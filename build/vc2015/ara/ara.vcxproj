@@ -18,6 +18,16 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\ara\const_string.h" />
+    <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
+    <ClInclude Include="..\..\..\ara\rapidjson.h" />
+    <ClInclude Include="..\..\..\ara\stringext.h" />
+    <ClInclude Include="..\..\..\ara\utf8.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\test\test_stringex.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{504157E6-AF5A-42D8-9740-1B8EEA49C037}</ProjectGuid>
     <RootNamespace>ara</RootNamespace>
@@ -65,7 +75,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)\..\..\..\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir)\..\..\..\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
