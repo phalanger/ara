@@ -39,13 +39,13 @@ namespace ara {
 			return *this;
 		}
 		typeStr		trim_right(const typeConstStr & chSet) const {
-			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), 0);
+			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
 			if (p != typeStrTraits::npos)
 				return typeStrTraits::substr(str_, 0, p + 1);
 			return str_;
 		}
 		string_ext &		trim_right_inplace(const typeConstStr & chSet) {
-			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), 0);
+			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
 			if (p != typeStrTraits::npos)
 				str_ = typeStrTraits::substr(str_, 0, p + 1);
 			return *this;

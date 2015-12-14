@@ -64,10 +64,10 @@ namespace ara {
 			return s.find_first_not_of(pattern, off, pattern_size);
 		}
 		static inline size_type	find_last_of(const base_type & s, const value_type * pattern, size_type pattern_size, size_type off) {
-			return s.find_first_of(pattern, off, pattern_size);
+			return s.find_last_of(pattern, off, pattern_size);
 		}
 		static inline size_type	find_last_not_of(const base_type & s, const value_type * pattern, size_type pattern_size, size_type off) {
-			return s.find_first_not_of(pattern, off, pattern_size);
+			return s.find_last_not_of(pattern, off, pattern_size);
 		}
 		static inline base_type substr(const base_type & s, size_type off, size_type count) {
 			return s.substr(off, count);
@@ -143,10 +143,10 @@ namespace ara {
 			return s.find_first_not_of(pattern, off, pattern_size);
 		}
 		static inline size_type	find_last_of(const base_type & s, const value_type * pattern, size_type pattern_size, size_type off) {
-			return s.find_first_of(pattern, off, pattern_size);
+			return s.find_last_of(pattern, off, pattern_size);
 		}
 		static inline size_type	find_last_not_of(const base_type & s, const value_type * pattern, size_type pattern_size, size_type off) {
-			return s.find_first_not_of(pattern, off, pattern_size);
+			return s.find_last_not_of(pattern, off, pattern_size);
 		}
 		static inline base_type substr(const base_type & s, size_type off, size_type count) {
 			return s.substr(off, count);
