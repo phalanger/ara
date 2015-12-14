@@ -40,6 +40,9 @@ namespace ara {
 		static void clear(base_type & s) {
 			s.clear();
 		}
+		static void resize(base_type & s, size_type n) {
+			s.resize(n);
+		}
 
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {
 			return s.find(ch, off);
@@ -71,6 +74,9 @@ namespace ara {
 		}
 		static inline void append(base_type & s, const value_type * ch, size_type size) {
 			s.append(ch, size);
+		}
+		static inline void append(base_type & s, size_type size, value_type ch) {
+			s.append(size, ch);
 		}
 		static inline base_type make(const value_type * ch, size_type size) {
 			return base_type(ch, size);
@@ -113,6 +119,9 @@ namespace ara {
 		static void clear(base_type & s) {
 			s.clear();
 		}
+		static void resize(base_type & s, size_type n) {
+			s.resize(n);
+		}
 
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {
 			return s.find(ch, off);
@@ -144,6 +153,9 @@ namespace ara {
 		}
 		static inline void append(base_type & s, const value_type * ch, size_type size) {
 			s.append(ch, size);
+		}
+		static inline void append(base_type & s, size_type size, value_type ch) {
+			s.append(size, ch);
 		}
 		static inline base_type make(const value_type * ch, size_type size) {
 			return base_type(ch, size);

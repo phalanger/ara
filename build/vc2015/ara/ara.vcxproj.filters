@@ -7,9 +7,6 @@
     <Filter Include="include\internal">
       <UniqueIdentifier>{389ae187-1d17-48c9-9b8d-186ae16e0d1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="test">
-      <UniqueIdentifier>{7c067f26-4f00-47dc-aa6a-b4eddd3168a9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\utf8.h">
@@ -27,10 +24,5 @@
     <ClInclude Include="..\..\..\ara\const_string.h">
       <Filter>include</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\test\test_stringex.cpp">
-      <Filter>test</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
