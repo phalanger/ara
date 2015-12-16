@@ -52,8 +52,8 @@ namespace ara {
 		}
 
 		typeStr		trim(const typeConstStr & chSet) const {
-			typeStr res = trim_left(chSet);
-			string_ext	ext(res);
+			typeOrgStr res = trim_left(chSet);
+			string_ext<typeOrgStr>	ext(res);
 			ext.trim_right_inplace(chSet);
 			return res;
 		}
@@ -126,7 +126,6 @@ namespace ara {
 	string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
 	}
-
 }
 
 #endif // !ARA_STRINGEXT_H

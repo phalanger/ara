@@ -17,6 +17,7 @@ public:
 	typedef const Ch &		const_reference;
 	typedef Ch				value_type;
 	typedef const Ch *		const_iterator;
+	typedef const Ch *		iterator;
 	typedef chTraits		traits_type;
 
 	const_string_base(void) : m_pCh( &g_nCh ),m_pChEnd( &g_nCh ) {}
