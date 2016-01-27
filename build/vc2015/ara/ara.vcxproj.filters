@@ -18,11 +18,26 @@
     <ClInclude Include="..\..\..\ara\stringext.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\ara\internal\string_traits.h">
+    <ClInclude Include="..\..\..\ara\ara_def.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h">
       <Filter>include\internal</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\ara\const_string.h">
+    <ClInclude Include="..\..\..\ara\ref_string.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\strformat.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\string_convert.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\default_string_traits.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\string_traits.h">
+      <Filter>include\internal</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

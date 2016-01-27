@@ -57,4 +57,46 @@ BOOST_AUTO_TEST_CASE(strext_trim_inplace)
 	BOOST_REQUIRE_EQUAL(re1, "hello world");
 }
 
+BOOST_AUTO_TEST_CASE(strext_to_int)
+{
+	const std::string str1 = "";
+	BOOST_REQUIRE_EQUAL( ara::strext(str1).to_int<int>(), int(0));
+
+	const std::string str2 = "123";
+	BOOST_REQUIRE_EQUAL(ara::strext(str2).to_int<int>(), int(123));
+
+	const std::string str3 = "a123";
+	int n = ara::strext(str3).to_int<int, 16>();
+	BOOST_REQUIRE_EQUAL(n, int(0xa123));
+
+	const std::string str4 = "a123";
+	int n2 = ara::strext(str4).to_int<int>();
+	BOOST_REQUIRE_EQUAL(n2, int(0));
+
+	int n3 = ara::strext(ara::ref_string("112345")).to_int<int,8>();
+	BOOST_REQUIRE_EQUAL(n3, int(0112345));
+}
+
+BOOST_AUTO_TEST_CASE(strext_from_int)
+{
+	std::string str1;
+	ara::strext(str1).append_int(100);
+	BOOST_REQUIRE_EQUAL(str1, "100");
+
+	std::string str2;
+	ara::strext(str2).append_int<int, 16>(12);
+	BOOST_REQUIRE_EQUAL(str2, "C");
+
+	std::string str3;
+	ara::strext(str3).append_int<int, 16,true>(12);
+	BOOST_REQUIRE_EQUAL(str3, "c");
+}
+
+BOOST_AUTO_TEST_CASE(detech_string_type)
+{
+	BOOST_REQUIRE_EQUAL(ara::is_string<std::string>::value, true);
+	BOOST_REQUIRE_EQUAL(ara::is_string<ara::ref_string>::value, true);
+	BOOST_REQUIRE_EQUAL(ara::is_string<int>::value, false);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

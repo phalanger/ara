@@ -1,5 +1,7 @@
-#ifndef ARA_BASE_CONSTSTRING_H
-#define ARA_BASE_CONSTSTRING_H
+#ifndef ARA_BASE_REFSTRING_H
+#define ARA_BASE_REFSTRING_H
+
+#include "ara_def.h"
 
 #include "internal/string_traits.h"
 #include <map>
@@ -8,7 +10,7 @@
 namespace ara {
 
 template<typename Ch, typename chTraits = std::char_traits<Ch> >
-class const_string_base
+class ref_string_base
 {
 public:
 	typedef size_t			size_type;
@@ -20,22 +22,22 @@ public:
 	typedef const Ch *		iterator;
 	typedef chTraits		traits_type;
 
-	const_string_base(void) : m_pCh( &g_nCh ),m_pChEnd( &g_nCh ) {}
-	const_string_base(const Ch * p, size_t nSize) : m_pCh( p ),m_pChEnd( p + nSize ) {}
-	const_string_base(const Ch * p, const Ch * pEnd) : m_pCh( p ),m_pChEnd( pEnd ) {}
-	const_string_base(const const_string_base & s) : m_pCh( s.m_pCh ),m_pChEnd( s.m_pChEnd ) {}
-	const_string_base(const Ch * p ) : m_pCh( p ),m_pChEnd( p ) 		{
+	ref_string_base(void) : m_pCh( &g_nCh ),m_pChEnd( &g_nCh ) {}
+	ref_string_base(const Ch * p, size_t nSize) : m_pCh( p ),m_pChEnd( p + nSize ) {}
+	ref_string_base(const Ch * p, const Ch * pEnd) : m_pCh( p ),m_pChEnd( pEnd ) {}
+	ref_string_base(const ref_string_base & s) : m_pCh( s.m_pCh ),m_pChEnd( s.m_pChEnd ) {}
+	ref_string_base(const Ch * p ) : m_pCh( p ),m_pChEnd( p ) 		{
 		m_pChEnd += chTraits::length( p );
 	}
 	template<typename typeStr>
-	const_string_base(const typeStr & s) :
+	ref_string_base(const typeStr & s) :
 		m_pCh(string_traits<typeStr>::data(s)),m_pChEnd( m_pCh + string_traits<typeStr>::size(s) ) {}
 
 	template<typename typeStr>
-	const_string_base(const typeStr & s,size_t off, size_t nCount) :
+	ref_string_base(const typeStr & s,size_t off, size_t nCount) :
 		m_pCh(string_traits<typeStr>::data(s) + off), m_pChEnd(m_pCh + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
 
-	int	compare( const const_string_base & s ) const    {
+	int	compare( const ref_string_base & s ) const    {
 		size_t nS1 = size() * sizeof(Ch);
 		size_t nS2 = s.size() * sizeof(Ch);
 		size_t nCmpSize = nS1 > nS2 ?  nS2 : nS1;
@@ -49,26 +51,26 @@ public:
 		return 0;
 	}
 
-	bool operator==(const const_string_base & s) const	{
+	bool operator==(const ref_string_base & s) const	{
 		return compare(s) == 0;
 	}
-	bool operator!=(const const_string_base & s) const	{
+	bool operator!=(const ref_string_base & s) const	{
 		return compare(s) != 0;
 	}
-	bool operator<(const const_string_base & s) const	{
+	bool operator<(const ref_string_base & s) const	{
 		return compare(s) < 0;
 	}
-	bool operator>(const const_string_base & s) const	{
+	bool operator>(const ref_string_base & s) const	{
 		return compare(s) > 0;
 	}
-	bool operator<=(const const_string_base & s) const	{
+	bool operator<=(const ref_string_base & s) const	{
 		return compare(s) <= 0;
 	}
-	bool operator>=(const const_string_base & s) const	{
+	bool operator>=(const ref_string_base & s) const	{
 		return compare(s) >= 0;
 	}
 
-	const const_string_base & operator=(const const_string_base & s)    {
+	const ref_string_base & operator=(const ref_string_base & s)    {
 		if ( this != &s )   {
 			m_pCh = s.m_pCh;
 			m_pChEnd = s.m_pChEnd;
@@ -76,11 +78,11 @@ public:
 		return *this;
 	}
 
-	const const_string_base & assign(const const_string_base & s)   {
+	const ref_string_base & assign(const ref_string_base & s)   {
 		return *this = s;
 	}
 
-	const const_string_base & assign(const Ch * pBegin, const Ch * pEnd )   {
+	const ref_string_base & assign(const Ch * pBegin, const Ch * pEnd )   {
 		m_pCh = pBegin;
 		m_pChEnd = pEnd;
 		return *this ;
@@ -111,16 +113,16 @@ public:
 		return m_pChEnd;
 	}
 
-	const_string_base	substr( size_t nOff, size_t nC = npos ) const   {
+	ref_string_base	substr( size_t nOff, size_t nC = npos ) const   {
 		size_t nMaxSize = size();
 		if ( nOff > nMaxSize )
 			nOff = nMaxSize;
 		if ( nC == npos || nOff + nC > nMaxSize )
 			nC = nMaxSize - nOff;
-		return const_string_base( m_pCh + nOff, m_pCh + nOff + nC );
+		return ref_string_base( m_pCh + nOff, m_pCh + nOff + nC );
 	}
 	
-	const_string_base & erase( size_t nOff, size_t nC = npos ) {
+	ref_string_base & erase( size_t nOff, size_t nC = npos ) {
 		if ( nOff != 0 && nC != npos )
 			throw std::bad_function_call();
 		else if ( nOff == 0 ) {
@@ -133,7 +135,7 @@ public:
 		return *this;
 	}
 
-	const_string_base	substring( int nBegin, int nEnd = -1 ) const    {
+	ref_string_base	substring( int nBegin, int nEnd = -1 ) const    {
 		int nMaxSize = static_cast<int>( size() );
 		if ( nBegin > nMaxSize )
 			nBegin = nMaxSize;
@@ -154,7 +156,7 @@ public:
 		if ( nEnd < nBegin )
 			nEnd = nBegin;
 
-		return const_string_base( m_pCh + nBegin, m_pCh + nEnd);
+		return ref_string_base( m_pCh + nBegin, m_pCh + nEnd);
 	}
 
 	size_t		find( Ch ch , size_t nOff = 0 ) const   {
@@ -182,7 +184,7 @@ public:
 		}
 		return (npos);	// no match
 	}
-	size_t		find( const const_string_base & s, size_t nOff = 0 ) const  {
+	size_t		find( const ref_string_base & s, size_t nOff = 0 ) const  {
 		return find( s.data(), nOff, s.size() );
 	}
 
@@ -215,7 +217,7 @@ public:
 
 		return (npos);	// no match
 	}
-	size_t		rfind( const const_string_base & s, size_t nOff = 0 ) const {
+	size_t		rfind( const ref_string_base & s, size_t nOff = 0 ) const {
 		return rfind( s.data(), nOff, s.size() );
 	}
 
@@ -228,7 +230,7 @@ public:
 				return p - m_pCh;
 		return npos;
 	}
-	size_t		find_first_of( const const_string_base & s, size_t nOff = 0 ) const {
+	size_t		find_first_of( const ref_string_base & s, size_t nOff = 0 ) const {
 		return find_first_of( s.data(), nOff, s.size() );
 	}
 
@@ -241,7 +243,7 @@ public:
 				return p - m_pCh;
 		return npos;
 	}
-	size_t		find_first_not_of( const const_string_base & s, size_t nOff = 0 ) const {
+	size_t		find_first_not_of( const ref_string_base & s, size_t nOff = 0 ) const {
 		return find_first_not_of( s.data(), nOff, s.size() );
 	}
 
@@ -255,7 +257,7 @@ public:
 				return p - m_pCh;
 		return npos;
 	}
-	size_t		find_last_of( const const_string_base & s , size_t nOff = npos ) const  {
+	size_t		find_last_of( const ref_string_base & s , size_t nOff = npos ) const  {
 		return find_last_of( s.data(), nOff, s.size() );
 	}
 
@@ -269,7 +271,7 @@ public:
 				return p - m_pCh;
 		return npos;
 	}
-	size_t		find_last_not_of( const const_string_base & s , size_t nOff = npos ) const  {
+	size_t		find_last_not_of( const ref_string_base & s , size_t nOff = npos ) const  {
 		return find_last_not_of( s.data(), nOff, s.size() );
 	}
 
@@ -281,7 +283,7 @@ public:
 		return typeString(data(),size());
 	}
 
-	void	swap( const const_string_base & s ) {
+	void	swap( const ref_string_base & s ) {
 		std::swap( m_pCh, s.m_pCh );
 		std::swap( m_pChEnd, s.m_pChEnd );
 	}
@@ -300,25 +302,28 @@ private:
 //////////////////////////////////////////////////////////////////////////
 
 template<typename Ch, typename chTraits>
-const Ch const_string_base<Ch,chTraits>::g_nCh = Ch();
+const Ch ref_string_base<Ch,chTraits>::g_nCh = Ch();
 
 template<typename Ch, typename chTraits>
-size_t	const_string_base<Ch,chTraits>::npos = static_cast<size_t>(-1);
+size_t	ref_string_base<Ch,chTraits>::npos = static_cast<size_t>(-1);
 
 template<typename Ch, typename chTraits, typename chTraits2>
-std::basic_ostream<Ch,chTraits> & operator<<( std::basic_ostream<Ch,chTraits> & o, const const_string_base<Ch, chTraits2> & s )
+std::basic_ostream<Ch,chTraits> & operator<<( std::basic_ostream<Ch,chTraits> & o, const ref_string_base<Ch, chTraits2> & s )
 {
-	typename const_string_base<Ch, chTraits2>::const_iterator it( s.begin() ), itEnd( s.end() );
+	typename ref_string_base<Ch, chTraits2>::const_iterator it( s.begin() ), itEnd( s.end() );
 	for (; it != itEnd; ++it)
 		o << (Ch)(*it);
 	return o;
 }
 
-typedef const_string_base<char, std::char_traits<char> >			const_string;
-typedef const_string_base<char16_t, std::char_traits<char16_t> >	const_u16string;
-typedef const_string_base<char32_t, std::char_traits<char32_t> >	const_u32string;
-typedef const_string_base<wchar_t, std::char_traits<wchar_t> >	const_wstring;
+typedef ref_string_base<char, std::char_traits<char> >			ref_string;
+typedef ref_string_base<char16_t, std::char_traits<char16_t> >	ref_u16string;
+typedef ref_string_base<char32_t, std::char_traits<char32_t> >	ref_u32string;
+typedef ref_string_base<wchar_t, std::char_traits<wchar_t> >	ref_wstring;
+
+template<typename Ch, typename chTraits>
+struct is_string<ref_string_base<Ch,chTraits>> : public std::true_type {};
 
 }//namespace ara {
 
-#endif//ARA_BASE_CONSTSTRING_H
+#endif//ARA_BASE_REFSTRING_H
