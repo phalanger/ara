@@ -93,5 +93,11 @@ namespace ara {
 	template<class Elem, class Traits, class Alloc>
 	struct is_string<std::basic_string<Elem, Traits, Alloc>> : public std::true_type {};
 
+	template<class T> struct is_char : public std::false_type {};
+	template<>	struct is_char<char> : public std::true_type {};
+	template<>	struct is_char<wchar_t> : public std::true_type {};
+	template<>	struct is_char<char16_t> : public std::true_type {};
+	template<>	struct is_char<char32_t> : public std::true_type {};
+
 }
 #endif // !ARA_INTERNAL_STDSTRING_TRAITS_H

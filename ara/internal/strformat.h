@@ -2,31 +2,482 @@
 #ifndef ARA_INTERNAL_STRFORMAT_H
 #define ARA_INTERNAL_STRFORMAT_H
 
+#include "string_traits.h"
+#include "string_convert.h"
+
 #include <string>
 #include <type_traits>
 
 namespace ara {
-	template<class T> 
-	struct format_append {
-		format_append(T & stream) : stream_(stream) {}
+	namespace format {
+		enum	INT_BASE {
+			BASE8 = std::ios::oct,
+			BASE10 = std::ios::dec,
+			BASE16 = std::ios::hex
+		};
+		enum	CHAR_CASE {
+			CHAR_UPCASE = 0,
+			CHAR_LOWCASE = 1
+		};
+		enum	BASE_FLAG {
+			HIDE_BASE = 0,
+			SHOW_BASE = 1,
+		};
+		enum	POS_FLAG {
+			HIDE_POS = 0,
+			SHOW_POS = 1,
+		};
+		enum	FIX_FLAG {
+			FIXED = 0,
+			SCIENTIFIC = 1,
+		};
+		enum	POINT_FLAG {
+			HIDE_POINT = 0,
+			SHOW_POINT = 1,
+		};
+		enum	ADJUSTFIELD_FLAG {
+			ADJUST_LEFT = std::ios::left,
+			ADJUST_RIGHT = std::ios::right,
+			ADJUST_INTERNAL = std::ios::internal,
+		};
+	}
 
-		void	append()
+	namespace internal {
+		template<class T, class Enable = void>
+		struct format_appender {
+			typedef typename T::char_type	char_type;
 
-		T & stream_;
-	};
+			format_appender(T & stream) : stream_(stream) {}
 
+			template<class T>
+			void	append(const T & t) {
+				stream_ << t;
+			}
+
+			void	append_ch(char ch) {
+				stream_ << static_cast<char_type>(ch);
+			}
+
+			template<class T>
+			void	append_str(const T * p, size_t nSize) {
+				std::basic_string<char_type>	str;
+				string_convert::append(str, p, nSize);
+				stream_ << str;
+			}
+
+			void	append_str(const char_type * p, size_t nSize) {
+				stream_.write(p, nSize);
+			}
+
+			template<class T>
+			void	append(const T & t, int nWidth, int chFill = '0'
+					, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				std::ios::fmtflags nFlags = stream_.flags();
+				stream_.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream_.width(nWidth));
+				chFill = stream_.fill(chFill);
+
+				stream_ << static_cast<T>(t);
+
+				stream_.flags(nFlags);
+				if (nWidth != -1)
+					stream_.width(nWidth);
+				stream_.fill(chFill);
+			}
+
+			template<class T>
+			void	append(const T & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
+				, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
+				, format::POS_FLAG bShowPos = format::HIDE_POS
+				, format::BASE_FLAG bShowBase = format::HIDE_BASE
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				std::ios::fmtflags nFlags = stream_.flags();
+				stream_.setf(static_cast<std::ios::fmtflags>(nBase), std::ios::basefield);
+				if (bShowPos == format::SHOW_POS)
+					stream_.setf(std::ios::showpos);
+				else
+					stream_.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					stream_.setf(std::ios::uppercase);
+				else
+					stream_.unsetf(std::ios::uppercase);
+				if (bShowBase == format::SHOW_BASE)
+					stream_.setf(std::ios::showbase);
+				else
+					stream_.unsetf(std::ios::showbase);
+				stream_.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream_.width(nWidth));
+				chFill = stream_.fill(chFill);
+
+				stream_ << static_cast<T>(t);
+
+				stream_.flags(nFlags);
+				if (nWidth != -1)
+					stream_.width(nWidth);
+				stream_.fill(chFill);
+			}
+
+			template<typename T, int base = 10, bool boLowCase = false>
+			void	append_int(T t) {
+				std::ios::fmtflags nFlags = stream_.flags();
+
+				if (base == 8) {
+					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE8), std::ios::basefield);
+				} else if (base == 10) {
+					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE10), std::ios::basefield);
+				} else if (base == 16) {
+					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE16), std::ios::basefield);
+				}
+				stream_ << static_cast<T>(t);
+				stream_.flags(nFlags);
+			}
+
+			template<typename typeDouble>
+			void	append(const typeDouble & dbVal,
+						format::FIX_FLAG bFixed,
+						format::POINT_FLAG bShowPoint = format::SHOW_POINT,
+						format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
+						format::POS_FLAG bShowPos = format::HIDE_POS,
+						format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
+							int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
+				std::ios::fmtflags nFlags = stream_.flags();
+				if (bFixed == format::FIXED)
+					stream_.setf(std::ios::fixed, std::ios::floatfield);
+				else
+					stream_.setf(std::ios::scientific, std::ios::floatfield);
+				if (bShowPoint == format::SHOW_POINT)
+					stream_.setf(std::ios::showpoint);
+				else
+					stream_.unsetf(std::ios::showpoint);
+				if (bShowPos == format::SHOW_POS)
+					stream_.setf(std::ios::showpos);
+				else
+					stream_.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					stream_.setf(std::ios::uppercase);
+				else
+					stream_.unsetf(std::ios::uppercase);
+				stream_.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nPrecision != -1)
+					nPrecision = static_cast<int>(stream_.precision(nPrecision));
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream_.width(nWidth));
+				chFill = stream_.fill(chFill);
+
+				stream_ << static_cast<typeDouble>(dbVal);
+
+				stream_.flags(nFlags);
+				if (nPrecision != -1)
+					stream_.precision(nPrecision);
+				if (nWidth != -1)
+					stream_.width(nWidth);
+				stream_.fill(chFill);
+			}
+
+			void	reserve(size_t n) {}
+
+			T & stream_;
+		};
+		
+		template<class T>
+		struct format_appender<T, typename std::enable_if<is_string<T>::value>::type> {
+			format_appender(T & str) : str_(str) {}
+
+			typedef string_traits<T>					typeStrTraits;
+			typedef typename typeStrTraits::value_type	typeCh;
+			typedef std::basic_ostringstream<typeCh>    typeStream;
+
+			void	append_ch(char ch) {
+				str_ += static_cast<typeCh>(ch);
+			}
+
+			template<class T>
+			void	append(const T & t) {
+				typeStream	out;
+				out << t;
+				str_ += out.str();
+			}
+
+			template<class T, typename std::enable_if_t<std::is_integral<T>::value>>
+			void	append(const T & t) {
+				append_int<T, 10, false>(t);
+			}
+
+			template<class T>
+			void	append_str(const T * p, size_t nSize) {
+				string_convert::append(str_, p, nSize);
+			}
+
+			template<typename T, int base = 10, bool boLowCase = false>
+			void	append_int(T t) {
+
+				static const char * Number_Low = "0123456789abcdef";
+				static const char * Number_Up = "0123456789ABCDEF";
+				bool boNegative = false;
+				const char * Number = boLowCase ? Number_Low : Number_Up;
+
+				if (t == 0) {
+					typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
+					return;
+				}
+				else if (std::is_signed<T>::value && t < 0) {
+					boNegative = true;
+					t = -t;
+				}
+
+				const	size_t	bufsize = 72;
+				typeCh	buf[bufsize];
+				typeCh * p = buf + bufsize;
+				while (t) {
+					*(--p) = static_cast<typeCh>(Number[t % static_cast<T>(base)]);
+					t /= static_cast<T>(base);
+				}
+				if (boNegative)
+					*(--p) = static_cast<typeCh>('-');
+				typeStrTraits::append(str_, p, buf + bufsize - p);
+			}
+
+			template<class T>
+			void	append(const T & t, int nWidth, int chFill = '0'
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				typeStream	out;
+				out.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					out.width(nWidth);
+				out.fill(chFill);
+
+				out << t;
+				str_ += out.str();
+			}
+
+			template<class T>
+			void	append(const T & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
+						, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
+						, format::POS_FLAG bShowPos = format::HIDE_POS
+						, format::BASE_FLAG bShowBase = format::HIDE_BASE
+						, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				typeStream	out;
+				out.setf(static_cast<std::ios::fmtflags>(nBase), std::ios::basefield);
+				if (bShowPos == format::SHOW_POS)
+					out.setf(std::ios::showpos);
+				else
+					out.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					out.setf(std::ios::uppercase);
+				else
+					out.unsetf(std::ios::uppercase);
+				if (bShowBase == format::SHOW_BASE)
+					out.setf(std::ios::showbase);
+				else
+					out.unsetf(std::ios::showbase);
+				out.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					out.width(nWidth);
+				out.fill(chFill);
+
+				out << static_cast<T>(t);
+
+				str_ += out.str();
+			}
+
+			template<typename typeDouble>
+			void	append(const typeDouble & dbVal,
+							format::FIX_FLAG bFixed,
+							format::POINT_FLAG bShowPoint = format::SHOW_POINT,
+							format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
+							format::POS_FLAG bShowPos = format::HIDE_POS,
+							format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
+							int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
+
+				typeStream	out;
+				if (bFixed == format::FIXED)
+					out.setf(std::ios::fixed, std::ios::floatfield);
+				else
+					out.setf(std::ios::scientific, std::ios::floatfield);
+				if (bShowPoint == format::SHOW_POINT)
+					out.setf(std::ios::showpoint);
+				else
+					out.unsetf(std::ios::showpoint);
+				if (bShowPos == format::SHOW_POS)
+					out.setf(std::ios::showpos);
+				else
+					out.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					out.setf(std::ios::uppercase);
+				else
+					out.unsetf(std::ios::uppercase);
+				out.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nPrecision != -1)
+					out.precision(nPrecision);
+				if (nWidth != -1)
+					out.width(nWidth);
+				out.fill(chFill);
+
+				out << static_cast<typeDouble>(dbVal);
+
+				str_ += out.str();
+			}
+
+			void	reserve(size_t n) {
+				str_.reserve(str_.size() + n);
+			}
+
+			T & str_;
+		};
+	}
 
 	template<class T>
-	struct format_append<T, typename std::enable_if<is_string<T>::value>::type> {
-		format_append(T & str) : str_(str) {}
-
-		T & str_;
-	};
-
-	template<class T>
-	struct str_format 
+	struct str_format
 	{
-	
+	public:
+		typedef internal::format_appender<T>	appender;
+		str_format(T & t) : out_(t) {}
+
+		template<class ch, typename...TypeList>
+		str_format &	printf(const ch * s, const TypeList&... t2) {
+			size_t nLength = std::char_traits<ch>::length(s);
+			out_.reserve(nLength);
+			printf_imp(s, nLength, t2...);
+			return *this;
+		}
+
+	protected:
+		template<typename char_type>
+		size_t	append_prefix(const char_type * fmt, size_t nSize) {
+			size_t i = 0;
+			for (; i < nSize; ++i) {
+				if (fmt[i] == '%' && i + 1 < nSize)
+					break;
+			}
+			out_.append_str(fmt, i);
+			return i;
+		}
+
+		template<typename char_type>
+		size_t	printf_imp(const char_type * fmt, size_t nSize) {
+			out_.append_str(fmt, nSize);
+			return nSize;
+		}
+		template<typename char_type, typename T1>
+		size_t    printf_imp(const char_type * fmt, size_t nSize, const T1 & t1) {
+			size_t i = append_prefix(fmt, nSize);
+			if (i + 1 >= nSize)
+				return nSize;
+			i += append_fmt_val(fmt + i, nSize - i, t1);
+			if (i >= nSize)
+				return nSize;
+			out_.append_str(fmt + i, nSize - i);
+			return i;
+		}
+		template<typename char_type, typename T1>
+		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1) {
+			size_t i = 1;	//fmt[0] is %
+			char_type	ch = fmt[i];
+			switch (ch) {
+			case 'v': case 'u': case 's': case 'f':
+				++i;	out_.append(t1);	break;
+			case 'd':
+				++i;	out_.append_int<T1,10,false>(t1);	break;
+			case 'x':
+				++i;	out_.append_int<T1, 16, false>(t1);	break;
+			case 'X':
+				++i;	out_.append_int<T1, 16, true>(t1);	break;
+
+			case '\0': case ',': case ' ': case '\r': case '\n': case '\t':
+				out_.append_ch(static_cast<char>(t1));
+				break;
+			default:
+				i += output_fmt_val_with_format(fmt + i, nSize - i, t1);
+				break;
+			}
+			return i;
+		}
+
+		template<typename char_type, typename T1>
+		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1) {
+			int                 nWidth = -1;
+			int                 nPrecision = -1;
+			char_type           chFill = ' ';
+			const char_type * pBegin = fmt;
+			const char_type * pEnd = fmt + n;
+			format::POS_FLAG bShowPos = format::HIDE_POS;
+			format::BASE_FLAG bShowBase = format::HIDE_BASE;
+			format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT;
+
+			while (fmt < pEnd && strchr("#-+ 0", char(*fmt)) != nullptr) {
+#define CHECK_CH( ch , action)  if ( *fmt == (ch) ) { ++fmt; action; }
+				CHECK_CH('#', bShowBase = format::SHOW_BASE);
+				CHECK_CH('-', nAdjust = format::ADJUST_LEFT);
+				CHECK_CH('+', bShowPos = format::SHOW_POS);
+				CHECK_CH(' ', chFill = ' ');
+				CHECK_CH('0', chFill = '0');
+			}
+			if (fmt < pEnd && *fmt >= '0' && *fmt <= '9') {
+				nWidth = 0;
+				for (; fmt < pEnd && *fmt >= '0' && *fmt <= '9'; ++fmt)
+					nWidth = nWidth * 10 + *fmt - '0';
+			}
+			if (fmt < pEnd && *fmt == '.') {
+				nPrecision = 0;
+				for (++fmt; fmt < pEnd && *fmt >= '0' && *fmt <= '9'; ++fmt)
+					nPrecision = nPrecision * 10 + *fmt - '0';
+			}
+
+			while (fmt < pEnd && *fmt == 'l')
+				++fmt;
+			if (fmt < pEnd)
+			{
+				const char_type ch = *fmt;
+				if (ch && !std::isspace(ch))
+					++fmt;
+
+#define CHECK_LOWCASE( c )    ( ch == c ? format::CHAR_LOWCASE : format::CHAR_UPCASE)
+				if (ch == 'f') {
+					out_.append(t1, format::FIXED, format::SHOW_POINT, format::CHAR_LOWCASE, bShowPos, nAdjust, nPrecision, nWidth, chFill);
+				}
+				else if (ch == 'e' || ch == 'E') {
+					out_.append(t1, format::SCIENTIFIC, format::SHOW_POINT, CHECK_LOWCASE('e'), bShowPos, nAdjust, nPrecision, nWidth, chFill);
+				}
+				else if (ch == 'x' || ch == 'X') {
+					out_.append(t1, format::BASE16, nWidth, chFill, CHECK_LOWCASE('x'), bShowPos, bShowBase, nAdjust);
+				}
+				else if (ch == 'o' || ch == 'O') {
+					out_.append(t1, format::BASE8, nWidth, chFill, CHECK_LOWCASE('o'), bShowPos, bShowBase, nAdjust);
+				}
+				else if (ch == 'd' || ch == 'u') {
+					out_.append(t1, format::BASE10, nWidth, chFill, format::CHAR_LOWCASE, bShowPos, bShowBase, nAdjust);
+				}
+				else {
+					out_.append(t1, nWidth, chFill, nAdjust);
+				}
+			}
+			return fmt - pBegin;
+		}
+		template<typename char_type, typename T1, typename...TypeList>
+		size_t printf_imp(const char_type * fmt, size_t nSize, T1 && t1, const TypeList&... t2) {
+			size_t i = append_prefix(fmt, nSize);
+			if (i + 1 >= nSize)
+				return nSize;
+			i += append_fmt_val(fmt + i, nSize - i, t1);
+			if (i >= nSize)
+				return nSize;
+			return i + printf_imp(fmt + i, nSize - i, t2...);
+		}
+
+
+		appender		out_;
 	};
 }
 

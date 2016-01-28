@@ -64,6 +64,7 @@ BOOST_AUTO_TEST_CASE(strext_to_int)
 
 	const std::string str2 = "123";
 	BOOST_REQUIRE_EQUAL(ara::strext(str2).to_int<int>(), int(123));
+	BOOST_REQUIRE_EQUAL(ara::strext(str2).to<int>(), int(123));
 
 	const std::string str3 = "a123";
 	int n = ara::strext(str3).to_int<int, 16>();
@@ -98,5 +99,35 @@ BOOST_AUTO_TEST_CASE(detech_string_type)
 	BOOST_REQUIRE_EQUAL(ara::is_string<ara::ref_string>::value, true);
 	BOOST_REQUIRE_EQUAL(ara::is_string<int>::value, false);
 }
+
+BOOST_AUTO_TEST_CASE(append_string)
+{
+	std::string	strRes;
+	auto s1 = ara::strext(strRes);
+
+	s1 += "Hello ";
+	s1 += L"world";
+
+	BOOST_REQUIRE_EQUAL(strRes, "Hello world");
+
+
+	std::wstring	strRes2;
+	auto s2 = ara::strext(strRes2);
+
+	s2 += "Hello ";
+	s2 += L"world";
+	s2 += s1.str();
+
+	BOOST_REQUIRE_EQUAL( ara::strext(strRes2).to<std::string>(), "Hello worldHello world");
+}
+
+BOOST_AUTO_TEST_CASE(printf_string)
+{
+	std::string	strRes;
+	ara::strext(strRes).printf("Hello %d hahaha", 100);
+
+	BOOST_REQUIRE_EQUAL(strRes, "Hello 100 hahaha");
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
