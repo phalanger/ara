@@ -30,6 +30,7 @@
 /build/codelite/.codelite
 Debug
 /build/codelite/test/*.mk
+/build/codelite/test/*.txt
 *.opensdf
 *.sdf
 *.vcxproj.user

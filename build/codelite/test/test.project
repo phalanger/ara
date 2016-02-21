@@ -26,7 +26,7 @@
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
-      <Compiler Options="-std=c++11" C_Options="" Assembler="">
+      <Compiler Options="-std=c++14" C_Options="" Assembler="">
         <IncludePath Value="../"/>
         <IncludePath Value="../../../"/>
       </Compiler>

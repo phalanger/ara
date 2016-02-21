@@ -211,7 +211,7 @@ namespace ara {
 		const date_time_imp&  set_time(int hour, int min, int sec) {
 			int year = 0, month = 0, day = 0, hour1 = 0, minute1 = 0, second1 = 0, yday = 0, wday = 0, isdst = 0;
 			get(year, month, day, hour1, minute1, second1, yday, wday, isdst);
-			set(year, month, day, hour, minute, second, isdst);
+			set(year, month, day, hour, min, sec, isdst);
 			return *this;
 		}
 		//! Set struct tm
@@ -246,7 +246,7 @@ namespace ara {
 			get(year, month, day, hour, minute, second, yday, wday, isdst);
 		}
 		inline void get(int & year, int & month, int & day, int & hour, int & minute, int & second, int & yday, int & wday, int & isdst) const {
-			internal::standard_time_op::local_time(traits::get_time(time_), year, month, day, hour, minute, sec, yday, wday, isdst);
+			internal::standard_time_op::local_time(traits::get_time(time_), year, month, day, hour, minute, second, yday, wday, isdst);
 		}
 
 		//! Return the date-only value
@@ -566,11 +566,11 @@ namespace ara {
 		TNs     nsec_;        /// and nanoseconds 
 	};
 
-	template<typename TSec, typename TNs = long>
-	const timer_val_imp<TSec, TNs> timer_val_imp<TSec, TNs>::zero = imer_val_imp<TSec, TNs>();
+	template<typename TSec, typename TNs>
+	const timer_val_imp<TSec, TNs> timer_val_imp<TSec, TNs>::zero = timer_val_imp<TSec, TNs>();
 
-	template<typename TSec, typename TNs = long>
-	const timer_val_imp<TSec, TNs> timer_val_imp<TSec, TNs>::max_time = imer_val_imp<TSec, TNs>(TSec(-1),TNs(-1));
+	template<typename TSec, typename TNs>
+	const timer_val_imp<TSec, TNs> timer_val_imp<TSec, TNs>::max_time = timer_val_imp<TSec, TNs>(TSec(-1),TNs(-1));
 
 	using timer_val = timer_val_imp<time_t, long>;
 

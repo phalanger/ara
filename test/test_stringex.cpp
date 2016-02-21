@@ -11,9 +11,6 @@ BOOST_AUTO_TEST_CASE(strext_constructor)
 	std::string str1 = " hello\r\t";
 	const std::string str2 = "\rhello world\n\t ";
 
-	auto ext1 = ara::strext(str1);
-	auto ext2 = ara::strext(str2);
-
 	size_t i = 0;
 	for (auto ch : ara::strext(str1)) {
 		BOOST_REQUIRE_EQUAL(ch , str1[i++]);

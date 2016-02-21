@@ -23,7 +23,7 @@ namespace ara {
 		using typeRefStr = ref_string_base<typename typeStrTraits::value_type, typename  typeStrTraits::traits_type>;
 
 		string_ext(typeStr & s) : str_(s) {}
-		string_ext(const string_ext & s) : str_(s._str_) {}
+		string_ext(const string_ext & s) : str_(s.str_) {}
 
  		auto begin() { return typeStrTraits::begin(str_); }
  		auto end() { return typeStrTraits::end(str_); }
@@ -34,25 +34,25 @@ namespace ara {
 		const typeStr & str() const { return str_; }
 
 		typeStr		trim_left(const typeRefStr & chSet) const {
-			typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
+			typename typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
 			if (p != typeStrTraits::npos)
 				return typeStrTraits::substr(str_, p, typeStrTraits::npos);
 			return str_;
 		}
 		string_ext &		trim_left_inplace(const typeRefStr & chSet) {
-			typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
+			typename typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
 			if (p != typeStrTraits::npos)
 				str_ = typeStrTraits::substr(str_, p, typeStrTraits::npos);
 			return *this;
 		}
 		typeStr		trim_right(const typeRefStr & chSet) const {
-			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
+			typename typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
 			if (p != typeStrTraits::npos)
 				return typeStrTraits::substr(str_, 0, p + 1);
 			return str_;
 		}
 		string_ext &		trim_right_inplace(const typeRefStr & chSet) {
-			typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
+			typename typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
 			if (p != typeStrTraits::npos)
 				str_ = typeStrTraits::substr(str_, 0, p + 1);
 			return *this;
@@ -114,12 +114,12 @@ namespace ara {
 			return *this;
 		}
 
-		template<class T, typename = std::enable_if<is_string<T>::value>::type >
+		template<class T, typename = typename std::enable_if<is_string<T>::value>::type >
 		inline string_ext & operator+=(const T & t) {
 			internal::string_convert::append(str_, t);
 			return *this;
 		}
-		template<class T, typename = std::enable_if<is_char<T>::value>::type >
+		template<class T, typename = typename std::enable_if<is_char<T>::value>::type >
 		inline string_ext & operator+=(const T * p) {
 			internal::string_convert::append(str_, ref_string_base<T>(p));
 			return *this;
@@ -154,6 +154,11 @@ namespace ara {
 	template<class typeStr>
 	string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
+	}
+    
+	template<class typeStr>
+	string_ext<const typeStr>	strext(const typeStr & s) {
+		return string_ext<const typeStr>(s);
 	}
 
 	template<class strType, class ch, typename...TypeList>

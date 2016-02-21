@@ -389,11 +389,11 @@ namespace ara {
 			case 'v': case 'u': case 's': case 'f':
 				++i;	out_.append(t1);	break;
 			case 'd':
-				++i;	out_.append_int<T1,10,false>(t1);	break;
+				++i;	out_.template append_int<T1, 10, false>(t1);	break;
 			case 'x':
-				++i;	out_.append_int<T1, 16, false>(t1);	break;
+				++i;	out_.template append_int<T1, 16, false>(t1);	break;
 			case 'X':
-				++i;	out_.append_int<T1, 16, true>(t1);	break;
+				++i;	out_.template append_int<T1, 16, true>(t1);	break;
 
 			case '\0': case ',': case ' ': case '\r': case '\n': case '\t':
 				out_.append_ch(static_cast<char>(t1));
@@ -475,7 +475,6 @@ namespace ara {
 				return nSize;
 			return i + printf_imp(fmt + i, nSize - i, t2...);
 		}
-
 
 		appender		out_;
 	};
