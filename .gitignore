@@ -26,3 +26,11 @@
 *.exe
 *.out
 *.app
+/build/codelite/Makefile
+/build/codelite/.codelite
+Debug
+/build/codelite/test/*.mk
+*.opensdf
+*.sdf
+*.vcxproj.user
+.vs

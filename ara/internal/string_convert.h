@@ -25,7 +25,7 @@ namespace ara {
 			inline string_appender & operator ++ () { return *this; }
 			inline string_appender operator ++ (int) { return *this; }
 			inline string_appender & operator=(char32_t ch) {
-				traits::append(str_, static_cast<traits::value_type>(ch));
+				traits::append(str_, static_cast<typename traits::value_type>(ch));
 				return *this;
 			}
 
@@ -102,7 +102,7 @@ namespace ara {
 			}
 			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char16_t * p, size_t n, const char16_t) {
-				string_traits<typeTarStr>::append(str, reinterpret_cast<const string_traits<typeTarStr>::value_type *>(p), n);
+				string_traits<typeTarStr>::append(str, reinterpret_cast<const typename string_traits<typeTarStr>::value_type *>(p), n);
 			}
 			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char32_t * p, size_t n, const char16_t) {
@@ -130,8 +130,8 @@ namespace ara {
 
 			template<typename typeTarStr, typename typeCh>
 			inline static void	append(typeTarStr & str, const typeCh * p, size_t n) {
-				using typeTarCh = char_type<sizeof(string_traits<typeTarStr>::value_type)>::value_type;
-				using  typeSrcCh = char_type<sizeof(typeCh)>::value_type;
+				using typeTarCh = typename char_type<sizeof(typename string_traits<typeTarStr>::value_type)>::value_type;
+				using  typeSrcCh = typename char_type<sizeof(typeCh)>::value_type;
 				append(str, reinterpret_cast<const typeSrcCh *>(p), n, typeTarCh() );
 			}
 

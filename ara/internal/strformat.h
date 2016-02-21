@@ -49,8 +49,8 @@ namespace ara {
 
 			format_appender(T & stream) : stream_(stream) {}
 
-			template<class T>
-			void	append(const T & t) {
+			template<class T2>
+			void	append(const T2 & t) {
 				stream_ << t;
 			}
 
@@ -58,8 +58,8 @@ namespace ara {
 				stream_ << static_cast<char_type>(ch);
 			}
 
-			template<class T>
-			void	append_str(const T * p, size_t nSize) {
+			template<class T2>
+			void	append_str(const T2 * p, size_t nSize) {
 				std::basic_string<char_type>	str;
 				string_convert::append(str, p, nSize);
 				stream_ << str;
@@ -69,8 +69,8 @@ namespace ara {
 				stream_.write(p, nSize);
 			}
 
-			template<class T>
-			void	append(const T & t, int nWidth, int chFill = '0'
+			template<class T2>
+			void	append(const T2 & t, int nWidth, int chFill = '0'
 					, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				std::ios::fmtflags nFlags = stream_.flags();
@@ -80,7 +80,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T>(t);
+				stream_ << static_cast<T2>(t);
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -88,8 +88,8 @@ namespace ara {
 				stream_.fill(chFill);
 			}
 
-			template<class T>
-			void	append(const T & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
+			template<class T2>
+			void	append(const T2 & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
 				, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
 				, format::POS_FLAG bShowPos = format::HIDE_POS
 				, format::BASE_FLAG bShowBase = format::HIDE_BASE
@@ -115,7 +115,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T>(t);
+				stream_ << static_cast<T2>(t);
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -123,8 +123,8 @@ namespace ara {
 				stream_.fill(chFill);
 			}
 
-			template<typename T, int base = 10, bool boLowCase = false>
-			void	append_int(T t) {
+			template<typename T2, int base = 10, bool boLowCase = false>
+			void	append_int(T2 t) {
 				std::ios::fmtflags nFlags = stream_.flags();
 
 				if (base == 8) {
@@ -134,7 +134,7 @@ namespace ara {
 				} else if (base == 16) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE16), std::ios::basefield);
 				}
-				stream_ << static_cast<T>(t);
+				stream_ << static_cast<T2>(t);
 				stream_.flags(nFlags);
 			}
 
@@ -198,25 +198,25 @@ namespace ara {
 				str_ += static_cast<typeCh>(ch);
 			}
 
-			template<class T>
-			void	append(const T & t) {
+			template<class T2>
+			void	append(const T2 & t) {
 				typeStream	out;
 				out << t;
 				str_ += out.str();
 			}
 
-			template<class T, typename std::enable_if_t<std::is_integral<T>::value>>
-			void	append(const T & t) {
-				append_int<T, 10, false>(t);
+			template<class T2, typename std::enable_if_t<std::is_integral<T2>::value>>
+			void	append(const T2 & t) {
+				append_int<T2, 10, false>(t);
 			}
 
-			template<class T>
-			void	append_str(const T * p, size_t nSize) {
+			template<class T2>
+			void	append_str(const T2 * p, size_t nSize) {
 				string_convert::append(str_, p, nSize);
 			}
 
-			template<typename T, int base = 10, bool boLowCase = false>
-			void	append_int(T t) {
+			template<typename T2, int base = 10, bool boLowCase = false>
+			void	append_int(T2 t) {
 
 				static const char * Number_Low = "0123456789abcdef";
 				static const char * Number_Up = "0123456789ABCDEF";
@@ -227,7 +227,7 @@ namespace ara {
 					typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
 					return;
 				}
-				else if (std::is_signed<T>::value && t < 0) {
+				else if (std::is_signed<T2>::value && t < 0) {
 					boNegative = true;
 					t = -t;
 				}
@@ -236,16 +236,16 @@ namespace ara {
 				typeCh	buf[bufsize];
 				typeCh * p = buf + bufsize;
 				while (t) {
-					*(--p) = static_cast<typeCh>(Number[t % static_cast<T>(base)]);
-					t /= static_cast<T>(base);
+					*(--p) = static_cast<typeCh>(Number[t % static_cast<T2>(base)]);
+					t /= static_cast<T2>(base);
 				}
 				if (boNegative)
 					*(--p) = static_cast<typeCh>('-');
 				typeStrTraits::append(str_, p, buf + bufsize - p);
 			}
 
-			template<class T>
-			void	append(const T & t, int nWidth, int chFill = '0'
+			template<class T2>
+			void	append(const T2 & t, int nWidth, int chFill = '0'
 				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				typeStream	out;
@@ -259,8 +259,8 @@ namespace ara {
 				str_ += out.str();
 			}
 
-			template<class T>
-			void	append(const T & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
+			template<class T2>
+			void	append(const T2 & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
 						, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
 						, format::POS_FLAG bShowPos = format::HIDE_POS
 						, format::BASE_FLAG bShowBase = format::HIDE_BASE
@@ -286,7 +286,7 @@ namespace ara {
 					out.width(nWidth);
 				out.fill(chFill);
 
-				out << static_cast<T>(t);
+				out << static_cast<T2>(t);
 
 				str_ += out.str();
 			}

@@ -617,5 +617,4 @@ inline ara::timer_val operator "" _sec(unsigned long long n) {
 	return ara::timer_val::make_by_sec(n);
 }
 
-#endif ARA_DATETIME_H
-
+#endif //ARA_DATETIME_H
