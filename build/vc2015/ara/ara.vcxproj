@@ -20,9 +20,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\ara_def.h" />
+    <ClInclude Include="..\..\..\ara\async_queue.h" />
+    <ClInclude Include="..\..\..\ara\datetime.h" />
+    <ClInclude Include="..\..\..\ara\dlist.h" />
+    <ClInclude Include="..\..\..\ara\internal\standard_datetime.h" />
     <ClInclude Include="..\..\..\ara\internal\strformat.h" />
     <ClInclude Include="..\..\..\ara\internal\string_convert.h" />
     <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
+    <ClInclude Include="..\..\..\ara\log.h" />
+    <ClInclude Include="..\..\..\ara\promise.h" />
     <ClInclude Include="..\..\..\ara\ref_string.h" />
     <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\default_string_traits.h" />

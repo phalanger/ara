@@ -125,6 +125,10 @@ namespace ara {
 			return *this;
 		}
 
+		template<class T, typename std::enable_if<std::is_same<T, typeStr>::value>::type * p = 0>
+		inline const T & to() const {
+			return str_;
+		}
 		template<class T>
 		inline T to(typename std::enable_if<is_string<T>::value>::type * p = 0) const {
 			T		res;
@@ -150,6 +154,14 @@ namespace ara {
 	template<class typeStr>
 	string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
+	}
+
+	template<class strType, class ch, typename...TypeList>
+	strType	str_printf(const ch * s, const TypeList&... t2) {
+		strType		str;
+		str_format<strType>		f(str);
+		f.printf(s, t2...);
+		return str;
 	}
 }
 

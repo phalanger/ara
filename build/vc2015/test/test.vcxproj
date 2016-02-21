@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\test\main.cpp" />
+    <ClCompile Include="..\..\..\test\test_datetime.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

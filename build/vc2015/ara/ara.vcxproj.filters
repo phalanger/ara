@@ -7,6 +7,9 @@
     <Filter Include="include\internal">
       <UniqueIdentifier>{389ae187-1d17-48c9-9b8d-186ae16e0d1a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{ec1fb9d0-7c69-4a4a-a111-b31a24cfa665}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\utf8.h">
@@ -37,6 +40,24 @@
       <Filter>include\internal</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\ara\internal\string_traits.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\promise.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_queue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\dlist.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\datetime.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\standard_datetime.h">
       <Filter>include\internal</Filter>
     </ClInclude>
   </ItemGroup>

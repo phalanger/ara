@@ -1,8 +1,7 @@
 
-#define BOOST_TEST_MODULE ara
-
-#include "boost/test/included/unit_test.hpp"
-
+#include <boost/test/test_tools.hpp>
+#include <boost/test/unit_test_suite.hpp>
+//#include <boost/test/unit_test.hpp>
 #include "ara/stringext.h"
 
 BOOST_AUTO_TEST_SUITE(stringext)
@@ -76,6 +75,9 @@ BOOST_AUTO_TEST_CASE(strext_to_int)
 
 	int n3 = ara::strext(ara::ref_string("112345")).to_int<int,8>();
 	BOOST_REQUIRE_EQUAL(n3, int(0112345));
+
+	int n4 = ara::strext(ara::ref_string("112345")).to<int>();
+	BOOST_REQUIRE_EQUAL(n4, int(112345));
 }
 
 BOOST_AUTO_TEST_CASE(strext_from_int)
@@ -119,6 +121,9 @@ BOOST_AUTO_TEST_CASE(append_string)
 	s2 += s1.str();
 
 	BOOST_REQUIRE_EQUAL( ara::strext(strRes2).to<std::string>(), "Hello worldHello world");
+
+	std::string		strRes3 = "abcdefgh";
+	BOOST_REQUIRE_EQUAL(ara::strext(strRes3).to<std::string>(), "abcdefgh");
 }
 
 BOOST_AUTO_TEST_CASE(printf_string)
@@ -127,7 +132,8 @@ BOOST_AUTO_TEST_CASE(printf_string)
 	ara::strext(strRes).printf("Hello %d hahaha", 100);
 
 	BOOST_REQUIRE_EQUAL(strRes, "Hello 100 hahaha");
-}
 
+	BOOST_REQUIRE_EQUAL(ara::str_printf<std::string>(L"Hello %02d",8), "Hello 08" );
+}
 
 BOOST_AUTO_TEST_SUITE_END()
