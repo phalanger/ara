@@ -27,6 +27,7 @@
     <ClInclude Include="..\..\..\ara\internal\strformat.h" />
     <ClInclude Include="..\..\..\ara\internal\string_convert.h" />
     <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
+    <ClInclude Include="..\..\..\ara\internal\tls_imp.h" />
     <ClInclude Include="..\..\..\ara\log.h" />
     <ClInclude Include="..\..\..\ara\promise.h" />
     <ClInclude Include="..\..\..\ara\ref_string.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="..\..\..\ara\internal\default_string_traits.h" />
     <ClInclude Include="..\..\..\ara\rapidjson.h" />
     <ClInclude Include="..\..\..\ara\stringext.h" />
+    <ClInclude Include="..\..\..\ara\threadext.h" />
     <ClInclude Include="..\..\..\ara\utf8.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

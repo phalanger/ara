@@ -108,7 +108,9 @@
       <File Name="../../../ara/internal/strformat.h"/>
       <File Name="../../../ara/internal/string_convert.h"/>
       <File Name="../../../ara/internal/string_traits.h"/>
+      <File Name="../../../ara/internal/tls_imp.h"/>
     </VirtualDirectory>
+    <File Name="../../../ara/threadext.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>

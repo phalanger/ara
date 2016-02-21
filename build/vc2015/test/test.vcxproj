@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\..\test\main.cpp" />
     <ClCompile Include="..\..\..\test\test_datetime.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
+    <ClCompile Include="..\..\..\test\test_threadext.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48842B41-F404-4965-98CF-6B9B54B4EF76}</ProjectGuid>

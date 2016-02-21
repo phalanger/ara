@@ -23,6 +23,7 @@
     <File Name="../../../test/main.cpp"/>
     <File Name="../../../test/test_datetime.cpp"/>
     <File Name="../../../test/test_stringex.cpp"/>
+    <File Name="../../../test/test_threadext.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
