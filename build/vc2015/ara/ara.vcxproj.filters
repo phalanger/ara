@@ -51,9 +51,6 @@
     <ClInclude Include="..\..\..\ara\dlist.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\ara\log.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\ara\datetime.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -71,6 +68,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\ara\internal\thread_state.h">
       <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_context.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\log.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
