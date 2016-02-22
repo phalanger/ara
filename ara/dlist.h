@@ -17,6 +17,9 @@ namespace ara {
 			unlink(); 
 		}
 
+		dlist(const dlist &) = delete;
+		dlist(dlist && r) = delete;
+
 		void       as_root() {
 			next_ = pre_ = (T *)this;
 		}
@@ -57,8 +60,6 @@ namespace ara {
 	protected:
 		T * next_ = nullptr;
 		T * pre_ = nullptr;
-	private:
-		dlist(const dlist & n);
 	};
 }
 

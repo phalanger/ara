@@ -66,5 +66,11 @@
     <ClInclude Include="..\..\..\ara\internal\tls_imp.h">
       <Filter>include\internal</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\flags.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\thread_state.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

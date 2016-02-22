@@ -23,10 +23,12 @@
     <ClInclude Include="..\..\..\ara\async_queue.h" />
     <ClInclude Include="..\..\..\ara\datetime.h" />
     <ClInclude Include="..\..\..\ara\dlist.h" />
+    <ClInclude Include="..\..\..\ara\flags.h" />
     <ClInclude Include="..\..\..\ara\internal\standard_datetime.h" />
     <ClInclude Include="..\..\..\ara\internal\strformat.h" />
     <ClInclude Include="..\..\..\ara\internal\string_convert.h" />
     <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
+    <ClInclude Include="..\..\..\ara\internal\thread_state.h" />
     <ClInclude Include="..\..\..\ara\internal\tls_imp.h" />
     <ClInclude Include="..\..\..\ara\log.h" />
     <ClInclude Include="..\..\..\ara\promise.h" />

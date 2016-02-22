@@ -381,8 +381,9 @@ namespace ara {
 			out_.append_str(fmt + i, nSize - i);
 			return i;
 		}
+
 		template<typename char_type, typename T1>
-		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1) {
+		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1, typename std::enable_if<std::is_integral<T1>::value>::type * a= nullptr) {
 			size_t i = 1;	//fmt[0] is %
 			char_type	ch = fmt[i];
 			switch (ch) {
@@ -404,9 +405,29 @@ namespace ara {
 			}
 			return i;
 		}
+		template<typename char_type, typename T1>
+		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1, typename std::enable_if<!std::is_integral<T1>::value>::type * a = nullptr) {
+			size_t i = 1;	//fmt[0] is %
+			char_type	ch = fmt[i];
+			switch (ch) {
+			case 'v': case 'u': case 's': case 'f':case 'd':case 'x':case 'X':
+				++i;	out_.append(t1);	break;
+			case '\0': case ',': case ' ': case '\r': case '\n': case '\t':
+				out_.append(t1);
+				break;
+			default:
+				i += output_fmt_val_with_format(fmt + i, nSize - i, t1);
+				break;
+			}
+			return i;
+		}
+
+#define CHECK_CH( ch , action)  if ( *fmt == (ch) ) { ++fmt; action; }
+#define CHECK_LOWCASE( c )    ( ch == c ? format::CHAR_LOWCASE : format::CHAR_UPCASE)
 
 		template<typename char_type, typename T1>
-		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1) {
+		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1
+											, typename std::enable_if<std::is_arithmetic<T1>::value>::type * = nullptr) {
 			int                 nWidth = -1;
 			int                 nPrecision = -1;
 			char_type           chFill = ' ';
@@ -417,7 +438,6 @@ namespace ara {
 			format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT;
 
 			while (fmt < pEnd && strchr("#-+ 0", char(*fmt)) != nullptr) {
-#define CHECK_CH( ch , action)  if ( *fmt == (ch) ) { ++fmt; action; }
 				CHECK_CH('#', bShowBase = format::SHOW_BASE);
 				CHECK_CH('-', nAdjust = format::ADJUST_LEFT);
 				CHECK_CH('+', bShowPos = format::SHOW_POS);
@@ -443,7 +463,6 @@ namespace ara {
 				if (ch && !std::isspace(ch))
 					++fmt;
 
-#define CHECK_LOWCASE( c )    ( ch == c ? format::CHAR_LOWCASE : format::CHAR_UPCASE)
 				if (ch == 'f') {
 					out_.append(t1, format::FIXED, format::SHOW_POINT, format::CHAR_LOWCASE, bShowPos, nAdjust, nPrecision, nWidth, chFill);
 				}
@@ -462,6 +481,48 @@ namespace ara {
 				else {
 					out_.append(t1, nWidth, chFill, nAdjust);
 				}
+			}
+			return fmt - pBegin;
+		}
+
+		template<typename char_type, typename T1>
+		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1
+									, typename std::enable_if<!std::is_arithmetic<T1>::value>::type * = nullptr) {
+			int                 nWidth = -1;
+			int                 nPrecision = -1;
+			char_type           chFill = ' ';
+			const char_type * pBegin = fmt;
+			const char_type * pEnd = fmt + n;
+			format::POS_FLAG bShowPos = format::HIDE_POS;
+			format::BASE_FLAG bShowBase = format::HIDE_BASE;
+			format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT;
+
+			while (fmt < pEnd && strchr("#-+ 0", char(*fmt)) != nullptr) {
+				CHECK_CH('#', bShowBase = format::SHOW_BASE);
+				CHECK_CH('-', nAdjust = format::ADJUST_LEFT);
+				CHECK_CH('+', bShowPos = format::SHOW_POS);
+				CHECK_CH(' ', chFill = ' ');
+				CHECK_CH('0', chFill = '0');
+			}
+			if (fmt < pEnd && *fmt >= '0' && *fmt <= '9') {
+				nWidth = 0;
+				for (; fmt < pEnd && *fmt >= '0' && *fmt <= '9'; ++fmt)
+					nWidth = nWidth * 10 + *fmt - '0';
+			}
+			if (fmt < pEnd && *fmt == '.') {
+				nPrecision = 0;
+				for (++fmt; fmt < pEnd && *fmt >= '0' && *fmt <= '9'; ++fmt)
+					nPrecision = nPrecision * 10 + *fmt - '0';
+			}
+
+			while (fmt < pEnd && *fmt == 'l')
+				++fmt;
+			if (fmt < pEnd)
+			{
+				const char_type ch = *fmt;
+				if (ch && !std::isspace(ch))
+					++fmt;
+				out_.append(t1, nWidth, chFill, nAdjust);
 			}
 			return fmt - pBegin;
 		}

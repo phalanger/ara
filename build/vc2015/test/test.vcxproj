@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\test\main.cpp" />
     <ClCompile Include="..\..\..\test\test_datetime.cpp" />
+    <ClCompile Include="..\..\..\test\test_flags.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />
   </ItemGroup>
