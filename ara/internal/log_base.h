@@ -4,6 +4,7 @@
 #include "../ara_def.h"
 #include "../dlist.h"
 #include "../datetime.h"
+#include "strformat.h"
 
 #include <algorithm>
 #include <iostream>
@@ -19,6 +20,7 @@ namespace ara {
 	};
 
 	class log_context;
+	class logger;
 
 	class log_stream : protected std::streambuf, public std::ostream
 	{
@@ -125,7 +127,7 @@ namespace ara {
 		log_stream & operator=(log_stream &&) = delete;
 	};
 
-	class log
+	class log : public log_stream, public str_format<std::ostream>
 	{
 	public:
 		enum level
@@ -157,14 +159,13 @@ namespace ara {
 			ref_string			data_;
 			log::level			level_;
 		};
-	}
 
 		class appender
 		{
 		public:
 			appender() {}
 			virtual ~appender() {}
-			virtual bool		onWrite(const internal::log_data & data, const logger & l, std::string & cache_str) = 0;
+			virtual bool		onWrite(const log_data & data, const logger & l, std::string & cache_str) = 0;
 			virtual std::string	dump_setting() const = 0;
 			virtual void	flush_all() = 0;
 		private:
@@ -174,66 +175,65 @@ namespace ara {
 			appender & operator = (appender &&) = delete;
 		};
 		typedef std::shared_ptr<appender>		appender_ptr;
-
-		class logger
-		{
-		public:
-			logger() : parent_(nullptr), level_(log::info), pass_to_parent_(false) {}
-			logger(logger * parent, const std::string & name)
-				: parent_(parent), name_(name), level_(log::debug), pass_to_parent_(true) {}
-
-			appender_ptr 		get_appender() const {
-				std::lock_guard<std::mutex> _guard(lock_);
-				return appender_;
-			}
-			logger *				get_parent() const { return parent_; }
-			level 					get_level() const { return level_; }
-			const std::string &		get_name() const { return name_; }
-			bool					get_pass_to_parent() const { return pass_to_parent_; }
-
-			void	set_appender(const appender_ptr	& p) {
-				std::lock_guard<std::mutex> _guard(lock_);
-				appender_ = p;
-			}
-			void	set_pass_to_parent(bool b) { pass_to_parent_ = b; }
-			void	set_level(level l) { level_ = l; }
-			bool	can_display(level l) const {
-				if (l > level_)
-					return false;
-				else if (appender_)
-					return true;
-				else if (pass_to_parent_ && parent_ != nullptr)
-					return parent_->can_display(l);
-				return false;
-			}
-			inline bool	can_display_in_this_logger(level l) const {
-				return (l <= level_ && appender_);
-			}
-		protected:
-			mutable std::mutex	lock_;
-			logger *		parent_ = nullptr;
-			appender_ptr	appender_;
-			std::string		name_;
-			log::level			level_ = info;
-			bool			pass_to_parent_ = false;
-		};
-
-	namespace internal  {
-		class log_context
-		{
-		public:
-			log_context() {}
-			~log_context() {}
-
-			logger *  get_current_logger() { return logger_; }
-			void           set_current_logger(logger &  l) { logger_ = &l; }
-
-			std::string &  get_cache_str() { return cache_str_; }
-		protected:
-			logger *		logger_ = nullptr;
-			std::string     cache_str_;
-		};
 	}
+
+	class logger
+	{
+	public:
+		logger() : parent_(nullptr), level_(log::info), pass_to_parent_(false) {}
+		logger(logger * parent, const std::string & name)
+			: parent_(parent), name_(name), level_(log::debug), pass_to_parent_(true) {}
+
+		internal::appender_ptr 		get_appender() const {
+			std::lock_guard<std::mutex> _guard(lock_);
+			return appender_;
+		}
+		logger *				get_parent() const { return parent_; }
+		log::level 				get_level() const { return level_; }
+		const std::string &		get_name() const { return name_; }
+		bool					get_pass_to_parent() const { return pass_to_parent_; }
+
+		void	set_appender(const internal::appender_ptr	& p) {
+			std::lock_guard<std::mutex> _guard(lock_);
+			appender_ = p;
+		}
+		void	set_pass_to_parent(bool b) { pass_to_parent_ = b; }
+		void	set_level(log::level l) { level_ = l; }
+		bool	can_display(log::level l) const {
+			if (l > level_)
+				return false;
+			else if (appender_)
+				return true;
+			else if (pass_to_parent_ && parent_ != nullptr)
+				return parent_->can_display(l);
+			return false;
+		}
+		inline bool	can_display_in_this_logger(level l) const {
+			return (l <= level_ && appender_);
+		}
+	protected:
+		mutable std::mutex	lock_;
+		logger *		parent_ = nullptr;
+		internal::appender_ptr	appender_;
+		std::string		name_;
+		log::level			level_ = info;
+		bool			pass_to_parent_ = false;
+	};
+
+	class log_context
+	{
+	public:
+		log_context() {}
+		~log_context() {}
+
+		logger *  get_current_logger() { return logger_; }
+		void           set_current_logger(logger &  l) { logger_ = &l; }
+
+		std::string &  get_cache_str() { return cache_str_; }
+	protected:
+		logger *		logger_ = nullptr;
+		std::string     cache_str_;
+	};
 }
 
 #endif//ARA_LOG_BASE_H_201602

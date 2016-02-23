@@ -336,7 +336,7 @@ namespace ara {
 
 			T & str_;
 		};
-	}
+	}//internal
 
 	template<class T>
 	struct str_format
