@@ -9,6 +9,7 @@
 #include <mutex>
 #include <iostream>
 #include <functional>
+#include <thread>
 
 namespace ara {
 	namespace internal  {

@@ -31,16 +31,16 @@ public:
 	}
 
 	inline	void	set_flags(valueType nFlags) {
-		flags_num_ |= nFlag;
+		flags_num_ |= nFlags;
 	}
 	inline	void	clear_flags(valueType nFlags) {
-		flags_num_ &= ~nFlag;
+		flags_num_ &= ~nFlags;
 	}
 	inline	void	set_flags_toggle(bool toggle,valueType nFlags) {
 		if (toggle)
-			set_flags(nFlag);
+			set_flags(nFlags);
 		else
-			clear_flags(nFlag);
+			clear_flags(nFlags);
 	}
 	inline	bool	check(valueType nFlags) const {
 		return (flags_num_ & nFlags) != 0;

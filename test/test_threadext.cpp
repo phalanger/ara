@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(thread_call)
 	ara::thread_context::dump_all_thread_state(o);
 	std::string str = o.str();
 
-	BOOST_REQUIRE_NE(str.find("]: threadext::thread_call::test_method"), std::string::npos);
+	BOOST_REQUIRE_NE(str.find("threadext::thread_call::test_method"), std::string::npos);
 
 	{
 		BEGIN_CALL("Test in sub function");
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(thread_call)
 
 		BOOST_REQUIRE_EQUAL(find_call_count(str2), 2);
 		BOOST_REQUIRE_NE(str2.find("Test in sub function"), std::string::npos);
-		BOOST_REQUIRE_NE(str2.find(" <- threadext::thread_call::test_method"), std::string::npos);
+		BOOST_REQUIRE_NE(str2.find("threadext::thread_call::test_method"), std::string::npos);
 
 		{
 			BEGIN_CALL("Test in sub function2", clock());
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(thread_call)
 	std::string str3 = o3.str();
 	BOOST_REQUIRE_EQUAL(find_call_count(str3), 1);
 	BOOST_REQUIRE_EQUAL(str3.find("Test in sub function"), std::string::npos);
-	BOOST_REQUIRE_NE(str3.find("]: threadext::thread_call::test_method"), std::string::npos);
+	BOOST_REQUIRE_NE(str3.find("threadext::thread_call::test_method"), std::string::npos);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

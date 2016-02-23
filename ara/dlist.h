@@ -63,4 +63,4 @@ namespace ara {
 	};
 }
 
-#endif ARA_DLIST_H
+#endif//ARA_DLIST_H

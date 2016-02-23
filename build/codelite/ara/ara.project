@@ -109,8 +109,12 @@
       <File Name="../../../ara/internal/string_convert.h"/>
       <File Name="../../../ara/internal/string_traits.h"/>
       <File Name="../../../ara/internal/tls_imp.h"/>
+      <File Name="../../../ara/internal/log_base.h"/>
+      <File Name="../../../ara/internal/log_context.h"/>
+      <File Name="../../../ara/internal/thread_state.h"/>
     </VirtualDirectory>
     <File Name="../../../ara/threadext.h"/>
+    <File Name="../../../ara/flags.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
