@@ -78,5 +78,11 @@
     <ClInclude Include="..\..\..\ara\internal\log_base.h">
       <Filter>include\internal</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_imp.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\singleton.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

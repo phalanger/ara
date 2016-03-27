@@ -68,13 +68,13 @@ namespace ara {
 		public:
 			LockType			lock_;
 			static LockType		g_lock;
-			static std::function<void(thread_call *)>		g_after_call;
+			static std::function<void(thread_call &)>		g_after_call;
 			static Root			root_;
 		};
 		template<typename LockType, typename Root>
 		LockType	thread_state_lock<LockType,Root>::g_lock;
 		template<typename LockType, typename Root>
-		std::function<void(thread_call *)>	thread_state_lock<LockType, Root>::g_after_call;
+		std::function<void(thread_call &)>	thread_state_lock<LockType, Root>::g_after_call;
 		template<typename LockType, typename Root>
 		Root	thread_state_lock<LockType, Root>::root_;
 
@@ -82,37 +82,40 @@ namespace ara {
 		{
 		public:
 			typedef std::mutex	LockType;
+			typedef thread_state_lock<std::mutex, thread_state>	lock_parent;
 
 			thread_state() : ptr_callstack_(nullptr) {
 				id_ = std::this_thread::get_id();
 			}
 			~thread_state() {
 				if (!alone()) {
-					std::lock_guard<LockType>	_guard(g_lock);
+					std::lock_guard<LockType>	_guard(lock_parent::g_lock);
 					unlink();
 				}
 			}
 			void	push(thread_call * p) {
-				std::lock_guard<LockType>		_guard(lock_);
+				std::lock_guard<LockType>		_guard(lock_parent::lock_);
 				ptr_callstack_ = p->join(ptr_callstack_);
 			}
 			thread_call *	pop() {
-				if (g_after_call)
-					g_after_call(ptr_callstack_);
-				std::lock_guard<LockType>		_guard(lock_);
+				if (lock_parent::g_after_call)
+					lock_parent::g_after_call(*ptr_callstack_);
+				std::lock_guard<LockType>		_guard(lock_parent::lock_);
 				thread_call * ret = ptr_callstack_;
 				ptr_callstack_ = ptr_callstack_ ? ptr_callstack_->detach() : nullptr;
 				return ret;
 			}
-			void	navigate_callstack(std::function<void(const thread_call *)> func) {
-				std::lock_guard<LockType>		_guard(lock_);
-				func(ptr_callstack_);
+			void	navigate_callstack(std::function<void(const thread_call &)> func) {
+				std::lock_guard<LockType>		_guard(lock_parent::lock_);
+				for (const thread_call * p = ptr_callstack_; p; p = p->get_caller()) {
+					func(*p);
+				}
 			}
-			static	void	register_after_call(std::function<void(thread_call *)>	 f) {
-				g_after_call = f;
+			static	void	register_after_call(std::function<void(thread_call &)>	&& f) {
+				g_after_call = std::move(f);
 			}
 			void		dump_callstack(std::ostream & out) {
-				std::lock_guard<LockType>        _guard(lock_);
+				std::lock_guard<LockType>        _guard(lock_parent::lock_);
 				bool boFirst = true;
 				for (const thread_call * p = ptr_callstack_; p; p = p->get_caller()) {
 					if (boFirst)
@@ -130,7 +133,7 @@ namespace ara {
 				return thread_state_lock<std::mutex, thread_state>::root_;
 			}
 			static void	dump_all(std::ostream & out) {
-				std::lock_guard<LockType>        _guard(g_lock);
+				std::lock_guard<LockType>        _guard(lock_parent::g_lock);
 				auto p = root_.get_next();
 				auto pend = &root_;
 				while (p != pend) {
@@ -141,7 +144,7 @@ namespace ara {
 				}
 			}
 			static void navigate_all(std::function<void(internal::thread_state &)> && func) {
-				std::lock_guard<LockType>        _guard(g_lock);
+				std::lock_guard<LockType>        _guard(lock_parent::g_lock);
 				auto p = root_.get_next();
 				auto pend = &root_;
 				while (p != pend) {

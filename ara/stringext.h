@@ -152,21 +152,32 @@ namespace ara {
 	};
 
 	template<class typeStr>
-	string_ext<typeStr>	strext(typeStr & s) {
+	inline string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
 	}
     
 	template<class typeStr>
-	string_ext<const typeStr>	strext(const typeStr & s) {
+	inline string_ext<const typeStr>	strext(const typeStr & s) {
 		return string_ext<const typeStr>(s);
 	}
 
 	template<class strType, class ch, typename...TypeList>
-	strType	str_printf(const ch * s, const TypeList&... t2) {
+	inline strType	str_printf(const ch * s, const TypeList&... t2) {
 		strType		str;
 		str_format<strType>		f(str);
 		f.printf(s, t2...);
 		return str;
+	}
+
+	template<class Stream>
+	inline str_format<Stream> stream_printf(Stream & out) {
+		return str_format<Stream>(out);
+	}
+
+	template<class Stream, class ch, typename...TypeList >
+	inline Stream & stream_printf(Stream & out, const ch * s, const TypeList&... t2) {
+		str_format<Stream>(out).printf(s, t2...);
+		return out;
 	}
 }
 

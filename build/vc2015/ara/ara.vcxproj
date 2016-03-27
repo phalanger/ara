@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\..\ara\flags.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
     <ClInclude Include="..\..\..\ara\internal\log_context.h" />
+    <ClInclude Include="..\..\..\ara\internal\log_imp.h" />
     <ClInclude Include="..\..\..\ara\internal\standard_datetime.h" />
     <ClInclude Include="..\..\..\ara\internal\strformat.h" />
     <ClInclude Include="..\..\..\ara\internal\string_convert.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\default_string_traits.h" />
     <ClInclude Include="..\..\..\ara\rapidjson.h" />
+    <ClInclude Include="..\..\..\ara\singleton.h" />
     <ClInclude Include="..\..\..\ara\stringext.h" />
     <ClInclude Include="..\..\..\ara\threadext.h" />
     <ClInclude Include="..\..\..\ara\utf8.h" />

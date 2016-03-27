@@ -5,6 +5,7 @@
 #include "stringext.h"
 #include "internal/tls_imp.h"
 #include "internal/thread_state.h"
+#include "internal/log_base.h"
 
 #include <functional>
 #include <list>
@@ -31,7 +32,12 @@
 		xxxxxx
 	}
 	ara::thread_context::dump_all_thread_state(o3);
-	ara::thread_context::navigate_all_thread_state([]( internal::thread_state & s ){
+	ara::thread_context::navigate_all_thread_state([]( ara::internal::thread_state & s ){
+	});
+
+	ara::thread_context::register_after_call([](ara::internal::thread_call & call){
+		ara::stream_printf(std::cout, "Finish %v, used: %v", call.get_call_info() , clock() - call.get_start_clock()) << std::endl;
+	});
 		
 	// Create thread that auto clear the thread context
 	ara::make_thread( []() {
@@ -86,6 +92,10 @@ namespace ara {
 		void	run_on_thread_exit(std::function<void()> && func) {
 			list_run_.push_back(std::move(func));
 		}
+		void	navigate_callstack(std::function<void(const internal::thread_call &)> && func) {
+			_get_thread_state().navigate_callstack(std::move(func));
+		}
+
 		uint64_t        next_sn()	{ return next_sn_++; }
 
 		static void		destroy_context() {
@@ -97,6 +107,9 @@ namespace ara {
 		}
 		static void		navigate_all_thread_state(std::function<void (internal::thread_state &)> && func) {
 			internal::thread_state::navigate_all(std::move(func));
+		}
+		static void		register_after_call(std::function<void(internal::thread_call &)> && func) {
+			internal::thread_state::register_after_call(std::move(func));
 		}
 	public:
 		//internal interface
@@ -113,12 +126,17 @@ namespace ara {
 		static void	_global_init() {
 			internal::thread_state::get_root().as_root();
 		}
+
+		log_context	 & _get_log_context() {
+			return	log_context_;
+		}
 	protected:
 		std::list<auto_del_base *>	list_del_;
 		std::list<std::function<void()>>		list_run_;
 		uint64_t								next_sn_ = 0;
 		internal::thread_local_storage			tls_mgr_;
 		internal::thread_state					thread_state_;
+		log_context								log_context_;
 	};
 
 	////////////////////////////////////////////////////

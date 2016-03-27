@@ -133,4 +133,18 @@ BOOST_AUTO_TEST_CASE(printf_string)
 	BOOST_REQUIRE_EQUAL(ara::str_printf<std::string>(L"Hello %02d",8), "Hello 08" );
 }
 
+BOOST_AUTO_TEST_CASE(printf_stream)
+{
+	std::stringstream	s;
+	ara::stream_printf(s).printf("Hello world %d", 100);
+
+	BOOST_REQUIRE_EQUAL(s.str(), "Hello world 100");
+
+	std::stringstream	s2;
+	ara::stream_printf(s2, "And say hello again, %d", 102);
+
+	BOOST_REQUIRE_EQUAL(s2.str(), "And say hello again, 102");
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()
