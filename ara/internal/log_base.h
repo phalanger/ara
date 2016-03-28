@@ -33,44 +33,44 @@ namespace ara {
 		};
 
 		class logger;
-	}
 
-	class log_context
-	{
-	public:
-		log_context() {}
-		~log_context() {
-			release_cache();
-		}
-
-		log::logger *  get_current_logger() { return logger_; }
-		void      set_current_logger(log::logger &  l) { logger_ = &l; }
-
-		std::string &  get_cache_str() { return cache_str_; }
-
-		char *		get_log_cache(size_t n) {
-			if (cache_ && cache_size_ < n) {
+		class log_context
+		{
+		public:
+			log_context() {}
+			~log_context() {
 				release_cache();
 			}
-			if (!cache_) {
-				cache_ = new char[n];
-				cache_size_ = n;
+
+			log::logger *  get_current_logger() { return logger_; }
+			void      set_current_logger(log::logger *  l) { logger_ = l; }
+
+			std::string &  get_cache_str() { return cache_str_; }
+
+			char *		get_log_cache(size_t n) {
+				if (cache_ && cache_size_ < n) {
+					release_cache();
+				}
+				if (!cache_) {
+					cache_ = new char[n];
+					cache_size_ = n;
+				}
+				return cache_;
 			}
-			return cache_;
-		}
-		void release_cache() {
-			if (cache_) {
-				delete[]cache_;
-				cache_ = nullptr;
-				cache_size_ = 0;
+			void release_cache() {
+				if (cache_) {
+					delete[]cache_;
+					cache_ = nullptr;
+					cache_size_ = 0;
+				}
 			}
-		}
-	protected:
-		log::logger *	logger_ = nullptr;
-		std::string     cache_str_;
-		char *			cache_ = nullptr;
-		size_t			cache_size_ = 0;
-	};
+		protected:
+			log::logger *	logger_ = nullptr;
+			std::string     cache_str_;
+			char *			cache_ = nullptr;
+			size_t			cache_size_ = 0;
+		};
+	}
 }
 
 #endif//ARA_LOG_BASE_H_201602

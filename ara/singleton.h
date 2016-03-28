@@ -2,6 +2,8 @@
 #ifndef ARA_SINGLETON_H
 #define ARA_SINGLETON_H
 
+#include "internal/singleton_mgr.h"
+
 #include <mutex>
 #include <atomic>
 
@@ -14,9 +16,11 @@ namespace ara {
 		static T	& get() {
 			if (UNLIKELY(instance_ == nullptr)) {
 				std::call_once(init_flag, []() {
-					if (!instance_)
-						instance_ = new T;
-					std::atexit(destroy);
+					if (!instance_) {
+						std::unique_ptr<T>	_au(new T);
+						instance_ = _au.release();
+						internal::singleton_mgr<void>::get().delete_on_app_exit(instance_);
+					}
 				});
 			}
 			return *instance_;
@@ -29,14 +33,11 @@ namespace ara {
 				return false;
 			std::call_once(init_flag, [p]() {
 				instance_ = p;
-				std::atexit(destroy);
+				internal::singleton_mgr<void>::get().delete_on_app_exit(instance_);
 			});
 			return instance_ == p;
 		}
 	protected:
-		static void	destroy() {
-			delete instance_;
-		}
 		static T *		instance_;
 		static std::once_flag init_flag;
 	};

@@ -122,6 +122,20 @@ namespace ara {
 			inline const std::thread::id &	thread_id() const { return thread_id_; }
 			inline const ref_string &		data() const { return data_; }
 			inline log::level				get_level() const { return level_; }
+
+			inline static const char *		get_level_name(level l) {
+				static const char * p[] =	{
+					"Emergency",
+					"Alert",
+					"Critical",
+					"Error",
+					"Warning",
+					"Notice",
+					"Info",
+					"Debug"
+				};
+				return p[static_cast<int>(l)];
+			}
 		protected:
 			const date_time		log_time_;
 			std::thread::id		thread_id_;
@@ -176,8 +190,8 @@ namespace ara {
 					return parent_->can_display(l);
 				return false;
 			}
-			inline bool	can_display_in_this_logger(log::level l) const {
-				return (l <= level_ && appender_);
+			inline bool	can_display_in_this_level(log::level l) const {
+				return (l <= level_);
 			}
 		protected:
 			mutable std::mutex	lock_;
@@ -193,6 +207,13 @@ namespace ara {
 		public:
 			static logger_mgr	& get() {
 				return singleton<logger_mgr>::get();
+			}
+
+			logger_mgr() : root_(nullptr, "Root") {
+			}
+			~logger_mgr() {
+				for (auto it : mapLogger_)
+					delete it.second;
 			}
 			
 			logger *	get_logger(const std::string & name) {
@@ -224,27 +245,55 @@ namespace ara {
 			logger			root_;
 		};
 
-		class log_imp : public log_stream, public str_format<log_stream>
+		class log_imp : public log_stream
 		{
 		public:
 			typedef str_format<log_stream>	typeFormat;
-			log_imp(logger * logger) : typeFormat(*((log_stream *)this)),logger_(logger) {}
+
+			log_imp(logger * logger) : formator_(*((log_stream *)this)),logger_(logger) {}
 
 			log_imp &	operator()(log::level l) {
 				level_ = l;
 				return *this;
 			}
+
+			template<class ch, typename...TypeList>
+			inline log_stream &	printf(const ch * s, const TypeList&... t2) {
+				formator_.printf(s, t2...);
+				return *this;
+			}
+
+			template<class ch, typename...TypeList>
+			inline log_stream &	printfln(const ch * s, const TypeList&... t2) {
+				formator_.printf(s, t2...);
+				*this << std::endl;
+				return *this;
+			}
+
 		protected:
+			inline void	set_logger(logger * l) {
+				logger_ = l;
+			}
+			inline logger * get_logger() const {
+				return logger_;
+			}
+
 			virtual void onCallBackData(const char * s, size_t n) {
 				if (!logger_)
 					return;
-				auto appender = logger_->get_appender();
-				if (appender) {
-					appender->onWrite(log_data(date_time::get_current(), std::this_thread::get_id(), ref_string(s, n), logger_->get_level()), *logger_, cache_str_);
+				log_data	data(date_time::get_current(), std::this_thread::get_id(), ref_string(s, n), level_);
+				logger	* p = logger_;
+				while (p != nullptr && p->can_display_in_this_level(level_)) {
+					if (p->get_appender())
+						p->get_appender()->onWrite(data, *p, cache_str_);
+					if (!p->get_pass_to_parent())
+						break;
+					p = p->get_parent();
 				}
 			}
+			typeFormat		formator_;
 			log::level		level_ = log::info;
-			logger	*		logger_;
+			logger	*		logger_ = nullptr;
 			std::string		cache_str_;
 		};
 	};//log

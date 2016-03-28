@@ -63,7 +63,7 @@ namespace ara {
 
 	class thread_context {
 	public:
-		static thread_context	& get() {
+		static inline thread_context	& get() {
 			return *internal::tls_holder<thread_context>::get();
 		}
 
@@ -127,7 +127,7 @@ namespace ara {
 			internal::thread_state::get_root().as_root();
 		}
 
-		log_context	 & _get_log_context() {
+		inline log::log_context	 & _get_log_context() {
 			return	log_context_;
 		}
 	protected:
@@ -136,7 +136,7 @@ namespace ara {
 		uint64_t								next_sn_ = 0;
 		internal::thread_local_storage			tls_mgr_;
 		internal::thread_state					thread_state_;
-		log_context								log_context_;
+		log::log_context						log_context_;
 	};
 
 	////////////////////////////////////////////////////

@@ -69,9 +69,6 @@
     <ClInclude Include="..\..\..\ara\internal\thread_state.h">
       <Filter>include\internal</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\ara\internal\log_context.h">
-      <Filter>include\internal</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\ara\log.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -83,6 +80,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\ara\singleton.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\singleton_mgr.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h">
+      <Filter>include\internal</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
