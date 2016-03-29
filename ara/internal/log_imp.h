@@ -23,7 +23,7 @@ namespace ara {
 		public:
 			typedef char char_type;
 			log_stream() : std::streambuf(), std::ostream((std::streambuf*)this)
-				, cache_(nullptr), default_cache_size_(g_nDefaultCacheSize), max_cache_size_(g_nMaxCacheSize) {
+				, cache_(nullptr), cache_size_(g_nDefaultCacheSize), max_cache_size_(g_nMaxCacheSize) {
 			}
 
 			~log_stream() {
@@ -31,18 +31,22 @@ namespace ara {
 			}
 
 			void	set_cache_size(size_t n) {
-				if (pbase() == nullptr)
-					default_cache_size_ = n;
-				else if (n > default_cache_size_) {
-					char * tmp = new char[n + 1];
-					tmp[n] = '\n';
-					size_t rest = pptr() - pbase();
+				if (n < g_nDefaultCacheSize || n > max_cache_size_)
+					return;
+				char * tmp = new char[n + 1];
+				tmp[n] = '\n';
+				size_t rest = 0;
+				if (pbase()) {
+					rest = pptr() - pbase();
 					memcpy(tmp, pbase(), rest);
-					delete[]cache_;
-					cache_ = tmp;
+				}
+				delete[]cache_;
+				cache_ = tmp;
+				if (pbase()) {
 					setp(cache_, cache_ + n);
 					pbump(static_cast<int>(rest));
 				}
+				cache_size_ = n;
 			}
 			void	set_max_cache_size(size_t n) {
 				max_cache_size_ = n;
@@ -58,35 +62,24 @@ namespace ara {
 			}
 			void	ref_to_context_cache() {
 				log_context & context = thread_context::get()._get_log_context();
-				char * p = context.get_log_cache(default_cache_size_);
+				char * p = context.get_log_cache(g_nDefaultCacheSize);
 				if (p != nullptr)
-					setp(p, p + default_cache_size_);
+					setp(p, p + g_nDefaultCacheSize);
 			}
 
 			int 	sync() {
 				char * pBegin = pbase();
 				char * pEnd = pptr();
-				char * pBufEnd = epptr();
-
-				if (pBegin == nullptr)
-					return 0;
-				else if (pBegin < pEnd) {
-					if (pEnd == pBufEnd && pEnd > pBegin && *(pEnd - 1) != '\n')
-						++pEnd;
-					char * p = pBegin;
-					while (pBegin < pEnd && (p = (char *)memchr(pBegin, '\n', pEnd - pBegin)) != NULL) {
-						onCallBackData(pBegin, (++p) - pBegin);
-						pBegin = p;
-					}
-					if (pBegin < pEnd)
-						onCallBackData(pBegin, pEnd - pBegin);
+				if (pBegin != nullptr) {
+					on_data(pBegin, pEnd - pBegin);
+					setp(nullptr, nullptr);
 				}
-				setp(pBegin, pBufEnd);
 				return 0;
 			}
 			int 	overflow(int c) {
 				if (pbase() == nullptr) {
 					ref_to_context_cache();
+					before_data();
 				}
 				else {
 					size_t nSize = static_cast<size_t>(pptr() - pbase());
@@ -101,10 +94,11 @@ namespace ara {
 				}
 				return c;
 			}
-			virtual void onCallBackData(const char * s, size_t n) = 0;
+			virtual void before_data() = 0; 
+			virtual void on_data(const char * s, size_t n) = 0;
 		protected:
 			char *					cache_ = nullptr;
-			size_t					default_cache_size_;
+			size_t					cache_size_;
 			size_t					max_cache_size_;
 		private:
 			log_stream(const log_stream & s) = delete;
@@ -116,11 +110,12 @@ namespace ara {
 		class log_data
 		{
 		public:
-			log_data(const date_time & t, const std::thread::id & tid, const ref_string & data, log::level l) :
-				log_time_(t), thread_id_(tid), data_(data), level_(l) {}
+			log_data(const date_time & t, const std::thread::id & tid, log::level l, const logger & ilogger) :
+				log_time_(t), thread_id_(tid), level_(l), logger_(ilogger) {}
+
 			inline const date_time &		log_time() const { return log_time_; }
 			inline const std::thread::id &	thread_id() const { return thread_id_; }
-			inline const ref_string &		data() const { return data_; }
+			inline const logger &			get_logger() const { return logger_; }
 			inline log::level				get_level() const { return level_; }
 
 			inline static const char *		get_level_name(level l) {
@@ -139,8 +134,8 @@ namespace ara {
 		protected:
 			const date_time		log_time_;
 			std::thread::id		thread_id_;
-			ref_string			data_;
 			log::level			level_;
+			const logger	&	logger_;
 		};
 
 		class appender
@@ -148,7 +143,8 @@ namespace ara {
 		public:
 			appender() {}
 			virtual ~appender() {}
-			virtual bool		onWrite(const log_data & data, const logger & l, std::string & cache_str) = 0;
+			virtual bool		before_write(const log_data & data, std::ostream & out) = 0;
+			virtual bool		on_flush(const log_data & data, const ref_string & content) = 0;
 			virtual std::string	dump_setting() const = 0;
 			virtual void	flush_all() = 0;
 		private:
@@ -170,10 +166,10 @@ namespace ara {
 				std::lock_guard<std::mutex> _guard(lock_);
 				return appender_;
 			}
-			logger *				get_parent() const { return parent_; }
-			log::level 				get_level() const { return level_; }
-			const std::string &		get_name() const { return name_; }
-			bool					get_pass_to_parent() const { return pass_to_parent_; }
+			inline logger *				get_parent() const { return parent_; }
+			inline log::level 			get_level() const { return level_; }
+			inline const std::string &	get_name() const { return name_; }
+			inline bool					get_pass_to_parent() const { return pass_to_parent_; }
 
 			void	set_appender(const appender_ptr	& p) {
 				std::lock_guard<std::mutex> _guard(lock_);
@@ -282,14 +278,31 @@ namespace ara {
 				return logger_;
 			}
 
-			virtual void onCallBackData(const char * s, size_t n) {
+			virtual void before_data() {
 				if (!logger_)
 					return;
-				log_data	data(date_time::get_current(), std::this_thread::get_id(), ref_string(s, n), level_);
+				log_data	data(date_time::get_current(), std::this_thread::get_id(), level_, *logger_);
 				logger	* p = logger_;
 				while (p != nullptr && p->can_display_in_this_level(level_)) {
-					if (p->get_appender())
-						p->get_appender()->onWrite(data, *logger_, cache_str_);
+					auto pAppender = p->get_appender();
+					if (pAppender)
+						pAppender->before_write(data, *this);
+					if (!p->get_pass_to_parent())
+						break;
+					p = p->get_parent();
+				}
+			}
+
+			virtual void on_data(const char * s, size_t n) {
+				if (!logger_)
+					return;
+				log_data	data(date_time::get_current(), std::this_thread::get_id(), level_, *logger_);
+				ref_string	content(s, n);
+				logger	* p = logger_;
+				while (p != nullptr && p->can_display_in_this_level(level_)) {
+					auto pAppender = p->get_appender();
+					if (pAppender)
+						pAppender->on_flush(data, content);
 					if (!p->get_pass_to_parent())
 						break;
 					p = p->get_parent();
@@ -298,7 +311,6 @@ namespace ara {
 			typeFormat		formator_;
 			log::level		level_ = log::info;
 			logger	*		logger_ = nullptr;
-			std::string		cache_str_;
 		};
 	};//log
 }

@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(log_base)
 	std::stringstream	s;
 
 	auto root = ara::log::logger_mgr::get().get_root();
-	root->set_appender(std::make_shared<ara::log::appender_stdstream<>>(s));
+	root->set_appender(std::make_shared<ara::log::appender_stdstream>(s));
 
 	ara::glog(ara::log::info).printfln("Hello %d", 123);
 
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(log_base_2)
 	std::stringstream	s;
 
 	auto root = ara::log::logger_mgr::get().get_root();
-	root->set_appender(std::make_shared<ara::log::appender_stdstream<>>(s));
+	root->set_appender(std::make_shared<ara::log::appender_stdstream>(s));
 
 	LOG_INFO().printf("Hello %d", 124) << std::endl;
 
