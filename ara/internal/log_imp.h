@@ -162,9 +162,9 @@ namespace ara {
 		class logger
 		{
 		public:
-			logger() : parent_(nullptr), level_(log::info), pass_to_parent_(false) {}
-			logger(logger * parent, const std::string & name)
-				: parent_(parent), name_(name), level_(log::debug), pass_to_parent_(true) {}
+			logger() : parent_(nullptr), level_(log::debug), pass_to_parent_(false) {}
+			logger(logger * parent, const std::string & name, log::level l = log::debug)
+				: parent_(parent), name_(name), level_(l), pass_to_parent_(true) {}
 
 			appender_ptr 		get_appender() const {
 				std::lock_guard<std::mutex> _guard(lock_);
@@ -198,7 +198,7 @@ namespace ara {
 			logger *		parent_ = nullptr;
 			appender_ptr	appender_;
 			std::string		name_;
-			log::level		level_ = log::info;
+			log::level		level_ = log::debug;
 			bool			pass_to_parent_ = false;
 		};
 
@@ -209,7 +209,7 @@ namespace ara {
 				return singleton<logger_mgr>::get();
 			}
 
-			logger_mgr() : root_(nullptr, "Root") {
+			logger_mgr() : root_(nullptr, "Root", log::info) {
 			}
 			~logger_mgr() {
 				for (auto it : mapLogger_)
@@ -217,8 +217,17 @@ namespace ara {
 			}
 			
 			logger *	get_logger(const std::string & name) {
-
 				std::lock_guard<std::mutex>		_aguard(lock_);
+				return get_logger_withoulock(name);
+			}
+
+			logger * get_root() {
+				return &root_;
+			}
+
+		protected:
+
+			logger *	get_logger_withoulock(const std::string & name) {
 
 				auto itFind = mapLogger_.find(name);
 				if (itFind != mapLogger_.end())
@@ -229,17 +238,12 @@ namespace ara {
 					auto ptr = new logger(&root_, name);
 					mapLogger_[name] = ptr;
 					return ptr;
-				} 
-				auto ptr = new logger(get_logger(name.substr(0, p)), name);
+				}
+				auto ptr = new logger(get_logger_withoulock(name.substr(0, p)), name);
 				mapLogger_[name] = ptr;
 				return ptr;
 			}
 
-			logger * get_root() {
-				return &root_;
-			}
-
-		protected:
 			std::mutex		lock_;
 			std::map<std::string, logger *>		mapLogger_;
 			logger			root_;
@@ -285,7 +289,7 @@ namespace ara {
 				logger	* p = logger_;
 				while (p != nullptr && p->can_display_in_this_level(level_)) {
 					if (p->get_appender())
-						p->get_appender()->onWrite(data, *p, cache_str_);
+						p->get_appender()->onWrite(data, *logger_, cache_str_);
 					if (!p->get_pass_to_parent())
 						break;
 					p = p->get_parent();

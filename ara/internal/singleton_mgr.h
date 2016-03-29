@@ -54,7 +54,7 @@ namespace ara {
 		};
 
 		template<class C>
-		singleton_mgr<C> * singleton_mgr<T>::instance_ = nullptr;
+		singleton_mgr<C> * singleton_mgr<C>::instance_ = nullptr;
 		template<class C>
 		std::once_flag singleton_mgr<C>::init_flag;
 	}

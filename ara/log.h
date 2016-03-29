@@ -10,8 +10,13 @@ namespace ara {
 	class glog : public log::log_imp
 	{
 	public:
-		glog(const char * name = nullptr) : log::log_imp(nullptr) {
+		explicit glog(const char * name = nullptr, log::level l = log::info) : log::log_imp(nullptr) {
 			init_logger(name);
+			level_ = l;
+		}
+		explicit glog(log::level l) : log::log_imp(nullptr) {
+			init_logger(nullptr);
+			level_ = l;
 		}
 
 		bool can_display(log::level l) const {
@@ -55,26 +60,25 @@ namespace ara {
 		log::logger	*		ori_logger_ = nullptr;
 	};
 
-#define	LOG_DEBUG(...)		if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::debug))		glog::dummy(); else glog( __VA_ARGS__ )(log::debug)
-#define	LOG_INFO(...)		if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::info))		glog::dummy(); else glog( __VA_ARGS__ )(log::info)
-#define	LOG_NOTICE(...)		if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::notice))		glog::dummy(); else glog( __VA_ARGS__ )(log::notice)
-#define	LOG_WARNING(...)	if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::warning))		glog::dummy(); else glog( __VA_ARGS__ )(log::warning)
-#define	LOG_ERROR(...)		if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::error))		glog::dummy(); else glog( __VA_ARGS__ )(log::error)
-#define	LOG_CRITICAL(...)	if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::critical))	glog::dummy(); else glog( __VA_ARGS__ )(log::critical)
-#define	LOG_ALERT(...)		if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::alert))		glog::dummy(); else glog( __VA_ARGS__ )(log::alert)
-#define	LOG_EMERGENCY(...)	if (!glog::get_logger_by_name( __VA_ARGS__ ).can_display(log::emergency))	glog::dummy(); else glog( __VA_ARGS__ )(log::emergency)
-
+#if 0
 	int example() {
-
 		glog	g;
 		g(log::debug).printfln("Debug log");
 
 		LOG_INFO().printf("Hello");
 		LOG_INFO("App.Server").printf("Hello");
 	}
-
-
+#endif//
 }
+
+#define	LOG_DEBUG(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::debug))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::debug)
+#define	LOG_INFO(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::info))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::info)
+#define	LOG_NOTICE(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::notice))	ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::notice)
+#define	LOG_WARNING(...)	if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::warning))	ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::warning)
+#define	LOG_ERROR(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::error))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::error)
+#define	LOG_CRITICAL(...)	if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::critical))	ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::critical)
+#define	LOG_ALERT(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::alert))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::alert)
+#define	LOG_EMERGENCY(...)	if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::emergency))	ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::emergency)
 
 #endif // ARA_LOG_H
 

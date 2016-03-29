@@ -7,14 +7,26 @@
 namespace ara {
 	namespace log {
 
+		class default_log_format
+		{
+		public:
+			static void output(const log_data & data, const logger & l, const char * lpTimeFormat, std::string & cache_str) {
+				cache_str.clear();
+				cache_str.reserve( data.data().length() + 64 );
+				strext(cache_str).printf("T:%v [%v] (%v) %v: %v", data.thread_id(), data.log_time().format(lpTimeFormat), l.get_name(), log_data::get_level_name(data.get_level()), data.data());
+			}
+		};
+
+		template<class format = default_log_format>
 		class appender_stdstream : public appender
 		{
 		public:
 			appender_stdstream(std::ostream  &	out) : out_(out) {}
 
 			virtual bool		onWrite(const log_data & data, const logger & l, std::string & cache_str) {
+				format::output(data, l, nullptr, cache_str);
 				std::lock_guard<std::mutex>		_guard(lock_);
-				out_ << "T:" << data.thread_id() << " [" << data.log_time().format() << "] (" <<  l.get_name() << ')' << log_data::get_level_name(data.get_level()) << ": " << data.data() << std::endl;
+				out_ << cache_str;
 				return true;
 			}
 

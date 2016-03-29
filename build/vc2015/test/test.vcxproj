@@ -24,6 +24,7 @@
     <ClCompile Include="..\..\..\test\test_flags.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />
+    <ClCompile Include="test_log.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48842B41-F404-4965-98CF-6B9B54B4EF76}</ProjectGuid>
