@@ -33,5 +33,8 @@
     <ClCompile Include="test_log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test_filesys.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

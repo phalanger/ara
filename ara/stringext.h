@@ -20,7 +20,8 @@ namespace ara {
 	public:
 		using typeOrgStr = std::remove_const_t<typeStr>;
 		using typeStrTraits = string_traits<typeOrgStr>;
-		using typeRefStr = ref_string_base<typename typeStrTraits::value_type, typename  typeStrTraits::traits_type>;
+		using value_type = typename typeStrTraits::value_type;
+		using typeRefStr = ref_string_base<value_type, typename  typeStrTraits::traits_type>;
 
 		string_ext(typeStr & s) : str_(s) {}
 		string_ext(const string_ext & s) : str_(s.str_) {}

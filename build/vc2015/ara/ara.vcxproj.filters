@@ -87,5 +87,8 @@
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h">
       <Filter>include\internal</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\filesys.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

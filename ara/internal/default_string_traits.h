@@ -46,6 +46,9 @@ namespace ara {
 		static void reserve(base_type & s, size_type n) {
 			s.reserve(n);
 		}
+		static bool empty(const base_type & s) {
+			return s.empty();
+		}
 
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {
 			return s.find(ch, off);
@@ -83,6 +86,9 @@ namespace ara {
 		}
 		static inline void append(base_type & s, value_type ch) {
 			s += ch;
+		}
+		static inline void append(base_type & s, const base_type & s2) {
+			s += s2;
 		}
 		static inline base_type make(const value_type * ch, size_type size) {
 			return base_type(ch, size);
