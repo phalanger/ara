@@ -8,13 +8,14 @@
 
 #include <string>
 
-#ifdef ARA_WIN32_VC_VER
+#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
 	#include <windows.h>
 	#include <sys/types.h>
 	#include <sys/stat.h>
 #else//ARA_WIN32_VC_VER
 	#include <sys/types.h>
 	#include <sys/stat.h>
+    #include <dirent.h>
 	#include <unistd.h>
 #endif//ARA_WIN32_VC_VER
 
@@ -113,7 +114,7 @@ namespace ara {
 			auto nSize = string_traits<typeStr>::size(sSub);
 			if (nSize == 0)
 				return	sPath;
-			string_traits<typeStr>::size_type off = 0;
+			typename string_traits<typeStr>::size_type off = 0;
 			auto p = string_traits<typeStr>::data(sSub);
 			for (; off < nSize; ++off, ++p)
 				if (!isPathSlashChar(*p))
@@ -175,7 +176,7 @@ namespace ara {
 			}
 		}
 
-#ifdef ARA_WIN32_VC_VER
+#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
 		
 		static time_t filetime_to_timet(const FILETIME& ft) {
 			ULARGE_INTEGER ull;
@@ -236,10 +237,9 @@ namespace ara {
 			attr.blocks = buf.st_blocks;
 			attr.blocksize = buf.st_blksize;
 			if (buf.st_mode & S_ISDIR)
-				attr.flags |= IS_DIR;
+				attr.flags |= file_attr::IS_DIR;
 			if (buf.st_mode & S_ISLNK)
-				attr.flags |= IS_LINK;
-
+				attr.flags |= file_attr::IS_LINK;
 			return true;
 		}
 
@@ -368,7 +368,7 @@ namespace ara {
 		}
 	};
 
-#ifdef ARA_WIN32_VC_VER
+#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
 	class dir_iterator
 	{
 	public:
@@ -447,7 +447,7 @@ namespace ara {
 		HANDLE hFind_ = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAA FindFileDataA_;
 	};
-#else//ARA_WIN32_VC_VER
+#else// !ARA_WIN32_VC_VER && !ARA_WIN32_MINGW_VER
 	class dir_iterator
 	{
 	public:

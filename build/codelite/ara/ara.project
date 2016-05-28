@@ -112,9 +112,14 @@
       <File Name="../../../ara/internal/log_base.h"/>
       <File Name="../../../ara/internal/log_context.h"/>
       <File Name="../../../ara/internal/thread_state.h"/>
+      <File Name="../../../ara/internal/log_appender_stdstream.h"/>
+      <File Name="../../../ara/internal/log_imp.h"/>
+      <File Name="../../../ara/internal/singleton_mgr.h"/>
     </VirtualDirectory>
     <File Name="../../../ara/threadext.h"/>
     <File Name="../../../ara/flags.h"/>
+    <File Name="../../../ara/filesys.h"/>
+    <File Name="../../../ara/singleton.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
