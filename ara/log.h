@@ -41,7 +41,6 @@ namespace ara {
 		}
 
 		static void dummy() {}
-
 	protected:
 		void		init_logger(const char * name) {
 			auto & context = thread_context::get()._get_log_context();
@@ -59,6 +58,21 @@ namespace ara {
 
 		log::logger	*		ori_logger_ = nullptr;
 	};
+
+	namespace log {
+		inline void register_appender(const log::appender_ptr & p) {
+			logger_mgr::get().get_root()->set_appender(p);
+		}
+		inline void register_appender(log::logger & logger, const log::appender_ptr & p) {
+			logger.set_appender(p);
+		}
+		inline void register_appender(const char * name, const log::appender_ptr & p) {
+			glog::get_logger_by_name(name).set_appender(p);
+		}
+		inline logger &		get_logger(const char * name = nullptr) {
+			return glog::get_logger_by_name(name);
+		}
+	}
 
 #if 0
 	int example() {

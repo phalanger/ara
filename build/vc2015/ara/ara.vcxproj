@@ -28,6 +28,7 @@
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
     <ClInclude Include="..\..\..\ara\internal\log_imp.h" />
+    <ClInclude Include="..\..\..\ara\internal\raw_file.h" />
     <ClInclude Include="..\..\..\ara\internal\singleton_mgr.h" />
     <ClInclude Include="..\..\..\ara\internal\standard_datetime.h" />
     <ClInclude Include="..\..\..\ara\internal\strformat.h" />

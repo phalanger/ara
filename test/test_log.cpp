@@ -12,8 +12,7 @@ BOOST_AUTO_TEST_CASE(log_base)
 {
 	std::stringstream	s;
 
-	auto root = ara::log::logger_mgr::get().get_root();
-	root->set_appender(std::make_shared<ara::log::appender_stdstream>(s));
+	ara::log::register_appender(std::make_shared<ara::log::appender_stdstream>(s));
 
 	ara::glog(ara::log::info).printfln("Hello %d", 123);
 
@@ -27,8 +26,8 @@ BOOST_AUTO_TEST_CASE(log_base_2)
 {
 	std::stringstream	s;
 
-	auto root = ara::log::logger_mgr::get().get_root();
-	root->set_appender(std::make_shared<ara::log::appender_stdstream>(s));
+	auto & root = ara::log::get_logger();
+	root.set_appender(std::make_shared<ara::log::appender_stdstream>(s));
 
 	LOG_INFO().printf("Hello %d", 124) << std::endl;
 
@@ -49,7 +48,7 @@ BOOST_AUTO_TEST_CASE(log_base_2)
 	strLog = s.str();
 	BOOST_REQUIRE_EQUAL(strLog.size(), pos);
 
-	root->set_level(ara::log::debug);
+	root.set_level(ara::log::debug);
 	LOG_DEBUG("App2.log").printfln("%u", 8735);
 	strLog = s.str();
 	BOOST_REQUIRE_EQUAL(strLog.find("T:", pos), pos);

@@ -90,5 +90,8 @@
     <ClInclude Include="..\..\..\ara\filesys.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\raw_file.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

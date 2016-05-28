@@ -30,10 +30,10 @@
     <ClCompile Include="..\..\..\test\test_flags.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_log.cpp">
+    <ClCompile Include="..\..\..\test\test_filesys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_filesys.cpp">
+    <ClCompile Include="..\..\..\test\test_log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

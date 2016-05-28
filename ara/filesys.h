@@ -5,10 +5,11 @@
 #include "ara_def.h"
 #include "stringext.h"
 #include "datetime.h"
+#include "internal/raw_file.h"
 
 #include <string>
 
-#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
+#if defined(ARA_WIN32_VER)
 	#include <windows.h>
 	#include <sys/types.h>
 	#include <sys/stat.h>
@@ -29,7 +30,7 @@ namespace ara {
 			IS_LINK = 0x02,
 			IS_SLINK = 0x04,
 			IS_COMPRESS = 0x08,
-			IS_ENC	= 0x10,
+			IS_ENC = 0x10,
 			IS_HIDDEN = 0x20,
 			IS_SYS = 0x40,
 			IS_READONLY = 0x80,
@@ -120,7 +121,7 @@ namespace ara {
 				if (!isPathSlashChar(*p))
 					break;
 
-			typeStr res = to_path( sPath );
+			typeStr res = to_path(sPath);
 			for (; off < nSize; ++off, ++p)
 				string_traits<typeStr>::append(res, *p);
 			return  res;
@@ -176,8 +177,8 @@ namespace ara {
 			}
 		}
 
-#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
-		
+#if defined(ARA_WIN32_VER)
+
 		static time_t filetime_to_timet(const FILETIME& ft) {
 			ULARGE_INTEGER ull;
 			ull.LowPart = ft.dwLowDateTime;
@@ -258,7 +259,7 @@ namespace ara {
 			class iterator
 			{
 			public:
-				iterator(const value_type * p, size_type n) : p_(p), end_(p + n), token_end_(p) {	fetch(); }
+				iterator(const value_type * p, size_type n) : p_(p), end_(p + n), token_end_(p) { fetch(); }
 				iterator() : p_(nullptr), end_(nullptr), token_end_(nullptr) {}
 				iterator(const iterator & i) : p_(i.p_), end_(i.end_), token_end_(i.token_end_) {}
 
@@ -299,7 +300,7 @@ namespace ara {
 						if (isPathSlashChar(*token_end_))
 							break;
 					return token_end_ != p_;
-				} 
+				}
 				const value_type *	p_;
 				const value_type *	end_;
 				const value_type *	token_end_;
@@ -308,7 +309,7 @@ namespace ara {
 			path_splitor(const typeStr & s) : s_(s) {}
 			path_splitor(typeStr && s) : s_(std::move(s)) {}
 			path_splitor(const path_splitor & s) : s_(s.s_) {}
-			path_splitor(path_splitor && s) : s_( std::move(s.s_) ) {}
+			path_splitor(path_splitor && s) : s_(std::move(s.s_)) {}
 
 			iterator	begin() const {
 				return iterator(string_traits<typeStr>::data(s_), string_traits<typeStr>::size(s_));
@@ -345,9 +346,10 @@ namespace ara {
 						vecItems.pop_back();
 					if (vecItems.empty())
 						needPrefix = true;
-				} else if (is_self_path(it))
+				}
+				else if (is_self_path(it))
 					continue;
-				else 
+				else
 					vecItems.push_back(it);
 			}
 			char ch = detect_path_slash(path);
@@ -368,14 +370,14 @@ namespace ara {
 		}
 	};
 
-#if defined(ARA_WIN32_VC_VER) || defined(ARA_WIN32_MINGW_VER)
+#if defined(ARA_WIN32_VER)
 	class dir_iterator
 	{
 	public:
 		dir_iterator() {}
 		dir_iterator(const std::string & strPath, const std::string & strFilter = "") {
-			std::string str = file_sys::join_to_file(strPath, strFilter.empty() ? std::string("*.*") : strFilter );
-			hFind_ = ::FindFirstFileA( str.c_str(), &FindFileDataA_);
+			std::string str = file_sys::join_to_file(strPath, strFilter.empty() ? std::string("*.*") : strFilter);
+			hFind_ = ::FindFirstFileA(str.c_str(), &FindFileDataA_);
 		}
 
 		dir_iterator(dir_iterator && r) {
@@ -473,7 +475,7 @@ namespace ara {
 			if (dir_ != nullptr)
 				::closedir(dir_);
 			char * p = reinterpret_cast<char *>(entry_);
-			delete []p;
+			delete[]p;
 		}
 
 		bool operator==(const dir_iterator &) const {
@@ -544,6 +546,36 @@ namespace ara {
 		std::string filter_;
 	};
 
+	class raw_file;
+
+	class raw_file : protected internal::raw_file_imp
+	{
+	public:
+		typedef internal::raw_file_imp::file_handle	file_handle;
+
+		file_handle		get_handle() const {
+			return fd_;
+		}
+
+		raw_file() {}
+
+		internal::open_flag<std::string>		open(const std::string & strName) {
+			return internal::open_flag<std::string>(*this, strName);
+		}
+		internal::open_flag<std::wstring>		open(const std::wstring & strName) {
+			return internal::open_flag<std::wstring>(*this, strName);
+		}
+		bool	open(const std::string & strName, int nFlags) {
+			return open_imp(strName, nFlags);
+		}
+		bool	open(const std::wstring & strName, int nFlags) {
+			return open_imp(strName, nFlags);
+		}
+		bool	is_opened() const {
+			return is_opened_imp();
+		}
+
+	};
 }
 
 #endif//ARA_FILESYS_H
