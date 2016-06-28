@@ -18,9 +18,11 @@ namespace ara {
 		class open_flag
 		{
 		public:
-			open_flag(raw_file_imp & f, const typeStr & strFileName) : f_(f), name_(strFileName), flags_(0) {}
+			open_flag(raw_file_imp & f, const typeStr & strFileName) : f_(f), name_(strFileName) {}
 			
 			bool	done();
+
+			open_flag &	mod(int nMod) { mod_ = nMod; return *this; }
 
 #define DECLEAR_FLAG(name, val)		open_flag &	name() { flags_ |= val; return *this; }
 			DECLEAR_FLAG(read_only, O_RDONLY)
@@ -40,6 +42,7 @@ namespace ara {
 			raw_file_imp &	f_;
 			typeStr			name_;
 			int				flags_ = 0;
+			int				mod_ = -1;
 		};
 
 		class raw_file_imp
@@ -71,10 +74,72 @@ namespace ara {
 #endif
 			}
 
-			bool		open_imp(const std::string & strName, int nFlags);
-			bool		open_imp(const std::wstring & strName, int nFlags);
-			off_t		seek_imp(off_t, std::ios::seek_dir from);
-			off_t		tell_imp();
+			template<class typeString>
+			bool		open_imp(const typeString & strName, int nFlags, int mod) {
+				close_imp();
+#if defined(ARA_WIN32_VER)
+				DWORD dwDesiredAccess = 0, dwShareMode = 0, dwCreationDisposition = 0, dwFlagsAndAttributes = 0;
+				if (nFlags & O_WRONLY)
+					dwDesiredAccess = GENERIC_WRITE;
+				else if (nFlags & O_RDWR)
+					dwDesiredAccess = GENERIC_WRITE | GENERIC_READ;
+				else
+					dwDesiredAccess = GENERIC_READ;
+
+				dwShareMode = FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE;
+
+				if (nFlags & O_CREAT) {
+					if (nFlags & O_TRUNC)
+						dwCreationDisposition = CREATE_ALWAYS;
+					else if (nFlags & O_EXCL)
+						dwCreationDisposition = CREATE_NEW;
+					else
+						dwCreationDisposition = OPEN_ALWAYS;
+				} else {
+					if (nFlags & O_TRUNC)
+						dwCreationDisposition = TRUNCATE_EXISTING;
+					else
+						dwCreationDisposition = OPEN_EXISTING;
+				}
+				
+				if (nFlags & O_TEMPORARY)
+					dwFlagsAndAttributes = FILE_ATTRIBUTE_TEMPORARY;
+				else
+					dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
+				if (nFlags & O_RANDOM)
+					dwFlagsAndAttributes |= FILE_FLAG_RANDOM_ACCESS;
+				if (mod != -1)
+					dwFlagsAndAttributes |= static_cast<DWORD>(mod);
+
+				fd_ = _open_imp(strName, dwDesiredAccess, dwShareMode, NULL, dwCreationDisposition, dwFlagsAndAttributes, NULL);
+				if (fd_ == INVALID_HANDLE_VALUE)
+					return false;
+				if (nFlags & O_APPEND)
+					::SetFilePointerEx(fd_, 0, 0, FILE_END);
+				return true;
+#else
+				if (mod == -1)
+					mod = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+				fd_ = _open_imp(strName, nFlags, mod);
+				return fd_ >= 0;
+#endif
+			}
+
+			off_t		seek_imp(off_t n, std::ios::seek_dir from) {
+				if (!is_opened_imp())
+					return off_t(-1);
+#if defined(ARA_WIN32_VER)
+				LARGE_INTEGER	off = {};
+				LARGE_INTEGER	NewFilePointer = {};
+				off.QuadPart = static_cast<LONGLONG>(n);
+				if (!::SetFilePointerEx(fd_, off, &NewFilePointer, from == std::ios::beg ? FILE_BEGIN : (from == std::ios::cur ? FILE_CURRENT : FILE_END)))
+					return off_t(-1);
+				return static_cast<off_t>(NewFilePointer.QuadPart);
+#else
+				return ::lseek(fd_, n, from == std::ios::beg ? SEEK_SET : (from == std::ios::cur ? SEEK_CUR : SEEK_END));
+#endif
+			}
+
 			int			read_imp(void * buf, size_t n);
 			int			write_imp(const void * buf, size_t n);
 			off_t		truncat_imp(size_t nNewSize);
@@ -82,14 +147,26 @@ namespace ara {
 		protected:
 #if defined(ARA_WIN32_VER)
 			HANDLE		fd_ = INVALID_HANDLE_VALUE;
+			static HANDLE		_open_imp(const std::string & strName, DWORD d1, DWORD d2, DWORD d3, DWORD d4) {
+				return ::CreateFileA(strName.c_str(), d1, d2, NULL, d3, d4, NULL);
+			}
+			static HANDLE		_open_imp(const std::wstring & strName, DWORD d1, DWORD d2, DWORD d3, DWORD d4) {
+				return ::CreateFileW(strName.c_str(), d1, d2, NULL, d3, d4, NULL);
+		}
 #else
 			int			fd_ = -1;
+			static int		open_imp(const std::string & strName, int a, int n) {
+				return ::open(strName.c_str(), a, n);
+			}
+			static int		open_imp(const std::string & strName, int a, int n) {
+				return ::wopen(strName.c_str(), a, n);
+			}
 #endif
 		};
 
 		template<typename typeStr>
 		inline bool open_flag<typeStr>::done() {
-			return f_.open_imp(name_, flags_);
+			return f_.open_imp(name_, flags_, mod_);
 		}
 
 	}//internal
