@@ -111,11 +111,11 @@ namespace ara {
 				if (mod != -1)
 					dwFlagsAndAttributes |= static_cast<DWORD>(mod);
 
-				fd_ = _open_imp(strName, dwDesiredAccess, dwShareMode, NULL, dwCreationDisposition, dwFlagsAndAttributes, NULL);
+				fd_ = _open_imp(strName, dwDesiredAccess, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes);
 				if (fd_ == INVALID_HANDLE_VALUE)
 					return false;
 				if (nFlags & O_APPEND)
-					::SetFilePointerEx(fd_, 0, 0, FILE_END);
+					::SetFilePointerEx(fd_, LARGE_INTEGER{0}, 0, FILE_END);
 				return true;
 #else
 				if (mod == -1)
@@ -140,9 +140,43 @@ namespace ara {
 #endif
 			}
 
-			int			read_imp(void * buf, size_t n);
-			int			write_imp(const void * buf, size_t n);
-			off_t		truncat_imp(size_t nNewSize);
+			int			read_imp(void * buf, size_t n) {
+				if (!is_opened_imp())
+					return -1;
+#if defined(ARA_WIN32_VER)
+				DWORD dwRead = 0;
+				if (!::ReadFile(fd_, buf, n, &dwRead, NULL))
+					return -1;
+				return static_cast<int>(dwRead);
+#else
+				return ::read(fd_, buf, n);
+#endif
+			}
+			int			write_imp(const void * buf, size_t n) {
+				if (!is_opened_imp())
+					return -1;
+#if defined(ARA_WIN32_VER)
+				DWORD dwWrite = 0;
+				if (!::WriteFile(fd_, buf, n, &dwWrite, NULL))
+					return -1;
+				return static_cast<int>(dwWrite);
+#else
+				return ::write(fd_, buf, n);
+#endif
+			}
+			bool		truncat_imp(uint64_t nNewSize) {
+				if (!is_opened_imp())
+					return false;
+#if defined(ARA_WIN32_VER)
+				LARGE_INTEGER	off = { 0 };
+				off.QuadPart = static_cast<decltype(off.QuadPart)>(nNewSize);
+				if (!::SetFilePointerEx(fd_, off, 0, FILE_BEGIN))
+					return false;
+				return true;
+#else
+				return ::ftruncate(fd_, static_cast<off_t>(nNewSize)) == 0;
+#endif
+			}
 
 		protected:
 #if defined(ARA_WIN32_VER)

@@ -35,3 +35,5 @@ Debug
 *.sdf
 *.vcxproj.user
 .vs
+*.db
+*.opendb

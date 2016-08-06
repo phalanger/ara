@@ -53,6 +53,35 @@ BOOST_AUTO_TEST_CASE(filesys_base)
 	BOOST_REQUIRE(ara::file_sys::fix_path(std::wstring(L"//abcd//../../def/../../hij/")) == L"/hij/");
 }
 
+BOOST_AUTO_TEST_CASE(filesys_stat)
+{
+#ifdef ARA_WIN32_VER
+	ara::file_adv_attr	attr;
+	if (ara::file_sys::get_file_attr("C:\\Windows", attr)) {
+		BOOST_REQUIRE(attr.is_dir());
+	}
+#endif
+}
+
+BOOST_AUTO_TEST_CASE(filesys_pathsplitor)
+{
+	std::wstring	wstrPath = L"C:\\Windows\\abc\\def";
+	size_t i = 0;
+	for (auto it : ara::file_sys::split_path(wstrPath)) {
+
+		if (i == 0)
+			BOOST_REQUIRE(it == L"C:");
+		else if (i == 1)
+			BOOST_REQUIRE(it == L"Windows");
+		else if (i == 2)
+			BOOST_REQUIRE(it == L"abc");
+		else if (i == 3)
+			BOOST_REQUIRE(it == L"def");
+
+		++i;
+	}
+}
+
 BOOST_AUTO_TEST_CASE(filesys_scandir)
 {
 	std::vector<std::string>		vectPathName;

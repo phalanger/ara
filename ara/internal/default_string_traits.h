@@ -10,7 +10,7 @@ namespace ara {
 	class string_traits
 	{
 	public:
-		typedef T	base_type;
+		typedef typename std::remove_reference<T>::type	base_type;
 		typedef typename base_type::value_type	value_type;
 		typedef typename base_type::size_type	size_type;
 		typedef typename base_type::traits_type	traits_type;

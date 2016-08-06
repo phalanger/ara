@@ -44,6 +44,14 @@
 		
 	}); 
 
+	// Or
+
+	// Destroy thread context self
+	std::thread t([](){
+		//Do something
+		ara::thread_context::destroy_context();
+	});
+
 */
 
 namespace ara {

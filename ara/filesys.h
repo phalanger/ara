@@ -16,9 +16,42 @@
 #else//ARA_WIN32_VC_VER
 	#include <sys/types.h>
 	#include <sys/stat.h>
-    #include <dirent.h>
+	#include <dirent.h>
 	#include <unistd.h>
 #endif//ARA_WIN32_VC_VER
+
+/*
+	//handle path
+	ara::file_sys::to_path(std::string("C:\\abcd"))								--> "C:\\abcd\\"
+	ara::file_sys::join_to_path(std::string("C:\\abcd"), std::string("def"))	--> "C:\\abcd\\def\\"
+	ara::file_sys::join_to_file(std::string("C:\\abcd"), std::string("def"))	--> "C:\\abcd\\def"
+	ara::file_sys::fix_path(std::string("C:\\\\abcd\\..\\.\\def\\..\\hij\\"))	--> "C:\\hij\\"
+	ara::file_sys::fix_path(std::wstring(L"//abcd/.././def/../hij/"))			--> L"/hij/"
+
+	//file stat
+	ara::file_adv_attr	attr;
+	if (ara::file_sys::get_file_attr("C:\\123", attr)) {
+		if (attr.is_dir()) {
+			//Output
+		}
+	}
+
+	//split path
+	std::wstring	wstrPath = L"C:\\Windows\\abc\\def";
+	for (auto it : ara::file_sys::split_path(wstrPath)) {
+		std::cout << "SubItem:" << it << std::endl;
+		// C:
+		// Windows
+		// abc
+		// def
+	}
+
+	//scan dir
+	for (auto it : ara::scan_dir("C:\\")) {
+		std::cout << "File Name:" << it << std::endl;		
+	}
+
+*/
 
 namespace ara {
 
@@ -35,12 +68,21 @@ namespace ara {
 			IS_SYS = 0x40,
 			IS_READONLY = 0x80,
 		};
-		int				flags;
+		int				flags = 0;
 		date_time		create_time;
 		date_time		modify_time;
 		date_time		access_time;
 		uint64_t		size = 0;
 		unsigned short	mode = 0;
+
+		bool	is_dir() const { return (flags & IS_DIR) != 0; }
+		bool	is_link() const { return (flags & IS_LINK) != 0; }
+		bool	is_soft_link() const { return (flags & IS_SLINK) != 0; }
+		bool	is_compressed() const { return (flags & IS_COMPRESS) != 0; }
+		bool	is_encrypted() const { return (flags & IS_ENC) != 0; }
+		bool	is_hidden() const { return (flags & IS_HIDDEN) != 0; }
+		bool	is_sys() const { return (flags & IS_SYS) != 0; }
+		bool	is_readonly() const { return (flags & IS_READONLY) != 0; }
 	};
 
 	class file_adv_attr : public file_attr
@@ -200,7 +242,7 @@ namespace ara {
 			attr.nlink = buf.st_nlink;
 			attr.blocks = 0;
 			attr.blocksize = 0;
-			attr.flags = 0;
+			attr.flags = buf.st_mode;
 		}
 
 		static bool		get_file_attr(const std::string & sFile, file_adv_attr & attr) {
@@ -323,6 +365,11 @@ namespace ara {
 
 		template<class typeStr>
 		static path_splitor<typeStr>	split_path(const typeStr & s) {
+			return path_splitor<typeStr>(s);
+		}
+
+		template<class typeStr>
+		static path_splitor<typeStr>	split_path(typeStr & s) {
 			return path_splitor<typeStr>(s);
 		}
 
@@ -565,16 +612,30 @@ namespace ara {
 		internal::open_flag<std::wstring>		open(const std::wstring & strName) {
 			return internal::open_flag<std::wstring>(*this, strName);
 		}
-		bool	open(const std::string & strName, int nFlags) {
-			return open_imp(strName, nFlags);
+		bool	open(const std::string & strName, int nFlags, int mod = -1) {
+			return open_imp(strName, nFlags, mod);
 		}
-		bool	open(const std::wstring & strName, int nFlags) {
-			return open_imp(strName, nFlags);
+		bool	open(const std::wstring & strName, int nFlags, int mod = -1) {
+			return open_imp(strName, nFlags, mod);
 		}
 		bool	is_opened() const {
 			return is_opened_imp();
 		}
-
+		int		read(void * buf, size_t n) {
+			return read_imp(buf, n);
+		}
+		int		write(const void * buf, size_t n) {
+			return write_imp(buf, n);
+		}
+		bool	truncat(uint64_t n) {
+			return truncat_imp(n);
+		}
+		off_t	seek(off_t n, std::ios::seek_dir from) {
+			return seek_imp(n, from);
+		}
+		off_t	tell() {
+			return seek_imp(0, std::ios::cur);
+		}
 	};
 }
 
