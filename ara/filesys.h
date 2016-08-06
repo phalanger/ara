@@ -415,7 +415,23 @@ namespace ara {
 				string_traits<typeStr>::append(res, ch);
 			return res;
 		}
-	};
+
+		static bool	unlink(const std::string & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::DeleteFileA(strFile.c_str()) == TRUE;
+#else
+			return ::unlink(strFile.c_str()) == 0;
+#endif
+		}
+		static bool	unlink(const std::wstring & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::DeleteFileW(strFile.c_str()) == TRUE;
+#else
+			return ::unlink(strext(strFile).to<std::string>().c_str()) == 0;
+#endif
+		}
+
+	};//file sys
 
 #if defined(ARA_WIN32_VER)
 	class dir_iterator

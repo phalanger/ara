@@ -23,6 +23,7 @@
     <ClInclude Include="..\..\..\ara\async_queue.h" />
     <ClInclude Include="..\..\..\ara\datetime.h" />
     <ClInclude Include="..\..\..\ara\dlist.h" />
+    <ClInclude Include="..\..\..\ara\error.h" />
     <ClInclude Include="..\..\..\ara\filesys.h" />
     <ClInclude Include="..\..\..\ara\flags.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />

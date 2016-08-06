@@ -4,9 +4,9 @@
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WINDOWS) || defined(WIN32)
 	#define ARA_WIN32_VER
-    #ifdef _WIN64
-        #define ARA_WIN64_VER
-    #endif
+	#ifdef _WIN64
+		#define ARA_WIN64_VER
+	#endif
 
 	#ifdef _MSC_VER
 		#if (_MSC_VER >= 1900)

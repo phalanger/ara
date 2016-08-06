@@ -1,7 +1,9 @@
 
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
+
 #include "ara/filesys.h"
+#include "ara/error.h"
 
 #include <iostream>
 
@@ -94,6 +96,35 @@ BOOST_AUTO_TEST_CASE(filesys_scandir)
 		vectPathName.push_back(it);
 	}
 	BOOST_REQUIRE_NE(vectPathName.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(filesys_rawfile)
+{
+	ara::raw_file	rf;
+#ifdef ARA_WIN32_VER
+	std::string strFile = "D:\\test.txt";
+#else
+	std::string strFile = "/tm/123.txt";
+#endif
+
+	ara::file_sys::unlink(strFile);
+
+	if (!rf.open(strFile).create().random().read_write().done())
+	{
+		std::cout << "Error:" << ara::error::info() << std::endl;
+		BOOST_ASSERT(false);
+	}
+	BOOST_REQUIRE_EQUAL(rf.write("Hello", 5), 5);
+	BOOST_REQUIRE_EQUAL(rf.tell(), 5);
+	BOOST_REQUIRE_EQUAL(rf.seek(2, std::ios::beg), 2);
+
+	char buf[10];
+	BOOST_REQUIRE_EQUAL(rf.read(buf, 3), 3);
+	BOOST_REQUIRE_EQUAL(buf[0], 'l');
+	BOOST_REQUIRE_EQUAL(buf[1], 'l');
+	BOOST_REQUIRE_EQUAL(buf[2], 'o');
+
+	ara::file_sys::unlink(strFile);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

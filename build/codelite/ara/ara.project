@@ -120,6 +120,7 @@
     <File Name="../../../ara/flags.h"/>
     <File Name="../../../ara/filesys.h"/>
     <File Name="../../../ara/singleton.h"/>
+    <File Name="../../../ara/error.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
