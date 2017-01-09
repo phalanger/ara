@@ -35,7 +35,6 @@
 			#define ARA_WIN32_VS6_VER
 		#endif
 		#define ARA_WIN32_VC_VER
-		#include <vld.h>
 	#elif defined( __BCPLUSPLUS__ )
 		#define ARA_WIN32_BCB_VER
 	#endif	//_MSC_VER , __BCPLUSPLUS__

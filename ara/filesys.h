@@ -621,6 +621,9 @@ namespace ara {
 		}
 
 		raw_file() {}
+		~raw_file() {
+			internal::raw_file_imp::close_imp();
+		}
 
 		internal::open_flag<std::string>		open(const std::string & strName) {
 			return internal::open_flag<std::string>(*this, strName);

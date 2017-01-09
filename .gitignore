@@ -31,6 +31,11 @@
 Debug
 /build/codelite/test/*.mk
 /build/codelite/test/*.txt
+/build/vc2015/Debug
+/build/vc2015/Release
+/build/vc2015/x64
+/build/vc2015/ara/x64
+/build/vc2015/test/x64
 *.opensdf
 *.sdf
 *.vcxproj.user
