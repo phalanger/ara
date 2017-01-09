@@ -60,7 +60,7 @@ namespace ara { namespace internal {
 		}
 
 		static void		make_key() {
-            T::_global_init();
+			T::_global_init();
 			pthread_key_create(&key, nullptr);
 			std::atexit(at_main_exit);
 		}

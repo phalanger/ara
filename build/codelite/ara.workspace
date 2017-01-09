@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Workspace Name="ara" Database="">
+<CodeLite_Workspace Name="ara" Database="" Version="10.0.0">
   <Project Name="ara" Path="ara/ara.project" Active="No"/>
   <Project Name="test" Path="test/test.project" Active="Yes"/>
   <BuildMatrix>

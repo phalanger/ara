@@ -96,5 +96,8 @@
     <ClInclude Include="..\..\..\ara\error.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\utf8_core.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

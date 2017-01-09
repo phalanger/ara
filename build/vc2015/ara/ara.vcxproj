@@ -37,6 +37,7 @@
     <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\thread_state.h" />
     <ClInclude Include="..\..\..\ara\internal\tls_imp.h" />
+    <ClInclude Include="..\..\..\ara\internal\utf8_core.h" />
     <ClInclude Include="..\..\..\ara\log.h" />
     <ClInclude Include="..\..\..\ara\promise.h" />
     <ClInclude Include="..\..\..\ara\ref_string.h" />

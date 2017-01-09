@@ -145,7 +145,7 @@ namespace ara {
 					return -1;
 #if defined(ARA_WIN32_VER)
 				DWORD dwRead = 0;
-				if (!::ReadFile(fd_, buf, n, &dwRead, NULL))
+				if (!::ReadFile(fd_, buf, static_cast<DWORD>(n), &dwRead, NULL))
 					return -1;
 				return static_cast<int>(dwRead);
 #else
@@ -157,7 +157,7 @@ namespace ara {
 					return -1;
 #if defined(ARA_WIN32_VER)
 				DWORD dwWrite = 0;
-				if (!::WriteFile(fd_, buf, n, &dwWrite, NULL))
+				if (!::WriteFile(fd_, buf, static_cast<DWORD>(n), &dwWrite, NULL))
 					return -1;
 				return static_cast<int>(dwWrite);
 #else

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="test" InternalType="Console">
+<CodeLite_Project Name="test" InternalType="Console" Version="10.0.0">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00010001N0005Debug000000000000]]>
@@ -27,6 +27,7 @@
     <File Name="../../../test/test_flags.cpp"/>
     <File Name="../../../test/test_filesys.cpp"/>
     <File Name="../../../test/test_log.cpp"/>
+    <File Name="../../../test/test_utf8.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

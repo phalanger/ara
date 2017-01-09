@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="ara" InternalType="Library">
+<CodeLite_Project Name="ara" InternalType="Library" Version="10.0.0">
   <Description/>
   <Dependencies/>
   <Settings Type="Static Library">
@@ -115,6 +115,7 @@
       <File Name="../../../ara/internal/log_appender_stdstream.h"/>
       <File Name="../../../ara/internal/log_imp.h"/>
       <File Name="../../../ara/internal/singleton_mgr.h"/>
+      <File Name="../../../ara/internal/utf8_core.h"/>
     </VirtualDirectory>
     <File Name="../../../ara/threadext.h"/>
     <File Name="../../../ara/flags.h"/>

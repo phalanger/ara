@@ -26,8 +26,8 @@ namespace ara {
 		string_ext(typeStr & s) : str_(s) {}
 		string_ext(const string_ext & s) : str_(s.str_) {}
 
- 		auto begin() { return typeStrTraits::begin(str_); }
- 		auto end() { return typeStrTraits::end(str_); }
+		auto begin() { return typeStrTraits::begin(str_); }
+		auto end() { return typeStrTraits::end(str_); }
 		typename typeStrTraits::const_iterator begin() const { return typeStrTraits::begin(str_); }
 		typename typeStrTraits::const_iterator end() const { return typeStrTraits::end(str_); }
 
@@ -156,7 +156,7 @@ namespace ara {
 	inline string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
 	}
-    
+	
 	template<class typeStr>
 	inline string_ext<const typeStr>	strext(const typeStr & s) {
 		return string_ext<const typeStr>(s);
