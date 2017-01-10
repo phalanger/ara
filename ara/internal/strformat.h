@@ -7,6 +7,7 @@
 
 #include <string>
 #include <type_traits>
+#include <cctype>
 
 namespace ara {
 	namespace format {
