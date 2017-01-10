@@ -28,6 +28,7 @@
     <File Name="../../../test/test_filesys.cpp"/>
     <File Name="../../../test/test_log.cpp"/>
     <File Name="../../../test/test_utf8.cpp"/>
+    <File Name="../../../test/test_dlist.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

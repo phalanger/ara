@@ -5,6 +5,38 @@
 #include "ref_string.h"
 #include "internal/standard_datetime.h"
 
+///	date_time
+///		Normal usage:
+///			ara::date_time	now = ara::date_time::get_current();
+///			ara::date_time	that_day(2011,3,28,10,30,00);
+///			ara::date_time	day1 = "2016-02-21 11:23:45"_date;
+///			ara::date_time	day2(time(NULL));
+///			ara::date_time	day3( std::chrono::system_clock::now() );
+///			ara::date_time	day4( "2016 02 21 11 23 45", "%Y %m %d %H %M %S" );
+///		Extention:
+///			define self storage
+///			class DateTimeWithMSTraits
+///			{
+///			public:
+///				static inline void	set_time(uint64_t & tar, time_t src) {
+///					tar = (src * 1000) | (tar % 1000);
+///				}
+///				static inline time_t get_time(uint64_t src) {
+///					return src / 1000;
+///				}
+///			};
+///			class date_time_ms : public ara::internal::date_time_imp< uint64_t, DateTimeWithMSTraits >
+///
+///	timer_val
+///		usage:
+///			ara::timer_val t1 = ara::timer_val::current_time();
+///			ara::timer_val t2(3, 1000);
+///			const auto ms1 = 1000_ms;
+///			const auto ms2 = 1_sec;
+///			auto ms3 = 1_sec + 20_ms;
+
+
+
 struct timeval;
 
 namespace ara {
@@ -93,6 +125,11 @@ namespace ara {
 			}
 			explicit date_time_imp(const char * lpDate, const char * format = nullptr) : time_(0) {
 				parse(lpDate, format);
+			}
+
+			template <class _Clock, class _Duration>
+			explicit date_time_imp(const std::chrono::time_point<_Clock, _Duration>& __atime) : time_(0) {
+				set(__atime);
 			}
 
 			static date_time_imp	get_current() {
@@ -199,6 +236,7 @@ namespace ara {
 			const date_time_imp&  set(int year, int month, int day,
 				int hour, int minute, int second, int isdst = 0) {
 				traits::set_time(time_, standard_time_op::mktime(year, month, day, hour, minute, second, isdst));
+				return *this;
 			}
 
 			//! Sets the value of this TDateTime object to the specified date-only value.
@@ -318,6 +356,9 @@ namespace ara {
 			void serialize(Archive & ar, const unsigned int) {
 				ar & time_;
 			}
+		protected:
+			T		get_raw() const { return time_; }
+			T	&	get_raw() { return time_; }
 		private:
 			T				time_;
 		}; //class TDateTime

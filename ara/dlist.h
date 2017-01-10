@@ -6,6 +6,20 @@
 
 #include <functional>
 
+///		double link list template
+///		example:
+///			class MyData : public ara::dlist<MyData>
+///			{
+///			public:
+///				MyData(int n = 0) : data_(n) {}
+///				int	data_;
+///			};
+///			MyData		root;
+///			root.as_root();
+///			
+///			MyData		node1(1);
+///			node1.append_after(root);	//root ->  node1
+
 namespace ara {
 
 	template<typename T>
