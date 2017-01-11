@@ -217,7 +217,7 @@ namespace ara {
 				string_convert::append(str_, p, nSize);
 			}
 
-			template<typename T2, int base = 10, bool boLowCase = false>
+			template<typename T2, int base = 10, bool boLowCase = false, typename std::enable_if<std::is_signed<T2>::value>::type>
 			void	append_int(T2 t) {
 
 				static const char * Number_Low = "0123456789abcdef";
@@ -229,7 +229,7 @@ namespace ara {
 					typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
 					return;
 				}
-				else if (std::is_signed<T2>::value && t < 0) {
+				else if (t < 0) {
 					boNegative = true;
 					t = -t;
 				}
@@ -244,6 +244,28 @@ namespace ara {
 				if (boNegative)
 					*(--p) = static_cast<typeCh>('-');
 				typeStrTraits::append(str_, p, buf + bufsize - p);
+			}
+
+			template<typename T2, int base = 10, bool boLowCase = false>
+			void	append_int(T2 t) {
+
+					static const char * Number_Low = "0123456789abcdef";
+					static const char * Number_Up = "0123456789ABCDEF";
+					const char * Number = boLowCase ? Number_Low : Number_Up;
+
+					if (t == 0) {
+						typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
+						return;
+					}
+
+					const	size_t	bufsize = 72;
+					typeCh	buf[bufsize];
+					typeCh * p = buf + bufsize;
+					while (t) {
+						*(--p) = static_cast<typeCh>(Number[t % static_cast<T2>(base)]);
+						t /= static_cast<T2>(base);
+					}
+					typeStrTraits::append(str_, p, buf + bufsize - p);
 			}
 
 			template<class T2>

@@ -260,44 +260,6 @@ namespace ara {
 			return *(reinterpret_cast<const T *>(this));
 		}
 
-		class reverse_range_helper
-		{
-		public:
-			reverse_range_helper(dlist * p) : p_(p) {}
-			reverse_range_helper(const reverse_range_helper & rhs) : p_(rhs.p_) {}
-
-			backward_iterator	begin() {
-				return p_->rbegin();
-			}
-			backward_iterator	end() {
-				return p_->rend();
-			}
-		protected:
-			dlist	* p_ = nullptr;
-		};
-		class const_reverse_range_helper
-		{
-		public:
-			const_reverse_range_helper(const dlist * p) : p_(p) {}
-			const_reverse_range_helper(const const_reverse_range_helper & rhs) : p_(rhs.p_) {}
-
-			const_backward_iterator	begin() const {
-				return p_->crbegin();
-			}
-			const_backward_iterator	end() const {
-				return p_->crend();
-			}
-		protected:
-			const dlist	* p_ = nullptr;
-		};
-
-		reverse_range_helper	reverse_range() {
-			return reverse_range_helper(this);
-		}
-		const_reverse_range_helper	reverse_range() const {
-			return const_reverse_range_helper(this);
-		}
-
 	protected:
 		T * next_ = nullptr;
 		T * pre_ = nullptr;

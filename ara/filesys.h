@@ -438,6 +438,21 @@ namespace ara {
 #endif
 		}
 
+		static bool path_exist(const std::string & strFile) {
+#ifdef ARA_WIN32_VER
+			return (::GetFileAttributesA(strFile.c_str()) != INVALID_FILE_ATTRIBUTES);
+#else
+			return (access(strFile.c_str(), F_OK) == 0);
+#endif
+		}
+		static bool path_exist(const std::wstring & strFile) {
+#ifdef ARA_WIN32_VER
+			return (::GetFileAttributesW(strFile.c_str()) != INVALID_FILE_ATTRIBUTES);
+#else
+			return (access(strext(strFile).to<>(std::string).c_str(), F_OK) == 0);
+#endif
+		}
+
 	};//file sys
 
 #if defined(ARA_WIN32_VER)

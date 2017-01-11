@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\..\ara\error.h" />
     <ClInclude Include="..\..\..\ara\filesys.h" />
     <ClInclude Include="..\..\..\ara\flags.h" />
+    <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
     <ClInclude Include="..\..\..\ara\internal\log_imp.h" />
@@ -48,6 +49,7 @@
     <ClInclude Include="..\..\..\ara\stringext.h" />
     <ClInclude Include="..\..\..\ara\threadext.h" />
     <ClInclude Include="..\..\..\ara\utf8.h" />
+    <ClInclude Include="..\..\..\ara\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{504157E6-AF5A-42D8-9740-1B8EEA49C037}</ProjectGuid>

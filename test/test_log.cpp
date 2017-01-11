@@ -2,7 +2,6 @@
 #include "3rd/Catch/single_include/catch.hpp"
 
 #include "ara/log.h"
-#include "ara/internal/log_appender_stdstream.h"
 
 #include <sstream>
 
@@ -51,5 +50,40 @@ TEST_CASE("log", "[base]") {
 		LOG_DEBUG("App2.log").printfln("%u", 8735);
 		strLog = s.str();
 		REQUIRE(strLog.find("T:", pos) == pos);
+	}
+}
+
+TEST_CASE("log to file", "[base]") {
+
+#ifdef ARA_WIN32_VER
+	std::string strFile = "D:\\a.log";
+#else
+	std::string strFile = "/tmp/a.log";
+#endif
+
+	SECTION("rolling file") {
+
+		auto & root = ara::log::get_logger();
+		root.set_appender(std::make_shared<ara::log::appender_rollingfile>(strFile));
+
+		LOG_INFO().printfln("Hello %d", 124);
+
+		std::string strFileWithDate = strFile + ara::date_time::get_current().format(".%Y-%m-%d");
+#ifndef ARA_WIN32_VER
+		REQUIRE(ara::file_sys::path_exist(strFile));
+#endif
+		REQUIRE(ara::file_sys::path_exist(strFileWithDate));
+	}
+	return;
+
+	std::string sPath, sFile;
+	ara::file_sys::split_path(strFile, sPath, sFile);
+	std::vector<std::string>		vectPathName;
+	for (auto it : ara::scan_dir(sPath)) {
+		if (it.find(sFile) == 0)
+			vectPathName.push_back(it);
+	}
+	for (auto n : vectPathName) {
+		ara::file_sys::unlink(ara::file_sys::join_to_file(sPath, n));
 	}
 }

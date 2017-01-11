@@ -662,4 +662,16 @@ inline ara::timer_val operator "" _sec(unsigned long long n) {
 	return ara::timer_val::make_by_sec(n);
 }
 
+inline ara::timer_val operator "" _minute(unsigned long long n) {
+	return ara::timer_val::make_by_sec(n * ara::date_time::get_seconds_per_minute());
+}
+
+inline ara::timer_val operator "" _hour(unsigned long long n) {
+	return ara::timer_val::make_by_sec(n * ara::date_time::get_seconds_per_hour());
+}
+
+inline ara::timer_val operator "" _day(unsigned long long n) {
+	return ara::timer_val::make_by_sec(n * ara::date_time::get_seconds_per_day());
+}
+
 #endif //ARA_DATETIME_H

@@ -312,6 +312,20 @@ namespace ara {
 			log::level		level_ = log::info;
 			logger	*		logger_ = nullptr;
 		};
+
+		class default_log_format
+		{
+		public:
+			static inline void output(std::ostream & out, const log_data & data, const char * lpTimeFormat) {
+				stream_printf(out).printf("T:%v [%v] (%v) %v: "
+					, data.thread_id()
+					, data.log_time().format(lpTimeFormat)
+					, data.get_logger().get_name()
+					, log_data::get_level_name(data.get_level())
+				);
+			}
+		};
+
 	};//log
 }
 

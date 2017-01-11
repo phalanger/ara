@@ -126,6 +126,10 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(strRes == "Hello 100 hahaha");
 
 		REQUIRE(ara::str_printf<std::string>(L"Hello %02d", 8) == "Hello 08");
+
+		size_t n = 100;
+		int m = -10;
+		REQUIRE(ara::str_printf<std::string>(L"Test %v, %v", n, m) == "Test 100, -10");
 	}
 
 	SECTION("printf stream") {

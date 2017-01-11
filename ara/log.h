@@ -1,6 +1,9 @@
 
 #if 0
 	int example() {
+
+		ara::log::init_defaul_log();
+
 		glog	g;
 		g(log::debug).printfln("Debug log");
 
@@ -31,6 +34,8 @@
 
 #include "ara_def.h"
 #include "internal/log_imp.h"
+#include "ara/internal/log_appender_stdstream.h"
+#include "ara/internal/log_appender_rollingfile.h"
 
 namespace ara {
 
@@ -98,6 +103,9 @@ namespace ara {
 		}
 		inline logger &		get_logger(const char * name = nullptr) {
 			return glog::get_logger_by_name(name);
+		}
+		inline void	init_defaul_log(std::ostream & out = std::cout) {
+			logger_mgr::get().get_root()->set_appender(std::make_shared<ara::log::appender_stdstream>(out));
 		}
 	}
 }

@@ -1,6 +1,7 @@
 
 #include "3rd/Catch/single_include/catch.hpp"
 #include "ara/dlist.h"
+#include "ara/utils.h"
 
 class MyData : public ara::dlist<MyData>
 {
@@ -59,15 +60,14 @@ TEST_CASE("double list", "[base]") {
 	REQUIRE(c == count);
 
 	c = static_cast<int>(count);
-	for (MyData & d : root.reverse_range()) {
+	for (MyData & d : ara::reverse_range(root)) {
 		REQUIRE(data_val[--c] == d.data_);
 	}
 	REQUIRE(c == 0);
 
 	c = static_cast<int>(count);
-	for (const MyData & d : root_c.reverse_range()) {
+	for (const MyData & d : ara::reverse_range(root_c)) {
 		REQUIRE(data_val[--c] == d.data_);
 	}
 	REQUIRE(c == 0);
 }
-
