@@ -139,4 +139,13 @@ TEST_CASE("stringext", "[base]") {
 
 		REQUIRE(s2.str() == "And say hello again, 102");
 	}
+
+	SECTION("ara::printf") {
+		auto s = ara::printf<std::string>("%d + %d = %d", 1, 2, 3);
+		REQUIRE(s == "1 + 2 = 3");
+
+		std::stringstream s2;
+		ara::printf(s2, "%d - %d = %d", 3, 2, 1);
+		REQUIRE(s2.str() == "3 - 2 = 1");
+	}
 }

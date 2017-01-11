@@ -1,4 +1,14 @@
 
+/*
+	class MyData {
+	public:
+		void foo();
+	};
+
+	ara::singleton<MyData>::get().foo();
+
+*/
+
 #ifndef ARA_SINGLETON_H
 #define ARA_SINGLETON_H
 

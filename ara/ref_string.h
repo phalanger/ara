@@ -1,3 +1,9 @@
+
+/*
+	std::string strReal = "Hello world";
+	ara::ref_string strRef = strReal;
+*/
+
 #ifndef ARA_BASE_REFSTRING_H
 #define ARA_BASE_REFSTRING_H
 

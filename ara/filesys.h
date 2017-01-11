@@ -1,25 +1,3 @@
-
-#ifndef ARA_FILESYS_H
-#define ARA_FILESYS_H
-
-#include "ara_def.h"
-#include "stringext.h"
-#include "datetime.h"
-#include "internal/raw_file.h"
-
-#include <string>
-
-#if defined(ARA_WIN32_VER)
-	#include <windows.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
-#else//ARA_WIN32_VC_VER
-	#include <sys/types.h>
-	#include <sys/stat.h>
-	#include <dirent.h>
-	#include <unistd.h>
-#endif//ARA_WIN32_VC_VER
-
 /*
 	//handle path
 	ara::file_sys::to_path(std::string("C:\\abcd"))								--> "C:\\abcd\\"
@@ -52,6 +30,27 @@
 	}
 
 */
+
+#ifndef ARA_FILESYS_H
+#define ARA_FILESYS_H
+
+#include "ara_def.h"
+#include "stringext.h"
+#include "datetime.h"
+#include "internal/raw_file.h"
+
+#include <string>
+
+#if defined(ARA_WIN32_VER)
+	#include <windows.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+#else//ARA_WIN32_VC_VER
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <dirent.h>
+	#include <unistd.h>
+#endif//ARA_WIN32_VC_VER
 
 namespace ara {
 
@@ -150,6 +149,10 @@ namespace ara {
 		static	typeStr		join_to_path(const typeStr & sPath, const typeStr & sSub) {
 			return to_path(join_to_file(sPath, sSub));
 		}
+		template<typename typeStrResult, typename ...typeStr>
+		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr... sPath) {
+			return join_to_path(join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
+		}
 
 		template<class typeStr>
 		static	typeStr		join_to_file(const typeStr & sPath, const typeStr & sSub) {
@@ -167,6 +170,10 @@ namespace ara {
 			for (; off < nSize; ++off, ++p)
 				string_traits<typeStr>::append(res, *p);
 			return  res;
+		}
+		template<typename typeStrResult, class...typeStr>
+		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr...sPath) {
+			return join_to_file( join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
 
 		template<class typeStr>

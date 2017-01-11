@@ -17,10 +17,16 @@ TEST_CASE("filesys", "[base]") {
 		REQUIRE(ara::file_sys::join_to_path(std::string("C:\\abcd\\"), std::string("\\def\\")) == "C:\\abcd\\def\\");
 		REQUIRE(ara::file_sys::join_to_path(std::string("C:\\abcd"), std::string("\\def\\")) == "C:\\abcd\\def\\");
 
+		REQUIRE(ara::file_sys::join_to_path(std::string("C:\\abcd"), std::string("def"), std::string("ghi")) == "C:\\abcd\\def\\ghi\\");
+		REQUIRE(ara::file_sys::join_to_path(std::wstring(L"C:\\abcd"), std::wstring(L"def"), std::wstring(L"ghi")) == L"C:\\abcd\\def\\ghi\\");
+
 		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd"), std::string("def")) == "C:\\abcd\\def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd\\"), std::string("def")) == "C:\\abcd\\def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd\\"), std::string("\\def")) == "C:\\abcd\\def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd"), std::string("\\def")) == "C:\\abcd\\def");
+
+		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd"), std::string("\\def"), std::string("\\ghi")) == "C:\\abcd\\def\\ghi");
+		REQUIRE(ara::file_sys::join_to_file(std::string("C:\\abcd"), std::string("\\def\\ghi"), std::string("\\jkl")) == "C:\\abcd\\def\\ghi\\jkl");
 
 		REQUIRE(ara::file_sys::fix_path(std::string("C:\\\\abcd\\..\\.\\def\\..\\hij\\")) == "C:\\hij\\");
 		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\khg\\..\\.\\def\\..\\hij\\")) == "C:\\abcd\\hij\\");
@@ -36,10 +42,16 @@ TEST_CASE("filesys", "[base]") {
 		REQUIRE(ara::file_sys::join_to_path(std::string("/abcd/"), std::string("/def/")) == "/abcd/def/");
 		REQUIRE(ara::file_sys::join_to_path(std::string("/abcd"), std::string("/def/")) == "/abcd/def/");
 
+		REQUIRE(ara::file_sys::join_to_path(std::string("/abcd"), std::string("def"), std::string("ghi")) == "/abcd/def/ghi/");
+		REQUIRE(ara::file_sys::join_to_path(std::wstring(L"/abcd"), std::wstring(L"def"), std::wstring(L"ghi")) == L"/abcd/def/ghi/");
+
 		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd"), std::string("def")) == "/abcd/def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd/"), std::string("def")) == "/abcd/def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd/"), std::string("/def")) == "/abcd/def");
 		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd"), std::string("/def")) == "/abcd/def");
+
+		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd"), std::string("/def"), std::string("/ghi")) == "/abcd/def/ghi");
+		REQUIRE(ara::file_sys::join_to_file(std::string("/abcd"), std::string("/def/ghi"), std::string("/jkl")) == "/abcd/def/ghi/jkl");
 
 		REQUIRE(ara::file_sys::fix_path(std::string("//abcd/.././def/../hij/")) == "/hij/");
 		REQUIRE(ara::file_sys::fix_path(std::string("/abcd/khg/.././def/../hij/")) == "/abcd/hij/");

@@ -1,4 +1,20 @@
 
+/*
+	std::string		str;
+	auto s = ara::strext(str);
+	s.printf("hello : %d\n", 100);
+	std::string s2 = s.trim();
+	s.trim_left_inplace(" \r\n;");
+
+	auto s2 = ara::str_printf<std::string>("name:%s\n", str);
+	ara::stream_printf(std::cout, "%d + %d = %d\n", 1 , 2, 1 + 2);
+
+	auto s3 = ara::printf<std::string>("%d + %d = %d", 1, 2, 3);
+
+	std::stringstream s4;
+	ara::printf(s4, "%d - %d = %d", 3, 2, 1);
+*/
+
 #ifndef ARA_STRINGEXT_H
 #define ARA_STRINGEXT_H
 
@@ -142,9 +158,9 @@ namespace ara {
 		}
 
 		template<class ch, typename...TypeList>
-		string_ext &	printf(const ch * s, const TypeList&... t2) {
+		string_ext &	printf(const ch * s, TypeList... t2) {
 			str_format<typeStr>		f(str_);
-			f.printf(s , t2...);
+			f.printf(s , std::forward<TypeList>(t2)...);
 			return *this;
 		}
 
@@ -163,10 +179,10 @@ namespace ara {
 	}
 
 	template<class strType, class ch, typename...TypeList>
-	inline strType	str_printf(const ch * s, const TypeList&... t2) {
+	inline strType	str_printf(const ch * s, TypeList... t2) {
 		strType		str;
 		str_format<strType>		f(str);
-		f.printf(s, t2...);
+		f.printf(s, std::forward<TypeList>(t2)...);
 		return str;
 	}
 
@@ -176,9 +192,18 @@ namespace ara {
 	}
 
 	template<class Stream, class ch, typename...TypeList >
-	inline Stream & stream_printf(Stream & out, const ch * s, const TypeList&... t2) {
-		str_format<Stream>(out).printf(s, t2...);
+	inline Stream & stream_printf(Stream & out, const ch * s, TypeList... t2) {
+		str_format<Stream>(out).printf(s, std::forward<TypeList>(t2)...);
 		return out;
+	}
+
+	template<class strType, class ch, typename...TypeList>
+	inline strType	printf(const ch * s, TypeList... t2) {
+		return str_printf<strType>(s, std::forward<TypeList>(t2)...);
+	}
+	template<class streamChar, class streamTraits, class ch, typename...TypeList>
+	inline std::basic_ostream<streamChar, streamTraits> & printf(std::basic_ostream<streamChar, streamTraits> & out, const ch * s, TypeList... t2) {
+		return stream_printf(out, s, std::forward<TypeList>(t2)...);
 	}
 }
 

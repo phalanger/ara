@@ -1,3 +1,15 @@
+/*
+	enum {
+		TESTFLAG_1 = 0x01,
+		TESTFLAG_2 = 0x02,
+		TESTFLAG_3 = 0x04,
+		TESTFLAG_4 = 0x08,
+	};
+
+	ara::flags<int>		flag1({ TESTFLAG_1 , TESTFLAG_2, TESTFLAG_4 });
+
+*/
+
 #ifndef ARA_FLAGS_H_201112
 #define ARA_FLAGS_H_201112
 
@@ -30,18 +42,33 @@ public:
 		return *this;
 	}
 
-	inline	void	set_flags(valueType nFlags) {
+	inline	flags &	set_flags(valueType nFlags) {
 		flags_num_ |= nFlags;
+		return *this;
 	}
-	inline	void	clear_flags(valueType nFlags) {
+	inline	flags &	clear_flags(valueType nFlags) {
 		flags_num_ &= ~nFlags;
+		return *this;
 	}
-	inline	void	set_flags_toggle(bool toggle,valueType nFlags) {
+	inline	flags &	set_flags_toggle(bool toggle,valueType nFlags) {
 		if (toggle)
 			set_flags(nFlags);
 		else
 			clear_flags(nFlags);
+		return *this;
 	}
+
+	template<typename...args>
+	inline	flags &	set_flags(valueType n, args... nFlags) {
+		flags_num_ |= n;
+		return set_flags(std::forward<args>(nFlags)...);
+	}
+	template<typename...args>
+	inline	flags &	clear_flags(valueType n, args... nFlags) {
+		flags_num_ &= ~n;
+		return clear_flags(std::forward<args>(nFlags)...);
+	}
+
 	inline	bool	check(valueType nFlags) const {
 		return (flags_num_ & nFlags) != 0;
 	}
@@ -51,6 +78,19 @@ public:
 	inline	bool	check_all(valueType nFlag) const {
 		return (flags_num_ & nFlag) == nFlag;
 	}
+	inline	bool	check_one(valueType nFlag) const {
+		return (flags_num_ & nFlag) != 0;
+	}
+
+	template<typename...args>
+	inline	bool	check_all(valueType nFlag, args... nOthers) const {
+		return ((flags_num_ & nFlag) == nFlag) && check_all(std::forward<args>(nOthers)...);
+	}
+	template<typename...args>
+	inline	bool	check_one(valueType nFlag, args... nOthers) const {
+		return ((flags_num_ & nFlag) == nFlag) || check_one(std::forward<args>(nOthers)...);
+	}
+
 
 	const valueType & get(void) const {
 		return flags_num_;

@@ -1,16 +1,4 @@
 
-#ifndef ARA_THREADEXT_H
-#define ARA_THREADEXT_H
-
-#include "stringext.h"
-#include "internal/tls_imp.h"
-#include "internal/thread_state.h"
-#include "internal/log_base.h"
-
-#include <functional>
-#include <list>
-#include <thread>
-
 /*
 	//Thread local storage
 	ara::thread_local_data_ptr<TLocalData>		a1;
@@ -53,6 +41,19 @@
 	});
 
 */
+
+
+#ifndef ARA_THREADEXT_H
+#define ARA_THREADEXT_H
+
+#include "stringext.h"
+#include "internal/tls_imp.h"
+#include "internal/thread_state.h"
+#include "internal/log_base.h"
+
+#include <functional>
+#include <list>
+#include <thread>
 
 namespace ara {
 

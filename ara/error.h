@@ -1,3 +1,9 @@
+
+///		get system last error
+///			cout << ara::error::code();
+///			cout << ara::error::info(EAGAIN);
+///			cout << ara::error::info();
+
 #ifndef ARA_ERROR_H_201608
 #define ARA_ERROR_H_201608
 

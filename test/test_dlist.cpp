@@ -44,4 +44,30 @@ TEST_CASE("double list", "[base]") {
 		REQUIRE(data_val[c] == p->data_);
 	}
 	REQUIRE(c == count);
+
+	c = 0;
+	for (MyData & d : root) {
+		REQUIRE(data_val[c++] == d.data_);
+	}
+	REQUIRE(c == count);
+
+	const MyData & root_c = root;
+	c = 0;
+	for (const MyData & d : root_c) {
+		REQUIRE(data_val[c++] == d.data_);
+	}
+	REQUIRE(c == count);
+
+	c = static_cast<int>(count);
+	for (MyData & d : root.reverse_range()) {
+		REQUIRE(data_val[--c] == d.data_);
+	}
+	REQUIRE(c == 0);
+
+	c = static_cast<int>(count);
+	for (const MyData & d : root_c.reverse_range()) {
+		REQUIRE(data_val[--c] == d.data_);
+	}
+	REQUIRE(c == 0);
 }
+

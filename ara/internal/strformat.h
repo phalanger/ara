@@ -348,10 +348,10 @@ namespace ara {
 		str_format(T & t) : out_(t) {}
 
 		template<class ch, typename...TypeList>
-		str_format &	printf(const ch * s, const TypeList&... t2) {
+		str_format &	printf(const ch * s, TypeList... t2) {
 			size_t nLength = std::char_traits<ch>::length(s);
 			out_.reserve(nLength);
-			printf_imp(s, nLength, t2...);
+			printf_imp(s, nLength, std::forward<TypeList>(t2)...);
 			return *this;
 		}
 
@@ -529,14 +529,14 @@ namespace ara {
 			return fmt - pBegin;
 		}
 		template<typename char_type, typename T1, typename...TypeList>
-		size_t printf_imp(const char_type * fmt, size_t nSize, T1 && t1, const TypeList&... t2) {
+		size_t printf_imp(const char_type * fmt, size_t nSize, T1 && t1, TypeList... t2) {
 			size_t i = append_prefix(fmt, nSize);
 			if (i + 1 >= nSize)
 				return nSize;
 			i += append_fmt_val(fmt + i, nSize - i, t1);
 			if (i >= nSize)
 				return nSize;
-			return i + printf_imp(fmt + i, nSize - i, t2...);
+			return i + printf_imp(fmt + i, nSize - i, std::forward<TypeList>(t2)...);
 		}
 
 		appender		out_;

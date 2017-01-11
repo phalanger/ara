@@ -1,4 +1,31 @@
 
+#if 0
+	int example() {
+		glog	g;
+		g(log::debug).printfln("Debug log");
+
+		LOG_INFO().printfln("Hello");
+		LOG_INFO("App.Server").printfln("Hello");
+
+		//Define user self log appender:
+		std::stringstream	s;
+		auto	appender_ptr = std::make_shared<ara::log::appender_stdstream>(s);
+
+		//change the root append. that will display all logs to the appender
+		ara::log::get_logger().set_appender(appender_ptr);
+		//or
+		ara::log::register_appender(appender_ptr);
+		
+		//change some layer appender
+		ara::log::get_logger("App.Server").set_appender(appender_ptr);
+		//or
+		ara::log::register_appender("App.Server", appender_ptr);
+		//then this log will append to the string
+		LOG_INFO("App.Server").printfln("Hello");
+
+	}
+#endif//
+
 #ifndef ARA_LOG_H
 #define ARA_LOG_H
 
@@ -40,7 +67,7 @@ namespace ara {
 			return *(log::logger_mgr::get().get_logger(name));
 		}
 
-		static void dummy() {}
+		static inline void dummy() {}
 	protected:
 		void		init_logger(const char * name) {
 			auto & context = thread_context::get()._get_log_context();
@@ -73,16 +100,6 @@ namespace ara {
 			return glog::get_logger_by_name(name);
 		}
 	}
-
-#if 0
-	int example() {
-		glog	g;
-		g(log::debug).printfln("Debug log");
-
-		LOG_INFO().printf("Hello");
-		LOG_INFO("App.Server").printf("Hello");
-	}
-#endif//
 }
 
 #define	LOG_DEBUG(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::debug))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::debug)
