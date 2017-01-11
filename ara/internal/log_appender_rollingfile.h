@@ -83,7 +83,7 @@ namespace ara {
 				else
 					strFileName += now.format(".%Y-%m-%d.%H%M%S");
 
-				rf_.open(strFileName).create().write_only().done();
+				rf_.open(strFileName).create().write_only().append().done();
 				current_size_ = 0;
 				
 

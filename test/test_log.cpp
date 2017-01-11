@@ -74,7 +74,6 @@ TEST_CASE("log to file", "[base]") {
 #endif
 		REQUIRE(ara::file_sys::path_exist(strFileWithDate));
 	}
-	return;
 
 	std::string sPath, sFile;
 	ara::file_sys::split_path(strFile, sPath, sFile);
