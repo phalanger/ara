@@ -2,14 +2,18 @@
 #ifndef ARA_ASYNC_QUEUE_H
 #define ARA_ASYNC_QUEUE_H
 
+#include <boost/asio.hpp>
+
 #include "ara_def.h"
 #include "dlist.h"
+#include "datetime.h"
+#include "log.h"
 
-#include <boost/asio.hpp>
 #include <functional>
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <memory>
 
 namespace ara {
 	namespace internal {
@@ -32,23 +36,23 @@ namespace ara {
 		static async_queue_ptr make_queue(size_t nBlockSize = 0) {
 			async_queue_ptr res(new async_queue);
 			if (nBlockSize)
-				res->setHashSize(nBlockSize);
+				res->set_hash_size(nBlockSize);
 			return res;
 		}
 		~async_queue();
 
-		void setTraceLog(bool boTrace) {
-			m_boTrace = boTrace;
+		void set_trace_log(bool boTrace) {
+			trace_ = boTrace;
 		}
 
 		void clear();
 
 		//It's not thread-safe. set the hash size without lock.
-		void setHashSize(size_t nBlockSize);
+		void	set_hash_size(size_t nBlockSize);
 
 		void	dump(const std::string & strPrefix, std::ostream & out);
 
-		void	apply(boost::asio::io_service & io, const typeKey & key, const TTimerValue & tTimeout, funcCallback && func, std::string && strTodo);
+		void	apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo);
 
 	protected:
 		async_queue();
@@ -56,8 +60,8 @@ namespace ara {
 		class HashNode;
 		class node;
 		class mission;
-		typedef std::shared_ptr<node> node_ptr;
-		typedef std::shared_ptr<mission> mission_ptr;
+		typedef std::shared_ptr<node>		node_ptr;
+		typedef std::shared_ptr<mission>	mission_ptr;
 		typedef std::shared_ptr<HashNode>	hashnode_ptr;
 		typedef std::weak_ptr<HashNode>		hashnode_weak_ptr;
 
@@ -75,15 +79,15 @@ namespace ara {
 		{
 		public:
 			mission(boost::asio::io_service & io, funcCallback && func, std::string && strTodo, const node_ptr & pParent)
-				: m_io(io), m_func(std::move(func)), m_strTodo(std::move(strTodo)), m_pParent(pParent) {
-				m_boTrace = pParent->isTraceLog();
+				: io_(io), func_(std::move(func)), todo_(std::move(strTodo)), parent_ptr_(pParent) {
+				trace_ = pParent->is_trace_log();
 			}
 
 			~mission() {
-				if (m_pParent) 	{
-					m_pParent->doFinish(this);
-					if (m_boTrace)
-						gError().log(TLog::levelDebug).format("Token Release for : %").arg(m_strTodo) << std::endl;
+				if (parent_ptr_) 	{
+					parent_ptr_->do_finish(this);
+					if (trace_)
+						ara::glog(log::debug).printfln("Token Release for : %v", todo_);
 				}
 			}
 
@@ -95,126 +99,126 @@ namespace ara {
 				action(boost::system::error_code(), token);
 			}
 
-			void setTimer(const TTimerValue & tTimeout) {
+			void set_timer(const timer_val & tTimeout) {
 				boost::system::error_code ec;
-				m_timer.reset(new boost::asio::deadline_timer(m_io));
-				m_timer->expires_from_now(boost::posix_time::seconds(static_cast<long>(tTimeout.sec())) + boost::posix_time::microseconds(tTimeout.micro_sec()), ec);
-				mission_ptr pSelf = m_pSelf;
-				m_timer->async_wait([this, pSelf](boost::system::error_code const & ec) {
+				timer_.reset(new boost::asio::deadline_timer(io_));
+				timer_->expires_from_now(boost::posix_time::seconds(static_cast<long>(tTimeout.sec())) + boost::posix_time::microseconds(tTimeout.micro_sec()), ec);
+				mission_ptr pSelf = self_ptr_;
+				timer_->async_wait([this, pSelf](boost::system::error_code const & ec) {
 					if (ec != boost::asio::error::operation_aborted) {
 						if (mission_base::cando()) {
-							funcCallback func = std::move(m_func);
+							funcCallback func = std::move(func_);
 							func(boost::asio::error::timed_out, nullptr);
 						}
 					}
 				}
 				);
 			}
-			void    setHolder(const mission_ptr & token) {
-				m_pSelf = token;
+			void    set_holder(const mission_ptr & token) {
+				self_ptr_ = token;
 			}
-			mission_ptr releaseHolder() {
+			mission_ptr release_holder() {
 				mission_ptr res;
-				res.swap(m_pSelf);
+				res.swap(self_ptr_);
 				return res;
 			}
 			void clear() {
-				m_pParent = nullptr;
+				parent_ptr_ = nullptr;
 				cancel();
-				m_pSelf = nullptr;
+				self_ptr_ = nullptr;
 			}
-			boost::asio::io_service & io() { return m_io; }
-			void	dump(const tstring & strPrefix, std::ostream & out) {
-				tstring strExpire;
-				if (m_timer) {
+			boost::asio::io_service & io() { return io_; }
+			void	dump(const std::string & strPrefix, std::ostream & out) {
+				std::string strExpire;
+				if (timer_) {
 					strExpire = " Expires at:";
-					strExpire += async::ptime_to_string(m_timer->expires_at());
+					strExpire += async::ptime_to_string(timer_->expires_at());
 				}
-				out << strPrefix << "[" << m_strTodo << "]" << strExpire << std::endl;
+				out << strPrefix << "[" << todo_ << "]" << strExpire << std::endl;
 			}
 		protected:
 			inline void action(boost::system::error_code const & ec, const async_token & token) {
 				if (mission_base::cando()) {
 					boost::system::error_code temp;
-					if (m_timer)
-						m_timer->cancel(temp);
-					if (!ec && m_boTrace)
-						gError().log(TLog::levelDebug).format("Token get for : %").arg(m_strTodo) << std::endl;
-					m_func(ec, token);
+					if (timer_)
+						timer_->cancel(temp);
+					if (!ec && trace_)
+						ara::glog(ara::log::debug).printfln("Token get for : %v", todo_);
+					func_(ec, token);
 				}
 			}
 
-			boost::asio::io_service & m_io;
-			funcCallback			m_func;
-			std::unique_ptr<boost::asio::deadline_timer> m_timer;
-			tstring					m_strTodo;
-			mission_ptr				m_pSelf;
-			node_ptr				m_pParent;
-			bool					m_boTrace = false;
+			boost::asio::io_service & io_;
+			funcCallback			func_;
+			std::unique_ptr<boost::asio::deadline_timer> timer_;
+			std::string				todo_;
+			mission_ptr				self_ptr_;
+			node_ptr				parent_ptr_;
+			bool					trace_ = false;
 		};
 
 		class node : public std::enable_shared_from_this<node>
 		{
 		public:
-			node(const typeKey & key, hashnode_ptr pParent) : m_key(key), m_pParent(pParent) {
-				m_boTrace = pParent->isTraceLog();
-				m_Root.as_root();
+			node(const typeKey & key, hashnode_ptr pParent) : key_(key), parent_ptr_(pParent) {
+				trace_ = pParent->is_trace_log();
+				root_.as_root();
 			}
 			~node() {
 				clear();
 			}
 
-			inline bool	isTraceLog() const {
-				return m_boTrace;
+			inline bool	is_trace_log() const {
+				return trace_;
 			}
 
-			void doApply(boost::asio::io_service & io, const TTimerValue & tTimeout, funcCallback && func, tstring && strTodo) {
+			void doApply(boost::asio::io_service & io, const timer_val & tTimeout, funcCallback && func, std::string && strTodo) {
 
 				mission_ptr pMission = std::make_shared<mission>(io, std::move(func), std::move(strTodo), this->shared_from_this());
 
-				std::unique_lock<std::mutex> _guard(m_Lock);
+				std::unique_lock<std::mutex> _guard(lock_);
 
-				if (m_Root.root_empty()) { //first time
-					pMission->append_before(m_Root);
+				if (root_.root_empty()) { //first time
+					pMission->append_before(root_);
 					_guard.unlock();
 					io.dispatch([pMission]() { pMission->active(pMission); });
 				}
 				else {
-					pMission->append_before(m_Root);
-					pMission->setHolder(pMission);
+					pMission->append_before(root_);
+					pMission->set_holder(pMission);
 
-					if (tTimeout != TTimerValue::max_time)
-						pMission->setTimer(tTimeout);
+					if (tTimeout != timer_val::max_time)
+						pMission->set_timer(tTimeout);
 				}
 			}
-			void doFinish(mission * pMission) {
-				std::unique_lock<std::mutex> _guard(m_Lock);
+			void do_finish(mission * pMission) {
+				std::unique_lock<std::mutex> _guard(lock_);
 				pMission->unlink();
 
-				if (m_Root.root_empty()) {
-					hashnode_ptr pParent = m_pParent.lock();
+				if (root_.root_empty()) {
+					hashnode_ptr pParent = parent_ptr_.lock();
 					_guard.unlock();
 					if (pParent)
-						pParent->destroy(m_key);
+						pParent->destroy(key_);
 				}
 				else {
-					mission * mis = static_cast<mission *>(m_Root.get_next());
-					mission_ptr pMission = mis->releaseHolder();
+					mission * mis = static_cast<mission *>(root_.get_next());
+					mission_ptr pMission = mis->release_holder();
 					_guard.unlock();
 					pMission->io().post([pMission]() { pMission->active(pMission); });
 				}
 			}
 
 			bool empty() {
-				std::lock_guard<std::mutex> _guard(m_Lock);
-				return m_Root.root_empty();
+				std::lock_guard<std::mutex> _guard(lock_);
+				return root_.root_empty();
 			}
 
 			void clear() {
-				std::lock_guard<std::mutex> _guard(m_Lock);
+				std::lock_guard<std::mutex> _guard(lock_);
 
-				mission_base * pBegin = m_Root.get_next();
-				mission_base * pEnd = &m_Root;
+				mission_base * pBegin = root_.get_next();
+				mission_base * pEnd = &root_;
 				while (pBegin != pEnd) {
 					mission * pCurMission = static_cast<mission *>(pBegin);
 					pBegin = pBegin->get_next();
@@ -224,10 +228,10 @@ namespace ara {
 				}
 			}
 
-			void	dump(const tstring & strPrefix, std::ostream & out) {
-				std::lock_guard<std::mutex> _guard(m_Lock);
-				mission_base * pBegin = m_Root.get_next();
-				mission_base * pEnd = &m_Root;
+			void	dump(const std::string & strPrefix, std::ostream & out) {
+				std::lock_guard<std::mutex> _guard(lock_);
+				mission_base * pBegin = root_.get_next();
+				mission_base * pEnd = &root_;
 				while (pBegin != pEnd) {
 					mission * pCurMission = static_cast<mission *>(pBegin);
 					pCurMission->dump(strPrefix + "  ", out);
@@ -235,11 +239,11 @@ namespace ara {
 				}
 			}
 		protected:
-			std::mutex m_Lock;
-			typeKey m_key;
-			hashnode_weak_ptr m_pParent;
-			mission_base m_Root;
-			bool			m_boTrace = false;
+			std::mutex			lock_;
+			typeKey				key_;
+			hashnode_weak_ptr	parent_ptr_;
+			mission_base		root_;
+			bool				trace_ = false;
 		};
 
 		typedef std::map<typeKey, std::shared_ptr<node>> typeNodeMap;
@@ -247,28 +251,28 @@ namespace ara {
 		class HashNode : public std::enable_shared_from_this<HashNode>
 		{
 		public:
-			HashNode(bool boTrace) : m_boTrace(boTrace) {}
+			HashNode(bool boTrace) : trace_(boTrace) {}
 
 			~HashNode() {
 				clear();
 			}
 
-			inline bool	isTraceLog() const {
-				return m_boTrace;
+			inline bool	is_trace_log() const {
+				return trace_;
 			}
 
-			std::mutex m_Lock;
-			std::map<typeKey, std::shared_ptr<node>> m_mapData;
-			bool		m_boTrace = false;
+			std::mutex lock_;
+			std::map<typeKey, std::shared_ptr<node>> map_data_;
+			bool		trace_ = false;
 
 			std::shared_ptr<node> get(const typeKey & key) {
 				std::shared_ptr<node> pNode;
 
-				std::unique_lock<std::mutex> _guard(m_Lock);
-				typename typeNodeMap::iterator it = m_mapData.find(key);
-				if (it == m_mapData.end()) {
+				std::unique_lock<std::mutex> _guard(lock_);
+				typename typeNodeMap::iterator it = map_data_.find(key);
+				if (it == map_data_.end()) {
 					pNode = std::make_shared<node>(key, this->shared_from_this());
-					m_mapData.insert(std::make_pair(key, pNode));
+					map_data_.insert(std::make_pair(key, pNode));
 				}
 				else
 					pNode = it->second;
@@ -276,29 +280,29 @@ namespace ara {
 			}
 
 			void destroy(const typeKey & key) {
-				std::unique_lock<std::mutex> _guard(m_Lock);
-				typename typeNodeMap::iterator it = m_mapData.find(key);
-				if (it != m_mapData.end() && it->second->empty())
-					m_mapData.erase(it);
+				std::unique_lock<std::mutex> _guard(lock_);
+				typename typeNodeMap::iterator it = map_data_.find(key);
+				if (it != map_data_.end() && it->second->empty())
+					map_data_.erase(it);
 			}
 
 			void clear() {
-				std::unique_lock<std::mutex> _guard(m_Lock);
-				auto it = m_mapData.begin();
-				auto itEnd = m_mapData.end();
+				std::unique_lock<std::mutex> _guard(lock_);
+				auto it = map_data_.begin();
+				auto itEnd = map_data_.end();
 				for (; it != itEnd; ++it)
 					it->second->clear();
-				m_mapData.clear();
+				map_data_.clear();
 			}
 
 			bool	empty() {
-				std::unique_lock<std::mutex> _guard(m_Lock);
-				return m_mapData.empty();
+				std::unique_lock<std::mutex> _guard(lock_);
+				return map_data_.empty();
 			}
-			void	dump(const tstring & strPrefix, std::ostream & out) {
-				std::unique_lock<std::mutex> _guard(m_Lock);
-				auto it = m_mapData.begin();
-				auto itEnd = m_mapData.end();
+			void	dump(const std::string & strPrefix, std::ostream & out) {
+				std::unique_lock<std::mutex> _guard(lock_);
+				auto it = map_data_.begin();
+				auto itEnd = map_data_.end();
 				for (; it != itEnd; ++it)
 				{
 					out << strPrefix << "Key:" << it->first << std::endl;
@@ -307,9 +311,9 @@ namespace ara {
 			}
 		};
 
-		std::vector<shared_ptr<HashNode>> m_vecHash;
-		typeKeyHash m_hashFunc;
-		bool m_boTrace = false;
+		std::vector<std::shared_ptr<HashNode>> hash_ary_;
+		typeKeyHash hash_func_;
+		bool trace_ = false;
 	};
 
 
@@ -328,38 +332,38 @@ namespace ara {
 	template<class typeKey, class typeKeyHash>
 	void async_queue<typeKey, typeKeyHash>::clear()
 	{
-		for (shared_ptr<HashNode> & pNode : m_vecHash) {
+		for (std::shared_ptr<HashNode> & pNode : hash_ary_) {
 			if (pNode)
 				pNode->clear();
 		}
-		m_vecHash.clear();
+		hash_ary_.clear();
 	}
 
 	template<class typeKey, class typeKeyHash>
-	void async_queue<typeKey, typeKeyHash>::setHashSize(size_t nBlockSize)
+	void async_queue<typeKey, typeKeyHash>::set_hash_size(size_t nBlockSize)
 	{
-		if (!m_vecHash.empty())
-			m_vecHash.clear();
+		if (!hash_ary_.empty())
+			hash_ary_.clear();
 
-		m_vecHash.resize(nBlockSize);
+		hash_ary_.resize(nBlockSize);
 	}
 
 	template<class typeKey, class typeKeyHash>
-	void async_queue<typeKey, typeKeyHash>::apply(boost::asio::io_service & io, const typeKey & key, const TTimerValue & tTimeout, funcCallback && func, tstring && strTodo)
+	void async_queue<typeKey, typeKeyHash>::apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo)
 	{
-		size_t nHash = m_hashFunc(key);
+		size_t nHash = hash_func_(key);
 		std::shared_ptr<node> pNode;
 
-		if (m_vecHash.empty()) {
+		if (hash_ary_.empty()) {
 			func(boost::asio::error::invalid_argument, nullptr);
 			return;
 		}
 		else {
-			size_t nIndex = nHash % m_vecHash.size();
-			if (!m_vecHash[nIndex])
-				m_vecHash[nIndex] = std::make_shared<HashNode>(m_boTrace);
+			size_t nIndex = nHash % hash_ary_.size();
+			if (!hash_ary_[nIndex])
+				hash_ary_[nIndex] = std::make_shared<HashNode>(trace_);
 
-			pNode = m_vecHash[nIndex]->get(key);
+			pNode = hash_ary_[nIndex]->get(key);
 		}
 
 		if (pNode)
@@ -367,10 +371,10 @@ namespace ara {
 	}
 
 	template<class typeKey, class typeKeyHash>
-	void async_queue<typeKey, typeKeyHash>::dump(const tstring & strPrefix, std::ostream & out)
+	void async_queue<typeKey, typeKeyHash>::dump(const std::string & strPrefix, std::ostream & out)
 	{
 		size_t	nIndex = 0;
-		for (shared_ptr<HashNode> & pNode : m_vecHash) {
+		for (std::shared_ptr<HashNode> & pNode : hash_ary_) {
 			if (pNode && !pNode->empty()) {
 				out << strPrefix << "[" << nIndex << "] :" << std::endl;
 				pNode->dump(strPrefix + "  ", out);
@@ -378,6 +382,6 @@ namespace ara {
 			++nIndex;
 		}
 	}
-}
+}//ara
 
 #endif ARA_ASYNC_QUEUE_H

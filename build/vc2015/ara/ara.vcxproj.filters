@@ -105,5 +105,8 @@
     <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h">
       <Filter>include\internal</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\event.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

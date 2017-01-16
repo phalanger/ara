@@ -36,7 +36,6 @@ namespace ara {
 		return internal::reverse_range_helper<container>(c);
 	}
 
-
 }
 
 #endif//ARA_UTILS_H

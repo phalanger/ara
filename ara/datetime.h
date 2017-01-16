@@ -546,10 +546,10 @@ namespace ara {
 				std::chrono::nanoseconds __ns = nsec_;
 				return __s + __ns;
 			}
-			template<typename _Rep, typename _Period>
-			std::chrono::duration<_Rep, _Period>	to_duration() const {
-				std::chrono::seconds __s = sec_;
-				std::chrono::nanoseconds __ns = nsec_;
+			
+			std::chrono::nanoseconds	to_duration() const {
+				std::chrono::seconds __s( sec_ );
+				std::chrono::nanoseconds __ns( nsec_ );
 				return __s + __ns;
 			}
 
