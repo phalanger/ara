@@ -15,9 +15,6 @@
     <ClInclude Include="..\..\..\ara\utf8.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\ara\rapidjson.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\ara\stringext.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -106,6 +103,9 @@
       <Filter>include\internal</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\ara\event.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\json.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

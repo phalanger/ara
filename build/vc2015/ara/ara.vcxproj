@@ -45,7 +45,7 @@
     <ClInclude Include="..\..\..\ara\ref_string.h" />
     <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\default_string_traits.h" />
-    <ClInclude Include="..\..\..\ara\rapidjson.h" />
+    <ClInclude Include="..\..\..\ara\json.h" />
     <ClInclude Include="..\..\..\ara\singleton.h" />
     <ClInclude Include="..\..\..\ara\stringext.h" />
     <ClInclude Include="..\..\..\ara\threadext.h" />
