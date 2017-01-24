@@ -52,6 +52,12 @@ namespace ara {
 				string_traits<typeTarStr>::append(str, p, n);
 			}
 			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const wchar_t * p, size_t n, const char) {
+				typedef string_traits<typeTarStr>	traits;
+				traits::reserve(str, traits::size(str) + n * 3);
+				utf8::utf16to8(p, p + n, string_appender<typeTarStr>(str));
+			}
+			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char16_t * p, size_t n, const char) {
 				typedef string_traits<typeTarStr>	traits;
 				traits::reserve(str, traits::size(str) + n * 3);
@@ -65,10 +71,35 @@ namespace ara {
 			}
 			
 			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const char * p, size_t n, const wchar_t) {
+				typedef string_traits<typeTarStr>	traits;
+				traits::reserve(str, traits::size(str) + n);
+				utf8::utf8to16(p, p + n, string_appender<typeTarStr>(str));
+			}
+			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const wchar_t * p, size_t n, const wchar_t) {
+				string_traits<typeTarStr>::append(str, reinterpret_cast<const typename string_traits<typeTarStr>::value_type *>(p), n);
+			}
+			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const char16_t * p, size_t n, const wchar_t) {
+				str.append(p, p + n);
+			}
+			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const char32_t * p, size_t n, const wchar_t) {
+				typedef string_traits<typeTarStr>	traits;
+				traits::reserve(str, traits::size(str) + n * 3);
+				utf8::utf32to16(p, p + n, string_appender<typeTarStr>(str));
+			}
+
+			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char * p, size_t n, const char16_t) {
 				typedef string_traits<typeTarStr>	traits;
 				traits::reserve(str, traits::size(str) + n);
 				utf8::utf8to16(p, p + n, string_appender<typeTarStr>(str));
+			}
+			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const wchar_t * p, size_t n, const char16_t) {
+				str.append(p, p + n);
 			}
 			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char16_t * p, size_t n, const char16_t) {
@@ -88,6 +119,12 @@ namespace ara {
 				utf8::utf8to32(p, p + n, string_appender<typeTarStr>(str));
 			}
 			template<typename typeTarStr>
+			inline static void	append(typeTarStr & str, const wchar_t * p, size_t n, const char32_t) {
+				typedef string_traits<typeTarStr>	traits;
+				traits::reserve(str, traits::size(str) + n);
+				utf8::utf16to32(p, p + n, string_appender<typeTarStr>(str));
+			}
+			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char16_t * p, size_t n, const char32_t) {
 				typedef string_traits<typeTarStr>	traits;
 				traits::reserve(str, traits::size(str) + n);
@@ -101,9 +138,8 @@ namespace ara {
 
 			template<typename typeTarStr, typename typeCh>
 			inline static void	append(typeTarStr & str, const typeCh * p, size_t n) {
-				using typeTarCh = typename char_type<sizeof(typename string_traits<typeTarStr>::value_type)>::value_type;
-				using  typeSrcCh = typename char_type<sizeof(typeCh)>::value_type;
-				append(str, reinterpret_cast<const typeSrcCh *>(p), n, typeTarCh() );
+				using typeTarCh = typename string_traits<typeTarStr>::value_type;
+				append(str, p, n, typeTarCh() );
 			}
 
 			template<typename typeTarStr, typename typeSrcStr>

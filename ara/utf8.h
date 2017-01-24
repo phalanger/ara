@@ -33,14 +33,17 @@ DEALINGS IN THE SOFTWARE.
 
 namespace ara {
 	namespace utf8 {
-		template<size_t n> struct unicode_char {
-			typedef char32_t	unicode_char_t;
+		template<typename typeChar> struct unicode_char {
+			enum { utf_type = 32 };
 		};
-		template<> struct unicode_char<1> {
-			typedef unsigned char	unicode_char_t;
+		template<> struct unicode_char<char> {
+			enum { utf_type = 8 };
 		};
-		template<> struct unicode_char<2> {
-			typedef char16_t	unicode_char_t;
+		template<> struct unicode_char<char16_t> {
+			enum { utf_type = 16 };
+		};
+		template<> struct unicode_char<wchar_t> {
+			enum { utf_type = 16 };
 		};
 
 		// Base for the exceptions that may be thrown from the library
@@ -490,7 +493,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy,1,1,typeStrFrom,typeStrTo> {
+			struct append_string<utf8_policy,8,8,typeStrFrom,typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					strTar.append( strSrc.begin(), strSrc.end() );
 				}
@@ -499,7 +502,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 1, 2, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 8, 16, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf8to16<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -508,7 +511,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 1, 4, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 8, 32, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf8to32<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -517,7 +520,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 2, 2, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 16, 16, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					strTar.append(strSrc.begin(), strSrc.end());
 				}
@@ -526,7 +529,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 2, 1, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 16, 8, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf16to8<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -535,7 +538,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 2, 4, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 16, 32, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf16to32<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -544,7 +547,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 4, 4, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 32, 32, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					strTar.append(strSrc.begin(), strSrc.end());
 				}
@@ -553,7 +556,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy,4, 1, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 32, 8, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf32to8<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -562,7 +565,7 @@ namespace ara {
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy, 4, 2, typeStrFrom, typeStrTo> {
+			struct append_string<utf8_policy, 32, 16, typeStrFrom, typeStrTo> {
 				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf32to16<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
@@ -577,7 +580,7 @@ namespace ara {
 			, typename charFrom = typename typeStrFrom::value_type
 			, typename charTar = typename typeStrTo::value_type>
 		typeStrTo & append(typeStrTo & strTar, const typeStrFrom & strSrc) {
-			ara::utf8::internal::append_string<utf8_policy, sizeof(charFrom), sizeof(charTar), typeStrFrom, typeStrTo>::append(strTar, strSrc);
+			ara::utf8::internal::append_string<utf8_policy, unicode_char<charFrom>::utf_type, unicode_char<charTar>::utf_type, typeStrFrom, typeStrTo>::append(strTar, strSrc);
 			return strTar;
 		}
 		template<typename typeStrTo
@@ -587,7 +590,7 @@ namespace ara {
 			, typename charTar = typename typeStrTo::value_type>
 		typeStrTo convert(const typeStrFrom & strSrc) {
 			typeStrTo strTar;
-			typedef ara::utf8::internal::append_string<utf8_policy, sizeof(charFrom), sizeof(charTar), typeStrFrom, typeStrTo>	helper;
+			typedef ara::utf8::internal::append_string<utf8_policy, unicode_char<charFrom>::utf_type, unicode_char<charTar>::utf_type, typeStrFrom, typeStrTo>	helper;
 			strTar.reserve(helper::cal_size(strSrc.length()));
 			helper::append(strTar, strSrc);
 			return strTar;
