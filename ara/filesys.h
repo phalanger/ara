@@ -601,7 +601,7 @@ namespace ara {
 		}
 		bool	fetch() {
 			struct dirent * dp;
-			if (::readdir_r(dir_, entry_, &dp) != 0) {
+			if (::readdir_r(dir_, entry_, &dp) != 0 || dp == nullptr) {
 				::closedir(dir_);
 				dir_ = nullptr;
 				return false;

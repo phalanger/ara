@@ -22,15 +22,15 @@
   <VirtualDirectory Name="src">
     <File Name="../../../test/main.cpp"/>
     <File Name="../../../test/test_datetime.cpp"/>
-    <File Name="../../../test/test_stringex.cpp"/>
-    <File Name="../../../test/test_threadext.cpp"/>
+    <File Name="../../../test/test_dlist.cpp"/>
     <File Name="../../../test/test_flags.cpp"/>
+    <File Name="../../../test/test_json.cpp"/>
+    <File Name="../../../test/test_stringex.cpp"/>
+    <File Name="../../../test/test_utf8.cpp"/>
+    <File Name="../../../test/test_utils.cpp"/>
     <File Name="../../../test/test_filesys.cpp"/>
     <File Name="../../../test/test_log.cpp"/>
-    <File Name="../../../test/test_utf8.cpp"/>
-    <File Name="../../../test/test_dlist.cpp"/>
-    <File Name="../../../test/test_utils.cpp"/>
-    <File Name="../../../test/test_json.cpp"/>
+    <File Name="../../../test/test_threadext.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

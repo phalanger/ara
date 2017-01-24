@@ -80,6 +80,7 @@ TEST_CASE("filesys", "[base]") {
 		std::wstring	wstrPath = L"/root/Windows/abc/def";
 #endif
 		size_t i = 0;
+
 		for (auto it : ara::file_sys::split_path(wstrPath)) {
 
 			if (i == 0)
@@ -100,7 +101,6 @@ TEST_CASE("filesys", "[base]") {
 
 	SECTION("scandir") {
 		std::vector<std::string>		vectPathName;
-
 #ifdef ARA_WIN32_VER
 		for (auto it : ara::scan_dir("C:\\")) {
 #else
@@ -116,7 +116,7 @@ TEST_CASE("filesys", "[base]") {
 #ifdef ARA_WIN32_VER
 		std::string strFile = "D:\\test.txt";
 #else
-		std::string strFile = "/tm/123.txt";
+		std::string strFile = "/tmp/123.txt";
 #endif
 
 		ara::file_sys::unlink(strFile);

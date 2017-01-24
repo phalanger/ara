@@ -10,6 +10,7 @@ static void check_convert1(const strSrc & s, const strTar & r)
 	strTar s2 = ara::utf8::convert<strTar, ara::utf8::policy::exception_while_error>(s);
 	strTar s3 = ara::utf8::convert<strTar, ara::utf8::policy::skip_error_fast>(s);
 
+	REQUIRE(s1.size() == r.size());
 	REQUIRE(s1 == r);
 	REQUIRE(s2 == r);
 	REQUIRE(s3 == r);
@@ -51,15 +52,15 @@ TEST_CASE("utf8", "[base]") {
 		std::wstring	str1_w = tar_w;
 		std::string		str1_a = (const char *)tar_a;
 
-		//check str32 ->
+		SECTION("check str32 ->")
 		{
-			check_convert1(str1_32, str1_32);
-			check_convert1(str1_32, str1_16);
-			check_convert1(str1_32, str1_w);
-			check_convert1(str1_32, str1_a);
+			SECTION("->32"){check_convert1(str1_32, str1_32);}
+			SECTION("->16"){check_convert1(str1_32, str1_16);}
+			SECTION("->w"){check_convert1(str1_32, str1_w);}
+			SECTION("->a"){check_convert1(str1_32, str1_a);}
 		}
 
-		//check str16
+		SECTION("check str16->")
 		{
 			check_convert1(str1_16, str1_32);
 			check_convert1(str1_16, str1_16);
@@ -67,7 +68,7 @@ TEST_CASE("utf8", "[base]") {
 			check_convert1(str1_16, str1_a);
 		}
 
-		//check wstr
+		SECTION("check wstr->")
 		{
 			check_convert1(str1_w, str1_32);
 			check_convert1(str1_w, str1_16);
@@ -75,7 +76,7 @@ TEST_CASE("utf8", "[base]") {
 			check_convert1(str1_w, str1_a);
 		}
 
-		//check astr
+		SECTION("check astr->")
 		{
 			check_convert1(str1_a, str1_32);
 			check_convert1(str1_a, str1_16);
