@@ -184,48 +184,4 @@ TEST_CASE("async queue", "[async]" ){
 		t1.join();
 		t2.join();
 	}
-	
-	SECTION("conflick") {
-		std::atomic<int>		count;
-		std::atomic<int>		num;
-		count = 0;
-		num = 0;
-		const size_t nThreadCount = 10;
-
-		ara::event<int>		c(0);
-
-		for (size_t i = 0; i < nThreadCount; ++i) {
-			auto t = std::thread([&num, &count, &c]() {
-				if (++num > 1)
-					++count;
-				Sleep(10);
-				--num;
-				c.inc_signal_one();
-			});
-			t.detach();
-		}
-		c.wait(nThreadCount);
-		REQUIRE(count > 0);
-
-		count = 0;
-		num = 0;
-		c.reset(0);
-		typedef ara::async_queue<std::string>	name_queue;
-		auto p = name_queue::make_queue(10);
-
-		for (size_t i = 0; i < nThreadCount; ++i) {
-			auto t = std::thread([&num, &count, &c, p]() {
-
-				if (++num > 1)
-					++count;
-				Sleep(10);
-				--num;
-				c.inc_signal_one();
-			});
-			t.detach();
-		}
-		c.wait(nThreadCount);
-		REQUIRE(count > 0);
-	}
-
 }
