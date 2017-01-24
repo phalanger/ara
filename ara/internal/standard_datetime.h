@@ -49,15 +49,27 @@ namespace ara {
 			}
 
 			static inline void local_time(time_t t, struct tm & info) {
+#ifdef ARA_WIN32_VER
 				::localtime_s(&info, &t);
+#else
+				::localtime_r(&t, &info);
+#endif
 			}
 			static inline void gmt_time(time_t t, struct tm & info) {
+#ifdef ARA_WIN32_VER
 				::gmtime_s(&info, &t);
+#else
+				::gmtime_r(&t, &info);
+#endif
 			}
 
 			static inline void local_time(time_t t, int & year, int & month, int & day, int & hour, int & minuite, int & sec, int & yday, int & wday, int & isdst) {
 				struct tm info = { 0 };
+#ifdef ARA_WIN32_VER
 				::localtime_s(&info, &t);
+#else
+				::localtime_r(&t, &info);
+#endif
 				year = info.tm_year + 1900;
 				month = info.tm_mon + 1;
 				day = info.tm_mday;
@@ -104,14 +116,22 @@ namespace ara {
 			template<typename T, typename Ret>
 			static Ret local_format(time_t t, const T * lpFormat) {
 				struct tm info = { 0 };
+#ifdef ARA_WIN32_VER
 				::localtime_s(&info, &t);
+#else
+				::localtime_r(&t, &info);
+#endif
 				return time_format(info, lpFormat);
 			}
 
 			template<typename T, typename Ret>
 			static Ret gmt_format(time_t t, const T * lpFormat) {
 				struct tm info = { 0 };
+#ifdef ARA_WIN32_VER
 				gmtime_s(&info, &t);
+#else
+				gmtime_r(&t, &info);
+#endif
 				return time_format(info, lpFormat);
 			}
 

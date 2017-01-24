@@ -10,9 +10,9 @@
 
 RAPIDJSON_NAMESPACE_BEGIN
 
-	template <typename iterator, typename Ch = typename iterator::value_type>
+	template <typename iterator, typename Char = typename iterator::value_type>
 	struct ara_json_string_stream {
-		typedef Ch Ch;
+		typedef Char Ch;
 		ara_json_string_stream(const iterator beg, const iterator end) : src_(beg), head_(beg), end_(end) {}
 
 		Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
@@ -34,9 +34,9 @@ RAPIDJSON_NAMESPACE_BEGIN
 		enum { copyOptimization = 1 };
 	};
 
-	template <typename Ch>
+	template <typename Char>
 	struct ara_json_insitu_string_stream {
-		typedef Ch Ch;
+		typedef Char Ch;
 		ara_json_insitu_string_stream(Ch * beg, Ch * end) : src_(beg), dst_(0), head_(beg), end_(end) {}
 
 		Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
@@ -98,17 +98,17 @@ namespace ara {
 		static jsdoc	parse(const typeStr & s, typename std::enable_if_t<ara::is_string<typeStr>::value, void> * dummy = nullptr) {
 			const Ch * ch = string_traits<typeStr>::data(s);
 			size_t n = string_traits<typeStr>::size(s);
-			rapidjson::ara_json_string_stream<const Encoding::Ch *, Encoding::Ch>	stream(ch, ch + n);
+			rapidjson::ara_json_string_stream<const Ch *, Ch>	stream(ch, ch + n);
 			jsdoc	t;
-			t.ParseStream<rapidjson::kParseDefaultFlags,Encoding>(stream);
+			t.template ParseStream<rapidjson::kParseDefaultFlags, Encoding>(stream);
 			return t;
 		}
 		static jsdoc	parse(std::basic_string<Ch> && str) {
 			Ch * ch = const_cast<Ch *>(str.data());
 			size_t n = str.size();
-			rapidjson::ara_json_insitu_string_stream<Encoding::Ch>	stream(ch, ch + n);
+			rapidjson::ara_json_insitu_string_stream<Ch>	stream(ch, ch + n);
 			jsdoc	t;
-			t.ParseStream<rapidjson::kParseInsituFlag, Encoding>(stream);
+			t.template ParseStream<rapidjson::kParseInsituFlag, Encoding>(stream);
 			return t;
 		}
 
@@ -145,33 +145,33 @@ namespace ara {
 
 		template<typename V>
 		jsvar_imp & set(const Ch * strKey, const V & v) {
-			if (!IsObject())
-				SetObject();
+			if (!val_.IsObject())
+				val_.SetObject();
 			val_.AddMember(rapidjson::StringRef(strKey), rapidjson::Value(v), at_);
 			return *this;
 		}
 		jsvar_imp & set(const Ch * strKey, const std::basic_string<Ch> & v) {
-			if (!IsObject())
-				SetObject();
+			if (!val_.IsObject())
+				val_.SetObject();
 			rapidjson::Value ra(v.data(), v.size());
 			val_.AddMember(rapidjson::StringRef(strKey), std::move(ra), at_);
 			return *this;
 		}
 		jsvar_imp & set(const char * strKey, const char * v) {
-			if (!IsObject())
-				SetObject();
+			if (!val_.IsObject())
+				val_.SetObject();
 			val_.AddMember(rapidjson::StringRef(strKey), rapidjson::StringRef(v), at_);
 			return *this;
 		}
 		jsvar_imp & set(const char * strKey, rapidjson::Value && val) {
-			if (!IsObject())
-				SetObject();
+			if (!val_.IsObject())
+				val_.SetObject();
 			val_.AddMember(rapidjson::StringRef(strKey), val, at_);
 			return *this;
 		}
 		jsvar_imp & set(const char * strKey, jsvar_imp && val) {
-			if (!IsObject())
-				SetObject();
+			if (!val_.IsObject())
+				val_.SetObject();
 			val_.AddMember(rapidjson::StringRef(strKey), val.val_, at_);
 			return *this;
 		}
@@ -186,9 +186,8 @@ namespace ara {
 		}
 
 		jsvar_imp & member(const char * strKey) {
-			if (!IsObject())
-				SetObject();
-			rapidjson::Value	v;
+			if (!val_.IsObject())
+				val_.SetObject();
 			jsvalue	& v = val_.AddMember(rapidjson::StringRef(strKey), v, at_);
 			return jsvar_imp(v, at_);
 		}

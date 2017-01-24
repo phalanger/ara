@@ -95,7 +95,8 @@ namespace ara {
 			}
 			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char32_t * p, size_t n, const char32_t) {
-				string_traits<typeTarStr>::append(str, p, n);
+				typedef string_traits<typeTarStr> traits;
+				traits::append(str, reinterpret_cast<const typename string_traits<typeTarStr>::value_type *>(p), n);
 			}
 
 			template<typename typeTarStr, typename typeCh>

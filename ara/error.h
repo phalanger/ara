@@ -44,10 +44,20 @@ namespace ara {
 			std::string message(messageBuffer, size);
 			::LocalFree(messageBuffer);
 
-			return message;			
+			return message;	
 #else
-			char _buf[_POSIX_C_SOURCE];
-			return ::strerror_r(nCode, _buf, _POSIX_C_SOURCE);
+			return strerror(nCode);
+//#ifndef _POSIX_C_SOURCE
+//#define _POSIX_C_SOURCE 200112
+//#endif
+//			std::string res;
+//			res.resize(_POSIX_C_SOURCE);
+//			char * _buf = const_cast<char *>(res.data());
+//			::strerror_r(nCode, _buf, res.size());
+//			std::string::size_type p = res.find('\0');
+//			if ( p != std::string::npos )
+//				res.resize(p);
+//			return res;
 #endif
 		}
 

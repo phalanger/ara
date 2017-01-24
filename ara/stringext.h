@@ -115,7 +115,7 @@ namespace ara {
 		template<typename T,int base = 10, bool boLowCase = false>
 			string_ext &	append_int(T t) {
 				internal::format_appender<typeStr>	appender(str_);
-				appender.append_int<T, base, boLowCase>(t);
+				appender.template append_int<T, base, boLowCase>(t);
 				return *this;
 			}
 

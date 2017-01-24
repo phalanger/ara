@@ -186,7 +186,7 @@ namespace ara {
 				return p == nullptr;
 			else if (ptr_ == nullptr)
 				return p == nullptr;
-			return ptr_.get() == p;
+			return ptr_->get() == p;
 		}
 
 	private:

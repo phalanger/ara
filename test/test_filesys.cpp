@@ -74,12 +74,20 @@ TEST_CASE("filesys", "[base]") {
 	}
 
 	SECTION("path splitor") {
+#ifdef ARA_WIN32_VER
 		std::wstring	wstrPath = L"C:\\Windows\\abc\\def";
+#else
+		std::wstring	wstrPath = L"/root/Windows/abc/def";
+#endif
 		size_t i = 0;
 		for (auto it : ara::file_sys::split_path(wstrPath)) {
 
 			if (i == 0)
+#ifdef ARA_WIN32_VER
 				REQUIRE(it == L"C:");
+#else
+				REQUIRE(it == L"root");
+#endif
 			else if (i == 1)
 				REQUIRE(it == L"Windows");
 			else if (i == 2)

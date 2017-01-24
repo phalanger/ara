@@ -4,9 +4,12 @@
 #include "../ara_def.h"
 #include <string>
 
+#include <fcntl.h>
+
 #if defined(ARA_WIN32_VER)
-	#include <fcntl.h>
 	#include <Windows.h>
+#else
+	#include <unistd.h>
 #endif
 
 namespace ara {
@@ -23,7 +26,18 @@ namespace ara {
 			bool	done();
 
 			open_flag &	mod(int nMod) { mod_ = nMod; return *this; }
-
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+#ifndef O_TEXT
+#define O_TEXT 0
+#endif
+#ifndef O_TEMPORARY
+#define O_TEMPORARY 0
+#endif
+#ifndef O_RANDOM
+#define O_RANDOM 0
+#endif
 #define DECLEAR_FLAG(name, val)		open_flag &	name() { flags_ |= val; return *this; }
 			DECLEAR_FLAG(read_only, O_RDONLY)
 			DECLEAR_FLAG(write_only, O_WRONLY)
@@ -189,11 +203,11 @@ namespace ara {
 		}
 #else
 			int			fd_ = -1;
-			static int		open_imp(const std::string & strName, int a, int n) {
+			static int		_open_imp(const std::string & strName, int a, int n) {
 				return ::open(strName.c_str(), a, n);
 			}
-			static int		open_imp(const std::string & strName, int a, int n) {
-				return ::wopen(strName.c_str(), a, n);
+			static int		_open_imp(const std::wstring & strName, int a, int n) {
+				return ::open(strext(strName).to<std::string>().c_str(), a, n);
 			}
 #endif
 		};

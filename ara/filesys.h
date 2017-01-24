@@ -50,6 +50,7 @@
 	#include <sys/stat.h>
 	#include <dirent.h>
 	#include <unistd.h>
+	#include <fnmatch.h>
 #endif//ARA_WIN32_VC_VER
 
 namespace ara {
@@ -269,8 +270,8 @@ namespace ara {
 		}
 #else
 		static bool		get_file_attr(const std::string & sFile, file_adv_attr & attr) {
-			struct stat64 buf;
-			if (stat64(sFile.c_str(), &buf) != 0)
+			struct stat buf;
+			if (stat(sFile.c_str(), &buf) != 0)
 				return false;
 
 			attr.create_time = static_cast<time_t>(buf.st_ctime);
@@ -286,9 +287,9 @@ namespace ara {
 			attr.nlink = buf.st_nlink;
 			attr.blocks = buf.st_blocks;
 			attr.blocksize = buf.st_blksize;
-			if (buf.st_mode & S_ISDIR)
+			if (buf.st_mode & S_IFDIR)
 				attr.flags |= file_attr::IS_DIR;
-			if (buf.st_mode & S_ISLNK)
+			if (buf.st_mode & S_IFLNK)
 				attr.flags |= file_attr::IS_LINK;
 			return true;
 		}
@@ -449,7 +450,7 @@ namespace ara {
 #ifdef ARA_WIN32_VER
 			return (::GetFileAttributesW(strFile.c_str()) != INVALID_FILE_ATTRIBUTES);
 #else
-			return (access(strext(strFile).to<>(std::string).c_str(), F_OK) == 0);
+			return (access(strext(strFile).to<std::string>().c_str(), F_OK) == 0);
 #endif
 		}
 

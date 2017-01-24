@@ -117,6 +117,7 @@
       <File Name="../../../ara/internal/singleton_mgr.h"/>
       <File Name="../../../ara/internal/utf8_core.h"/>
       <File Name="../../../ara/internal/log_appender_rollingfile.h"/>
+      <File Name="../../../ara/internal/raw_file.h"/>
     </VirtualDirectory>
     <File Name="../../../ara/threadext.h"/>
     <File Name="../../../ara/flags.h"/>
@@ -124,6 +125,7 @@
     <File Name="../../../ara/singleton.h"/>
     <File Name="../../../ara/error.h"/>
     <File Name="../../../ara/utils.h"/>
+    <File Name="../../../ara/json.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
