@@ -42,3 +42,4 @@ Debug
 .vs
 *.db
 *.opendb
+.vscode

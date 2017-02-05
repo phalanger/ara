@@ -47,6 +47,7 @@
 #define ARA_THREADEXT_H
 
 #include "stringext.h"
+#include "utils.h"
 #include "internal/tls_imp.h"
 #include "internal/thread_state.h"
 #include "internal/log_base.h"
@@ -261,10 +262,6 @@ namespace ara {
 		return res;
 	}
 }
-
-#define ARA_JOIN_2(a, b)			a##b
-#define ARA_JOIN_1(a, b)			ARA_JOIN_2(a, b)
-#define ARA_TMP_VAR(a)				ARA_JOIN_1(a, __LINE__)
 
 #define BEGIN_CALL_AUTOINFO		ara::call_begin		ARA_TMP_VAR(_call)( ara::str_printf<std::string>("%v@%v#%v", ARA_FUNC_NAME, __FILE__, __LINE__) )
 #define BEGIN_CALL(...)			ara::call_begin		ARA_TMP_VAR(_call)( __VA_ARGS__)

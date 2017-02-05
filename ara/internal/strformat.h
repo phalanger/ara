@@ -7,6 +7,8 @@
 
 #include <string>
 #include <type_traits>
+#include <algorithm>
+#include <iostream>
 #include <cctype>
 #include <cstring>
 
@@ -45,6 +47,57 @@ namespace ara {
 	}
 
 	namespace internal {
+
+		template<class Ch, class traits = std::char_traits<Ch>>
+		struct fixed_buffer {
+			typedef Ch		char_type;
+			typedef traits	traits_type;
+
+			fixed_buffer(Ch * buf, size_t nSize) : buf_(buf), buf_end_(buf + nSize) {}
+
+			inline void	append(Ch ch) {
+				if (buf_ != buf_end_)
+					*buf_++ = ch;
+			}
+			inline void	append_ch(char ch) {
+				if (buf_ != buf_end_)
+					*buf_++ = static_cast<Ch>(ch);
+			}
+			inline void	write(const Ch * buf, size_t nSize) {
+				size_t nCopy = std::min<size_t>( nSize, buf_end_ - buf_ );
+				if (nCopy) {
+					memcpy(buf_, buf, nCopy * sizeof(Ch));
+					buf_ += nCopy;
+				}
+			}
+			inline Ch * begin() const { return buf_; }
+			inline Ch * end() const { return buf_end_; }
+		protected:
+			Ch *		buf_;
+			Ch *		buf_end_;
+		};
+		template<class Ch, class traits = std::char_traits<Ch>>
+		class fixed_stream : protected std::basic_streambuf<Ch, traits>, public std::basic_ostream<Ch, traits>
+		{
+		public:
+			typedef Ch char_type;
+			typedef traits traits_type;
+			typedef fixed_buffer<Ch, traits>	buffer_type;
+			typedef std::basic_streambuf<Ch, traits>	streambuf_parent;
+			typedef std::basic_ostream<Ch, traits>	ostream_parent;
+
+			fixed_stream(buffer_type & buf) : buf_(buf), streambuf_parent(), ostream_parent((streambuf_parent*)this) {
+				setp(buf_.begin(), buf_.end());
+			}
+			inline size_t size() const {
+				return pptr() - pbase();
+			}
+		protected:
+			int 	sync() { pptr(); return 0; }
+			int 	overflow(int c) { return EOF; }
+			buffer_type	&	buf_;
+		};
+
 		template<class T, class Enable = void>
 		struct format_appender {
 			typedef typename T::char_type	char_type;
@@ -54,6 +107,19 @@ namespace ara {
 			template<class T2>
 			void	append(const T2 & t) {
 				stream_ << t;
+			}
+
+			void	append(const char * ch) {
+				append_str(ch, std::char_traits<char>::length(ch));
+			}
+			void	append(const wchar_t * ch) {
+				append_str(ch, std::char_traits<wchar_t>::length(ch));
+			}
+			void	append(const char16_t * ch) {
+				append_str(ch, std::char_traits<char16_t>::length(ch));
+			}
+			void	append(const char32_t * ch) {
+				append_str(ch, std::char_traits<char32_t>::length(ch));
 			}
 
 			void	append_ch(char ch) {
@@ -187,7 +253,7 @@ namespace ara {
 
 			T & stream_;
 		};
-		
+
 		template<class T>
 		struct format_appender<T, typename std::enable_if<is_string<T>::value>::type> {
 			format_appender(T & str) : str_(str) {}
@@ -205,6 +271,19 @@ namespace ara {
 				typeStream	out;
 				out << t;
 				str_ += out.str();
+			}
+
+			void	append(const char * ch) {
+				append_str(ch, std::char_traits<char>::length(ch));
+			}
+			void	append(const wchar_t * ch) {
+				append_str(ch, std::char_traits<wchar_t>::length(ch));
+			}
+			void	append(const char16_t * ch) {
+				append_str(ch, std::char_traits<char16_t>::length(ch));
+			}
+			void	append(const char32_t * ch) {
+				append_str(ch, std::char_traits<char32_t>::length(ch));
 			}
 
 			template<class T2, typename std::enable_if_t<std::is_integral<T2>::value>>

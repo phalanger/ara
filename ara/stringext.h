@@ -205,6 +205,16 @@ namespace ara {
 	inline std::basic_ostream<streamChar, streamTraits> & printf(std::basic_ostream<streamChar, streamTraits> & out, const ch * s, TypeList... t2) {
 		return stream_printf(out, s, std::forward<TypeList>(t2)...);
 	}
+	template<class bufCh, class ch, typename...TypeList>
+	inline size_t	snprintf(bufCh * buf, size_t nBufSize, const ch * s, TypeList... t2) {
+		ara::internal::fixed_buffer<bufCh>		buffer(buf, nBufSize);
+		ara::internal::fixed_stream<bufCh>		stream(buffer);
+		stream_printf(stream, s, std::forward<TypeList>(t2)...);
+		size_t n = stream.size();
+		if (n < nBufSize)
+			buf[n] = bufCh();
+		return n;
+	}
 }
 
 #endif // !ARA_STRINGEXT_H

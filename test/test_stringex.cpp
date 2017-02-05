@@ -121,9 +121,9 @@ TEST_CASE("stringext", "[base]") {
 
 	SECTION("printf string") {
 		std::string	strRes;
-		ara::strext(strRes).printf("Hello %d hahaha", 100);
+		ara::strext(strRes).printf("Hello %d ha%s%shaha", 100, L"ha", "ha");
 
-		REQUIRE(strRes == "Hello 100 hahaha");
+		REQUIRE(strRes == "Hello 100 hahahahaha");
 
 		REQUIRE(ara::str_printf<std::string>(L"Hello %02d", 8) == "Hello 08");
 
@@ -151,5 +151,39 @@ TEST_CASE("stringext", "[base]") {
 		std::stringstream s2;
 		ara::printf(s2, "%d - %d = %d", 3, 2, 1);
 		REQUIRE(s2.str() == "3 - 2 = 1");
+	}
+
+	SECTION("ara::snprintf") {
+		char buf[16];
+
+		size_t n = ara::snprintf(buf, 16, "Hello %s", L"world");
+		REQUIRE(n == 11);
+		REQUIRE(std::string(buf) == "Hello world");
+
+		n = ara::snprintf(buf, 16, "Hello %s %d", L"world", 100000);
+		REQUIRE(n == 16);
+		REQUIRE(std::string(buf, n) == "Hello world 1000");
+	}
+}
+
+TEST_CASE("stringext benchmark", "[.],[benchmark]") {
+
+	const size_t nCount = 100000;
+	char buf[16];
+
+	SECTION("ara::snprintf") {
+		for (size_t i = 0; i < nCount; ++i) {
+			size_t n = ara::snprintf(buf, 16, "Hello %s %d", "world", 123);
+			REQUIRE(n == 15);
+			REQUIRE(std::string(buf) == "Hello world 123");
+		}
+	}
+
+	SECTION("snprintf") {
+		for (size_t i = 0; i < nCount; ++i) {
+			size_t n = ::snprintf(buf, 16, "Hello %s %d", "world", 123);
+			REQUIRE(n == 15);
+			REQUIRE(std::string(buf) == "Hello world 123");
+		}
 	}
 }

@@ -10,6 +10,7 @@
 #define ARA_UTILS_H
 
 #include "ara_def.h"
+#include <functional>
 
 namespace ara {
 
@@ -36,6 +37,23 @@ namespace ara {
 		return internal::reverse_range_helper<container>(c);
 	}
 
+
+	///////////////////////////////////////////////
+
+	class defer {
+	public:
+		defer(std::function<void()> && func) : func_(std::move(func)) {}
+		~defer() { func_(); }
+	protected:
+		std::function<void()>	func_;
+	};
+
 }
+
+#define ARA_JOIN_2(a, b)			a##b
+#define ARA_JOIN_1(a, b)			ARA_JOIN_2(a, b)
+#define ARA_TMP_VAR(a)				ARA_JOIN_1(a, __LINE__)
+
+#define ARA_DEFER(f)	ara::defer		ARA_TMP_VAR(__defer)([&](){ f });
 
 #endif//ARA_UTILS_H
