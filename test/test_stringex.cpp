@@ -168,14 +168,13 @@ TEST_CASE("stringext", "[base]") {
 
 TEST_CASE("stringext benchmark", "[.],[benchmark]") {
 
-	const size_t nCount = 100000;
+	const size_t nCount = 1000000;
 	char buf[16];
 
 	SECTION("ara::snprintf") {
 		for (size_t i = 0; i < nCount; ++i) {
 			size_t n = ara::snprintf(buf, 16, "Hello %s %d", "world", 123);
 			REQUIRE(n == 15);
-			REQUIRE(std::string(buf) == "Hello world 123");
 		}
 	}
 
@@ -183,7 +182,6 @@ TEST_CASE("stringext benchmark", "[.],[benchmark]") {
 		for (size_t i = 0; i < nCount; ++i) {
 			size_t n = ::snprintf(buf, 16, "Hello %s %d", "world", 123);
 			REQUIRE(n == 15);
-			REQUIRE(std::string(buf) == "Hello world 123");
 		}
 	}
 }

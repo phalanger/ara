@@ -72,6 +72,7 @@ namespace ara {
 			}
 			inline Ch * begin() const { return buf_; }
 			inline Ch * end() const { return buf_end_; }
+			inline void reset(Ch * b) { buf_ = b; }
 		protected:
 			Ch *		buf_;
 			Ch *		buf_end_;
@@ -88,6 +89,9 @@ namespace ara {
 
 			fixed_stream(buffer_type & buf) : buf_(buf), streambuf_parent(), ostream_parent((streambuf_parent*)this) {
 				setp(buf_.begin(), buf_.end());
+			}
+			~fixed_stream() {
+				buf_.reset(pptr());
 			}
 			inline size_t size() const {
 				return pptr() - pbase();
@@ -252,6 +256,200 @@ namespace ara {
 			void	reserve(size_t n) {}
 
 			T & stream_;
+		};
+
+		template<class Ch, class traits>
+		struct format_appender<fixed_buffer<Ch, traits>, void> {
+			typedef fixed_buffer<Ch, traits>	buffer_type;
+			typedef fixed_stream<Ch, traits>	stream_type;
+			typedef Ch	char_type;
+
+			format_appender(buffer_type & buf) : buf_(buf) {}
+
+			template<class T2>
+			void	append(const T2 & t) {
+				stream_type		stream(buf_);
+				stream << t;
+			}
+
+			template<typename srcCh>
+			void	append(const srcCh * ch) {
+				append_str(ch, std::char_traits<srcCh>::length(ch));
+			}
+			void	append(const Ch * ch) {
+				buf_.write(ch, std::char_traits<Ch>::length(ch));
+			}
+
+			void	append_ch(char ch) {
+				buf_.append_ch(ch);
+			}
+
+			template<class T2>
+			void	append_str(const T2 * p, size_t nSize) {
+				std::basic_string<char_type>	str;
+				string_convert::append(str, p, nSize);
+				buf_.write(str.data(), str.length());
+			}
+
+			void	append_str(const char_type * p, size_t nSize) {
+				buf_.write(p, nSize);
+			}
+
+			template<class T2>
+			void	append(const T2 & t, int nWidth, int chFill = '0'
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				stream_type		stream(buf_);
+				std::ios::fmtflags nFlags = stream.flags();
+				stream.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream.width(nWidth));
+				chFill = stream.fill(chFill);
+
+				stream << static_cast<T2>(t);
+
+				stream.flags(nFlags);
+				if (nWidth != -1)
+					stream.width(nWidth);
+				stream.fill(chFill);
+			}
+
+			template<class T2>
+			void	append(const T2 & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
+				, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
+				, format::POS_FLAG bShowPos = format::HIDE_POS
+				, format::BASE_FLAG bShowBase = format::HIDE_BASE
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+
+				stream_type		stream(buf_);
+				std::ios::fmtflags nFlags = stream.flags();
+				stream.setf(static_cast<std::ios::fmtflags>(nBase), std::ios::basefield);
+				if (bShowPos == format::SHOW_POS)
+					stream.setf(std::ios::showpos);
+				else
+					stream.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					stream.setf(std::ios::uppercase);
+				else
+					stream.unsetf(std::ios::uppercase);
+				if (bShowBase == format::SHOW_BASE)
+					stream.setf(std::ios::showbase);
+				else
+					stream.unsetf(std::ios::showbase);
+				stream.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream.width(nWidth));
+				chFill = stream.fill(chFill);
+
+				stream << static_cast<T2>(t);
+
+				stream.flags(nFlags);
+				if (nWidth != -1)
+					stream.width(nWidth);
+				stream.fill(chFill);
+			}
+
+			template<typename T2, int base = 10, bool boLowCase = false, typename std::enable_if<std::is_signed<T2>::value>::type>
+			void	append_int(T2 t) {
+
+				static const char * Number_Low = "0123456789abcdef";
+				static const char * Number_Up = "0123456789ABCDEF";
+				bool boNegative = false;
+				const char * Number = boLowCase ? Number_Low : Number_Up;
+
+				if (t == 0) {
+					buf_.append_ch(static_cast<typeCh>(Number[0]));
+					return;
+				}
+				else if (t < 0) {
+					boNegative = true;
+					t = -t;
+				}
+
+				const	size_t	bufsize = 72;
+				char_type	buf[bufsize];
+				char_type * p = buf + bufsize;
+				while (t) {
+					*(--p) = static_cast<char_type>(Number[t % static_cast<T2>(base)]);
+					t /= static_cast<T2>(base);
+				}
+				if (boNegative)
+					*(--p) = static_cast<char_type>('-');
+				buf_.write(p, buf + bufsize - p);
+			}
+
+			template<typename T2, int base = 10, bool boLowCase = false>
+			void	append_int(T2 t) {
+
+				static const char * Number_Low = "0123456789abcdef";
+				static const char * Number_Up = "0123456789ABCDEF";
+				const char * Number = boLowCase ? Number_Low : Number_Up;
+
+				if (t == 0) {
+					buf_.append_ch(static_cast<char_type>(Number[0]));
+					return;
+				}
+
+				const	size_t	bufsize = 72;
+				char_type	buf[bufsize];
+				char_type * p = buf + bufsize;
+				while (t) {
+					*(--p) = static_cast<char_type>(Number[t % static_cast<T2>(base)]);
+					t /= static_cast<T2>(base);
+				}
+				buf_.write(p, buf + bufsize - p);
+			}
+
+			template<typename typeDouble>
+			void	append(const typeDouble & dbVal,
+				format::FIX_FLAG bFixed,
+				format::POINT_FLAG bShowPoint = format::SHOW_POINT,
+				format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
+				format::POS_FLAG bShowPos = format::HIDE_POS,
+				format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
+				int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
+
+				stream_type		stream(buf_);
+				std::ios::fmtflags nFlags = stream.flags();
+				if (bFixed == format::FIXED)
+					stream.setf(std::ios::fixed, std::ios::floatfield);
+				else
+					stream.setf(std::ios::scientific, std::ios::floatfield);
+				if (bShowPoint == format::SHOW_POINT)
+					stream.setf(std::ios::showpoint);
+				else
+					stream.unsetf(std::ios::showpoint);
+				if (bShowPos == format::SHOW_POS)
+					stream.setf(std::ios::showpos);
+				else
+					stream.unsetf(std::ios::showpos);
+				if (bUpcase == format::CHAR_UPCASE)
+					stream.setf(std::ios::uppercase);
+				else
+					stream.unsetf(std::ios::uppercase);
+				stream.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
+
+				if (nPrecision != -1)
+					nPrecision = static_cast<int>(stream.precision(nPrecision));
+				if (nWidth != -1)
+					nWidth = static_cast<int>(stream.width(nWidth));
+				chFill = stream.fill(chFill);
+
+				stream << static_cast<typeDouble>(dbVal);
+
+				stream.flags(nFlags);
+				if (nPrecision != -1)
+					stream.precision(nPrecision);
+				if (nWidth != -1)
+					stream.width(nWidth);
+				stream.fill(chFill);
+			}
+
+			void	reserve(size_t n) {}
+
+			buffer_type & buf_;
 		};
 
 		template<class T>

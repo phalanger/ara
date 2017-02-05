@@ -207,10 +207,11 @@ namespace ara {
 	}
 	template<class bufCh, class ch, typename...TypeList>
 	inline size_t	snprintf(bufCh * buf, size_t nBufSize, const ch * s, TypeList... t2) {
-		ara::internal::fixed_buffer<bufCh>		buffer(buf, nBufSize);
-		ara::internal::fixed_stream<bufCh>		stream(buffer);
-		stream_printf(stream, s, std::forward<TypeList>(t2)...);
-		size_t n = stream.size();
+		internal::fixed_buffer<bufCh>		buffer(buf, nBufSize);
+		str_format<internal::fixed_buffer<bufCh>>		f(buffer);
+		f.printf(s, std::forward<TypeList>(t2)...);
+
+		size_t n = buffer.begin() - buf;
 		if (n < nBufSize)
 			buf[n] = bufCh();
 		return n;
