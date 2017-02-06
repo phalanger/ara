@@ -45,31 +45,31 @@ namespace ara {
 			return 0;
 		}
 
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline int	compare(const typeStr & s) const {
 			return compare(s.data(), s.size());
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator==(const typeStr & s) const {
 			return compare(s) == 0;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator!=(const typeStr & s) const {
 			return compare(s) != 0;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator<(const typeStr & s) const {
 			return compare(s) < 0;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator>(const typeStr & s) const {
 			return compare(s) > 0;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator<=(const typeStr & s) const {
 			return compare(s) <= 0;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator>=(const typeStr & s) const {
 			return compare(s) >= 0;
 		}

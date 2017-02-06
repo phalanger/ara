@@ -126,6 +126,8 @@
     <File Name="../../../ara/error.h"/>
     <File Name="../../../ara/utils.h"/>
     <File Name="../../../ara/json.h"/>
+    <File Name="../../../ara/event.h"/>
+    <File Name="../../../ara/fixed_string.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>

@@ -65,19 +65,19 @@ namespace ara {
 				if (rest) {
 					buf_.resize(size_ + rest);
 					char_type * buf = const_cast<char_type *>(buf_.data());
-					setp(buf + size_, buf + buf_.size());
+					this->setp(buf + size_, buf + buf_.size());
 				}
 				else
-					setp(nullptr, nullptr);
+					this->setp(nullptr, nullptr);
 			}
 			~string_stream() {
-				size_ += pptr() - pbase();
+				size_ += this->pptr() - this->pbase();
 				buf_.resize(size_);
 			}
 		protected:
 			int 	sync() { return 0; }
 			int 	overflow(int c) {
-				size_ += pptr() - pbase();
+				size_ += this->pptr() - this->pbase();
 				buf_.resize(size_);
 				buf_ += static_cast<char_type>(c);
 				++size_;
@@ -86,7 +86,7 @@ namespace ara {
 				if (maxsize <= size_)
 					return traits_type::eof();
 				char_type * buf = const_cast<char_type *>(buf_.data());
-				setp(buf + size_, buf + maxsize);
+				this->setp(buf + size_, buf + maxsize);
 				if (grow_ < 1024)
 					grow_ <<= 1;
 				return c; 
