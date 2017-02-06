@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\..\ara\error.h" />
     <ClInclude Include="..\..\..\ara\event.h" />
     <ClInclude Include="..\..\..\ara\filesys.h" />
+    <ClInclude Include="..\..\..\ara\fixed_string.h" />
     <ClInclude Include="..\..\..\ara\flags.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />

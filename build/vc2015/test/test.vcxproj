@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\test\benchmark_printf.cpp" />
     <ClCompile Include="..\..\..\test\main.cpp" />
     <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
     <ClCompile Include="..\..\..\test\test_datetime.cpp" />
     <ClCompile Include="..\..\..\test\test_dlist.cpp" />
     <ClCompile Include="..\..\..\test\test_filesys.cpp" />
+    <ClCompile Include="..\..\..\test\test_fixedstring.cpp" />
     <ClCompile Include="..\..\..\test\test_flags.cpp" />
     <ClCompile Include="..\..\..\test\test_log.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
@@ -132,7 +134,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>"$(TargetDir)\$(TargetName).exe"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

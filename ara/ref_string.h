@@ -44,8 +44,8 @@ public:
 		m_pCh(string_traits<typeStr>::data(s) + off), m_pChEnd(m_pCh + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
 
 	int	compare( const ref_string_base & s ) const    {
-		size_t nS1 = size() * sizeof(Ch);
-		size_t nS2 = s.size() * sizeof(Ch);
+		size_t nS1 = size();
+		size_t nS2 = s.size();
 		size_t nCmpSize = nS1 > nS2 ?  nS2 : nS1;
 		int n = chTraits::compare( m_pCh, s.m_pCh, nCmpSize );
 		if ( n != 0 )

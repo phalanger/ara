@@ -108,5 +108,8 @@
     <ClInclude Include="..\..\..\ara\json.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\fixed_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

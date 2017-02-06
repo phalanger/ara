@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "ref_string.h"
+#include "fixed_string.h"
 #include "internal/string_traits.h"
 #include "internal/string_convert.h"
 #include "internal/strformat.h"
@@ -207,13 +208,13 @@ namespace ara {
 	}
 	template<class bufCh, class ch, typename...TypeList>
 	inline size_t	snprintf(bufCh * buf, size_t nBufSize, const ch * s, TypeList... t2) {
-		internal::fixed_buffer<bufCh>		buffer(buf, nBufSize);
-		str_format<internal::fixed_buffer<bufCh>>		f(buffer);
+		fixed_string_base<bufCh>	str(buf, nBufSize);
+		str_format<fixed_string_base<bufCh>>		f(str);
 		f.printf(s, std::forward<TypeList>(t2)...);
 
-		size_t n = buffer.begin() - buf;
+		size_t n = str.size();
 		if (n < nBufSize)
-			buf[n] = bufCh();
+			str.append(bufCh());
 		return n;
 	}
 }
