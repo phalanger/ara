@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\..\test\test_filesys.cpp" />
     <ClCompile Include="..\..\..\test\test_fixedstring.cpp" />
     <ClCompile Include="..\..\..\test\test_flags.cpp" />
+    <ClCompile Include="..\..\..\test\test_keystring.cpp" />
     <ClCompile Include="..\..\..\test\test_log.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />

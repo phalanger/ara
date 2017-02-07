@@ -60,7 +60,7 @@ namespace ara {
 			typedef std::basic_ostream<char_type, traits_type>		ostream_parent;
 			typedef string_traits<strType>			string_traits;
 
-			string_stream(strType & buf) : buf_(buf), streambuf_parent(), ostream_parent((streambuf_parent*)this) {
+			string_stream(strType & buf) : streambuf_parent(), ostream_parent((streambuf_parent*)this), buf_(buf) {
 				size_ = string_traits::size(buf_);
 				size_type rest = string_traits::capacity(buf_) - size_;
 				if (rest) {
@@ -595,16 +595,16 @@ namespace ara {
 			char_type           chFill = ' ';
 			const char_type * pBegin = fmt;
 			const char_type * pEnd = fmt + n;
-			format::POS_FLAG bShowPos = format::HIDE_POS;
-			format::BASE_FLAG bShowBase = format::HIDE_BASE;
+			//format::POS_FLAG bShowPos = format::HIDE_POS;
+			//format::BASE_FLAG bShowBase = format::HIDE_BASE;
 			format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT;
 
 			for (;;) {
 				if (fmt >= pEnd)
 					break;
-				CHECK_CH('#', bShowBase = format::SHOW_BASE)
+				//CHECK_CH('#', bShowBase = format::SHOW_BASE)
 				CHECK_CH('-', nAdjust = format::ADJUST_LEFT)
-				CHECK_CH('+', bShowPos = format::SHOW_POS)
+				//CHECK_CH('+', bShowPos = format::SHOW_POS)
 				CHECK_CH(' ', chFill = ' ')
 				CHECK_CH('0', chFill = '0')
 				else

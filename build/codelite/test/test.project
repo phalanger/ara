@@ -33,6 +33,7 @@
     <File Name="../../../test/test_threadext.cpp"/>
     <File Name="../../../test/benchmark_printf.cpp"/>
     <File Name="../../../test/test_fixedstring.cpp"/>
+    <File Name="../../../test/test_keystring.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

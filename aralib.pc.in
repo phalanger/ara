@@ -1,0 +1,7 @@
+includedir=@INCLUDE_INSTALL_DIR@
+
+Name: @PROJECT_NAME@
+Description: A simple C++14 template library
+Version: @LIB_VERSION_STRING@
+URL: https://github.com/phalanger/ara
+Cflags: -I${includedir}
