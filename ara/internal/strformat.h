@@ -58,34 +58,35 @@ namespace ara {
 			typedef typename strType::size_type		size_type;
 			typedef std::basic_streambuf<char_type, traits_type>	streambuf_parent;
 			typedef std::basic_ostream<char_type, traits_type>		ostream_parent;
+			typedef string_traits<strType>			string_traits;
 
 			string_stream(strType & buf) : buf_(buf), streambuf_parent(), ostream_parent((streambuf_parent*)this) {
-				size_ = buf_.size();
-				size_type rest = buf_.capacity() - size_;
+				size_ = string_traits::size(buf_);
+				size_type rest = string_traits::capacity(buf_) - size_;
 				if (rest) {
-					buf_.resize(size_ + rest);
-					char_type * buf = const_cast<char_type *>(buf_.data());
-					this->setp(buf + size_, buf + buf_.size());
+					string_traits::resize(buf_, size_ + rest);
+					char_type * buf = const_cast<char_type *>(string_traits::data(buf_));
+					this->setp(buf + size_, buf + string_traits::size(buf_));
 				}
 				else
 					this->setp(nullptr, nullptr);
 			}
 			~string_stream() {
 				size_ += this->pptr() - this->pbase();
-				buf_.resize(size_);
+				string_traits::resize(buf_, size_);
 			}
 		protected:
 			int 	sync() { return 0; }
 			int 	overflow(int c) {
 				size_ += this->pptr() - this->pbase();
-				buf_.resize(size_);
-				buf_ += static_cast<char_type>(c);
+				string_traits::resize(buf_, size_);
+				string_traits::append(buf_, static_cast<char_type>(c));
 				++size_;
-				buf_.resize(size_ + grow_);
-				size_type maxsize = buf_.size();
+				string_traits::resize(buf_, size_ + grow_);
+				size_type maxsize = string_traits::size(buf_);
 				if (maxsize <= size_)
 					return traits_type::eof();
-				char_type * buf = const_cast<char_type *>(buf_.data());
+				char_type * buf = const_cast<char_type *>(string_traits::data(buf_));
 				this->setp(buf + size_, buf + maxsize);
 				if (grow_ < 1024)
 					grow_ <<= 1;

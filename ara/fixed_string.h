@@ -47,7 +47,7 @@ namespace ara {
 
 		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline int	compare(const typeStr & s) const {
-			return compare(s.data(), s.size());
+			return compare(string_traits<typeStr>::data(s), string_traits<typeStr>::size(s));
 		}
 		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline bool operator==(const typeStr & s) const {
@@ -108,9 +108,9 @@ namespace ara {
 			return *this;
 		}
 
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline const fixed_string_base & operator=(const typeStr & s) {
-			return assign(s.data(), s.size());
+			return assign(string_traits<typeStr>::data(s), string_traits<typeStr>::size(s));
 		}
 		inline const fixed_string_base & operator=(const fixed_string_base & s) {
 			if (&s != this)
@@ -233,8 +233,9 @@ namespace ara {
 			}
 			return (npos);	// no match
 		}
-		inline size_type		find(const fixed_string_base & s, size_type nOff = 0) const {
-			return find(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		find(const typeStr & s, size_type nOff = 0) const {
+			return find(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
 		size_type		rfind(Ch ch, size_type nOff = npos) const {
@@ -266,8 +267,9 @@ namespace ara {
 
 			return (npos);	// no match
 		}
-		inline size_type		rfind(const fixed_string_base & s, size_type nOff = 0) const {
-			return rfind(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		rfind(const typeStr & s, size_type nOff = 0) const {
+			return rfind(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
 		size_type		find_first_of(const Ch * s, size_type nOff, size_type nSize) const {
@@ -279,8 +281,9 @@ namespace ara {
 					return p - m_pCh;
 			return npos;
 		}
-		inline size_type		find_first_of(const fixed_string_base & s, size_type nOff = 0) const {
-			return find_first_of(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		find_first_of(const typeStr & s, size_type nOff = 0) const {
+			return find_first_of(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
 		size_type		find_first_not_of(const Ch * s, size_type nOff, size_type nSize) const {
@@ -292,8 +295,9 @@ namespace ara {
 					return p - m_pCh;
 			return npos;
 		}
-		inline size_type		find_first_not_of(const fixed_string_base & s, size_type nOff = 0) const {
-			return find_first_not_of(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		find_first_not_of(const typeStr & s, size_type nOff = 0) const {
+			return find_first_not_of(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
 		size_type		find_last_of(const Ch * s, size_type nOff, size_type nSize) const {
@@ -306,8 +310,9 @@ namespace ara {
 					return p - m_pCh;
 			return npos;
 		}
-		inline size_type		find_last_of(const fixed_string_base & s, size_type nOff = npos) const {
-			return find_last_of(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		find_last_of(const typeStr & s, size_type nOff = npos) const {
+			return find_last_of(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
 		size_type		find_last_not_of(const Ch * s, size_type nOff, size_type nSize) const {
@@ -320,16 +325,17 @@ namespace ara {
 					return p - m_pCh;
 			return npos;
 		}
-		inline size_type		find_last_not_of(const fixed_string_base & s, size_type nOff = npos) const {
-			return find_last_not_of(s.data(), nOff, s.size());
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
+		inline size_type		find_last_not_of(const typeStr & s, size_type nOff = npos) const {
+			return find_last_not_of(string_traits<typeStr>::data(s), nOff, string_traits<typeStr>::size(s));
 		}
 
-		inline std::basic_string<value_type> str() const {
-			return std::basic_string<value_type>(data(), size());
+		inline std::basic_string<value_type, chTraits> str() const {
+			return std::basic_string<value_type, chTraits>(data(), size());
 		}
 		template<typename typeString>
 		inline typeString  as() const {
-			return typeString(data(), size());
+			return string_traits<typeString>::make(data(), size());
 		}
 
 		inline void	swap(const fixed_string_base & s) {
@@ -365,11 +371,11 @@ namespace ara {
 			}
 			return *this;
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline fixed_string_base & append(const typeStr & s) {
-			size_type nCopy = std::min<size_type>(s.size(), capacity() - size());
+			size_type nCopy = std::min<size_type>(string_traits<typeStr>::size(s), capacity() - size());
 			if (nCopy) {
-				chTraits::move(m_pChEnd, s.data(), nCopy);
+				chTraits::move(m_pChEnd, string_traits<typeStr>::data(s), nCopy);
 				m_pChEnd += nCopy;
 			}
 			return *this;
@@ -381,7 +387,7 @@ namespace ara {
 		inline fixed_string_base & operator+=(const Ch * ch) {
 			return append(ch);
 		}
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		inline fixed_string_base & operator+=(const typeStr & s) {
 			return append(s);
 		}
@@ -414,14 +420,14 @@ namespace ara {
 			return insert(nWhere, s, chTraits::length(s));
 		}
 
-		template<typename typeStr>
+		template<typename typeStr, typename std::enable_if<is_string<typeStr>::value>::type>
 		fixed_string_base & insert(size_type nWhere, const typeStr & srcStr, size_type off = 0, size_type count = npos) {
-			size_type nSrcSize = srcStr.size();
+			size_type nSrcSize = string_traits<typeStr>::size(srcStr);
 			if (off > nSrcSize)
 				off = nSrcSize;
 			if (count > nSrcSize || off + count > nSrcSize)
 				count = nSrcSize - off;
-			return insert(nWhere, srcStr.data() + off, count);
+			return insert(nWhere, string_traits<typeStr>::data(srcStr) + off, count);
 		}
 
 		void	reserve(size_type) {}

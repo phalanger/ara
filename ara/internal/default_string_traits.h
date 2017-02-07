@@ -49,6 +49,9 @@ namespace ara {
 		static bool empty(const base_type & s) {
 			return s.empty();
 		}
+		static inline size_type capacity(base_type & s) {
+			return s.capacity();
+		}
 
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {
 			return s.find(ch, off);
