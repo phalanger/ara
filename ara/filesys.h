@@ -151,7 +151,7 @@ namespace ara {
 			return to_path(join_to_file(sPath, sSub));
 		}
 		template<typename typeStrResult, typename ...typeStr>
-		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr... sPath) {
+		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&... sPath) {
 			return join_to_path(join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
 
@@ -173,7 +173,7 @@ namespace ara {
 			return  res;
 		}
 		template<typename typeStrResult, class...typeStr>
-		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr...sPath) {
+		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&...sPath) {
 			return join_to_file( join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
 
@@ -299,10 +299,12 @@ namespace ara {
 		}
 #endif
 
-		template<class typeStr>
+		template<class typeStrIn>
 		class path_splitor
 		{
 		public:
+			typedef typename std::remove_reference<typeStrIn>::type	typeStrInNoRef;
+			typedef typename std::remove_const<typeStrInNoRef>::type	typeStr;
 			typedef typename string_traits<typeStr>::value_type	value_type;
 			typedef typename string_traits<typeStr>::size_type	size_type;
 
@@ -372,18 +374,8 @@ namespace ara {
 		};
 
 		template<class typeStr>
-		static path_splitor<typeStr>	split_path(const typeStr & s) {
-			return path_splitor<typeStr>(s);
-		}
-
-		template<class typeStr>
-		static path_splitor<typeStr>	split_path(typeStr & s) {
-			return path_splitor<typeStr>(s);
-		}
-
-		template<class typeStr>
 		static path_splitor<typeStr>	split_path(typeStr && s) {
-			return path_splitor<typeStr>(std::move(s));
+			return path_splitor<typeStr>(std::forward<typeStr>(s));
 		}
 
 		template<class typeStr>

@@ -23,6 +23,7 @@
 #include <string>
 #include <type_traits>
 
+#include "utils.h"
 #include "ref_string.h"
 #include "fixed_string.h"
 #include "internal/string_traits.h"
@@ -35,16 +36,20 @@ namespace ara {
 	class string_ext
 	{
 	public:
-		using typeOrgStr = std::remove_const_t<typeStr>;
+		using typeOrgStr = typename std::remove_const<typeStr>::type;
 		using typeStrTraits = string_traits<typeOrgStr>;
 		using value_type = typename typeStrTraits::value_type;
 		using typeRefStr = ref_string_base<value_type, typename  typeStrTraits::traits_type>;
+		using iterator = typename select_type<std::is_const<typeStr>::value, 
+										typename typeOrgStr::const_iterator, 
+										typename typeOrgStr::iterator>::type;
+
 
 		string_ext(typeStr & s) : str_(s) {}
 		string_ext(const string_ext & s) : str_(s.str_) {}
 
-		auto begin() { return typeStrTraits::begin(str_); }
-		auto end() { return typeStrTraits::end(str_); }
+		iterator begin() { return typeStrTraits::begin(str_); }
+		iterator end() { return typeStrTraits::end(str_); }
 		typename typeStrTraits::const_iterator begin() const { return typeStrTraits::begin(str_); }
 		typename typeStrTraits::const_iterator end() const { return typeStrTraits::end(str_); }
 
@@ -159,7 +164,7 @@ namespace ara {
 		}
 
 		template<class ch, typename...TypeList>
-		string_ext &	printf(const ch * s, TypeList... t2) {
+		string_ext &	printf(const ch * s, TypeList&&... t2) {
 			str_format<typeStr>		f(str_);
 			f.printf(s , std::forward<TypeList>(t2)...);
 			return *this;
@@ -180,7 +185,7 @@ namespace ara {
 	}
 
 	template<class strType, class ch, typename...TypeList>
-	inline strType	str_printf(const ch * s, TypeList... t2) {
+	inline strType	str_printf(const ch * s, TypeList&&... t2) {
 		strType		str;
 		str_format<strType>		f(str);
 		f.printf(s, std::forward<TypeList>(t2)...);
@@ -193,21 +198,21 @@ namespace ara {
 	}
 
 	template<class Stream, class ch, typename...TypeList >
-	inline Stream & stream_printf(Stream & out, const ch * s, TypeList... t2) {
+	inline Stream & stream_printf(Stream & out, const ch * s, TypeList&&... t2) {
 		str_format<Stream>(out).printf(s, std::forward<TypeList>(t2)...);
 		return out;
 	}
 
 	template<class strType, class ch, typename...TypeList>
-	inline strType	printf(const ch * s, TypeList... t2) {
+	inline strType	printf(const ch * s, TypeList&&... t2) {
 		return str_printf<strType>(s, std::forward<TypeList>(t2)...);
 	}
 	template<class streamChar, class streamTraits, class ch, typename...TypeList>
-	inline std::basic_ostream<streamChar, streamTraits> & printf(std::basic_ostream<streamChar, streamTraits> & out, const ch * s, TypeList... t2) {
+	inline std::basic_ostream<streamChar, streamTraits> & printf(std::basic_ostream<streamChar, streamTraits> & out, const ch * s, TypeList&&... t2) {
 		return stream_printf(out, s, std::forward<TypeList>(t2)...);
 	}
 	template<class bufCh, class ch, typename...TypeList>
-	inline size_t	snprintf(bufCh * buf, size_t nBufSize, const ch * s, TypeList... t2) {
+	inline size_t	snprintf(bufCh * buf, size_t nBufSize, const ch * s, TypeList&&... t2) {
 		fixed_string_base<bufCh>	str(buf, nBufSize);
 		str_format<fixed_string_base<bufCh>>		f(str);
 		f.printf(s, std::forward<TypeList>(t2)...);

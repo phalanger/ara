@@ -59,12 +59,12 @@ public:
 	}
 
 	template<typename...args>
-	inline	flags &	set_flags(valueType n, args... nFlags) {
+	inline	flags &	set_flags(valueType n, args&&... nFlags) {
 		flags_num_ |= n;
 		return set_flags(std::forward<args>(nFlags)...);
 	}
 	template<typename...args>
-	inline	flags &	clear_flags(valueType n, args... nFlags) {
+	inline	flags &	clear_flags(valueType n, args&&... nFlags) {
 		flags_num_ &= ~n;
 		return clear_flags(std::forward<args>(nFlags)...);
 	}
@@ -83,11 +83,11 @@ public:
 	}
 
 	template<typename...args>
-	inline	bool	check_all(valueType nFlag, args... nOthers) const {
+	inline	bool	check_all(valueType nFlag, args&&... nOthers) const {
 		return ((flags_num_ & nFlag) == nFlag) && check_all(std::forward<args>(nOthers)...);
 	}
 	template<typename...args>
-	inline	bool	check_one(valueType nFlag, args... nOthers) const {
+	inline	bool	check_one(valueType nFlag, args&&... nOthers) const {
 		return ((flags_num_ & nFlag) == nFlag) || check_one(std::forward<args>(nOthers)...);
 	}
 

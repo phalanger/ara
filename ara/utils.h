@@ -14,20 +14,34 @@
 
 namespace ara {
 
+	template<bool B, class T1, class T2>
+	struct select_type {
+		typedef T2		type;
+	};
+	template<class T1, class T2>
+	struct select_type<true, T1, T2> {
+		typedef T1		type;
+	};
+
 	namespace internal {
 		template<typename container>
 		class reverse_range_helper {
 		public:
+			typedef typename select_type<std::is_const<container>::value, 
+				typename container::const_reverse_iterator, 
+				typename container::reverse_iterator>::type iterator;
+
 			reverse_range_helper(container & c) : c_(c) {}
 			reverse_range_helper(const reverse_range_helper & r) : c_(r.c_) {}
 
-			inline auto begin() {
+			inline iterator begin() {
 				return c_.rbegin();
 			}
-			inline auto end() {
+			inline iterator end() {
 				return c_.rend();
 			}
 		protected:
+
 			container & c_;
 		};
 	}

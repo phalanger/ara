@@ -58,35 +58,35 @@ namespace ara {
 			typedef typename strType::size_type		size_type;
 			typedef std::basic_streambuf<char_type, traits_type>	streambuf_parent;
 			typedef std::basic_ostream<char_type, traits_type>		ostream_parent;
-			typedef string_traits<strType>			string_traits;
+			typedef string_traits<strType>			string_traits_type;
 
 			string_stream(strType & buf) : streambuf_parent(), ostream_parent((streambuf_parent*)this), buf_(buf) {
-				size_ = string_traits::size(buf_);
-				size_type rest = string_traits::capacity(buf_) - size_;
+				size_ = string_traits_type::size(buf_);
+				size_type rest = string_traits_type::capacity(buf_) - size_;
 				if (rest) {
-					string_traits::resize(buf_, size_ + rest);
-					char_type * buf = const_cast<char_type *>(string_traits::data(buf_));
-					this->setp(buf + size_, buf + string_traits::size(buf_));
+					string_traits_type::resize(buf_, size_ + rest);
+					char_type * buf = const_cast<char_type *>(string_traits_type::data(buf_));
+					this->setp(buf + size_, buf + string_traits_type::size(buf_));
 				}
 				else
 					this->setp(nullptr, nullptr);
 			}
 			~string_stream() {
 				size_ += this->pptr() - this->pbase();
-				string_traits::resize(buf_, size_);
+				string_traits_type::resize(buf_, size_);
 			}
 		protected:
 			int 	sync() { return 0; }
 			int 	overflow(int c) {
 				size_ += this->pptr() - this->pbase();
-				string_traits::resize(buf_, size_);
-				string_traits::append(buf_, static_cast<char_type>(c));
+				string_traits_type::resize(buf_, size_);
+				string_traits_type::append(buf_, static_cast<char_type>(c));
 				++size_;
-				string_traits::resize(buf_, size_ + grow_);
-				size_type maxsize = string_traits::size(buf_);
+				string_traits_type::resize(buf_, size_ + grow_);
+				size_type maxsize = string_traits_type::size(buf_);
 				if (maxsize <= size_)
 					return traits_type::eof();
-				char_type * buf = const_cast<char_type *>(string_traits::data(buf_));
+				char_type * buf = const_cast<char_type *>(string_traits_type::data(buf_));
 				this->setp(buf + size_, buf + maxsize);
 				if (grow_ < 1024)
 					grow_ <<= 1;
@@ -284,7 +284,7 @@ namespace ara {
 				append_str(ch, std::char_traits<char32_t>::length(ch));
 			}
 
-			template<class T2, typename std::enable_if_t<std::is_integral<T2>::value>>
+			template<class T2, typename std::enable_if<std::is_integral<T2>::value>::type>
 			inline void	append(const T2 & t) {
 				append_int<T2, 10, false>(t);
 			}
@@ -444,7 +444,7 @@ namespace ara {
 		str_format(T & t) : out_(t) {}
 
 		template<class ch, typename...TypeList>
-		str_format &	printf(const ch * s, TypeList... t2) {
+		str_format &	printf(const ch * s, TypeList&&... t2) {
 			size_t nLength = std::char_traits<ch>::length(s);
 			out_.reserve(nLength);
 			printf_imp(s, nLength, std::forward<TypeList>(t2)...);
@@ -634,7 +634,7 @@ namespace ara {
 			return fmt - pBegin;
 		}
 		template<typename char_type, typename T1, typename...TypeList>
-		size_t printf_imp(const char_type * fmt, size_t nSize, T1 && t1, TypeList... t2) {
+		size_t printf_imp(const char_type * fmt, size_t nSize, T1 && t1, TypeList&&... t2) {
 			size_t i = append_prefix(fmt, nSize);
 			if (i + 1 >= nSize)
 				return nSize;
