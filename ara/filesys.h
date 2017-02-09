@@ -455,7 +455,8 @@ namespace ara {
 			strFolder.assign(lpTempPathBuffer, dw);
 			return true;
 #else
-			strFolder = getenv("TMPDIR");
+			const char * tp = getenv("TMPDIR");
+			strFolder = (tp == nullptr ? "/tmp" : tp);
 			return true;
 #endif
 		}
@@ -469,7 +470,10 @@ namespace ara {
 			strFolder.assign(lpTempPathBuffer, dw);
 			return true;
 #else
-			strext(strFolder) = getenv("TMPDIR");
+			std::string tmp;
+			if (!get_temp_folder(tmp))
+				return false;
+			strFolder = strext(tmp).to<std::wstring>();
 			return true;
 #endif
 		}
