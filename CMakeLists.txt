@@ -5,9 +5,9 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 PROJECT(ara)
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    # require at least gcc 4.8.2
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8.2)
-        message(FATAL_ERROR "GCC version must be at least 4.8.2!")
+    # require at least gcc 4.8
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+        message(FATAL_ERROR "GCC version must be at least 4.8!")
     endif()
     set(CMAKE_CXX_FLAGS "-std=c++11 -O2 ${CMAKE_CXX_FLAGS}")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

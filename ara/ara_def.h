@@ -64,8 +64,8 @@
 #if  defined(LINUX) || defined(__linux)
 	#define ARA_LINUX_VER
 #endif  //LINUX
-#if defined(__APPLE__)
-	#define ARA_APPLE_VER
+#if defined(__MACH__)
+	#define ARA_MAC_VER
 #endif //__APPLE__    
 
 #ifdef __GNUC__
