@@ -446,6 +446,33 @@ namespace ara {
 #endif
 		}
 
+		static bool	get_temp_folder(std::string & strFolder) {
+#ifdef ARA_WIN32_VER
+			char lpTempPathBuffer[MAX_PATH];
+			DWORD dw = ::GetTempPathA(MAX_PATH, lpTempPathBuffer);
+			if (dw == 0)
+				return false;
+			strFolder.assign(lpTempPathBuffer, dw);
+			return true;
+#else
+			strFolder = getenv("TMPDIR");
+			return true;
+#endif
+		}
+
+		static bool	get_temp_folder(std::wstring & strFolder) {
+#ifdef ARA_WIN32_VER
+			wchar_t lpTempPathBuffer[MAX_PATH];
+			DWORD dw = ::GetTempPathW(MAX_PATH, lpTempPathBuffer);
+			if (dw == 0)
+				return false;
+			strFolder.assign(lpTempPathBuffer, dw);
+			return true;
+#else
+			strext(strFolder) = getenv("TMPDIR");
+			return true;
+#endif
+		}
 	};//file sys
 
 #if defined(ARA_WIN32_VER)

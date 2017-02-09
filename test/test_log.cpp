@@ -55,11 +55,9 @@ TEST_CASE("log", "[base]") {
 
 TEST_CASE("log to file", "[base]") {
 
-#ifdef ARA_WIN32_VER
-	std::string strFile = "D:\\a.log";
-#else
-	std::string strFile = "/tmp/a.log";
-#endif
+	std::string strFile;
+	REQUIRE(ara::file_sys::get_temp_folder(strFile));
+	strFile = ara::file_sys::join_to_file(strFile, std::string("a.log"));
 
 	SECTION("rolling file") {
 
