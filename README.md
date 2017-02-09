@@ -1,6 +1,8 @@
 # ara
 
-Build status (on Travis CI) [![Build Status](https://travis-ci.org/phalanger/ara.svg?branch=master)](https://travis-ci.org/phalanger/ara)
+Linux/Mac Build status (on Travis CI) [![Build Status](https://travis-ci.org/phalanger/ara.svg?branch=master)](https://travis-ci.org/phalanger/ara)
+
+Windows Build status (on AppVeyor) [![Build Status](https://ci.appveyor.com/api/projects/status/842088lgtg7gnyx8/branch/master)](https://ci.appveyor.com/project/phalanger/ara/branch/master)
 
 "ara" is a simple template C++14 library.
 
