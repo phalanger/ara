@@ -137,6 +137,12 @@ namespace ara {
 			return *this;
 		}
 
+		template<class T>
+		inline string_ext & append(T ch, typename std::enable_if<is_char<T>::value>::type * p3 = 0) {
+			internal::string_convert::append(str_, &ch, 1);
+			return *this;
+		}
+
 		template<class T, typename = typename std::enable_if<is_string<T>::value>::type >
 		inline string_ext & operator+=(const T & t) {
 			internal::string_convert::append(str_, t);
@@ -145,6 +151,11 @@ namespace ara {
 		template<class T, typename = typename std::enable_if<is_char<T>::value>::type >
 		inline string_ext & operator+=(const T * p) {
 			internal::string_convert::append(str_, ref_string_base<T>(p));
+			return *this;
+		}
+		template<class T, typename = typename std::enable_if<is_char<T>::value>::type >
+		inline string_ext & operator+=(T ch) {
+			internal::string_convert::append(str_, &ch, 1);
 			return *this;
 		}
 

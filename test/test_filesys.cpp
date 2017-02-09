@@ -113,11 +113,11 @@ TEST_CASE("filesys", "[base]") {
 
 	SECTION("rwafile") {
 		ara::raw_file	rf;
-#ifdef ARA_WIN32_VER
-		std::string strFile = "D:\\test.txt";
-#else
-		std::string strFile = "/tmp/123.txt";
-#endif
+
+		std::string strFile;
+		REQUIRE(ara::file_sys::get_temp_folder(strFile));
+		strFile += ara::file_sys::path_slash();
+		strFile += "123.txt";
 
 		ara::file_sys::unlink(strFile);
 
