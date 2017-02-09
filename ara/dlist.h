@@ -143,71 +143,71 @@ namespace ara {
 		protected:
 			const dlist	* p_ = nullptr;
 		};
-		class backward_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
+		class reverse_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 		public:
-			explicit backward_iterator(dlist * p) : p_(p) {}
-			backward_iterator(const backward_iterator & rhs) : p_(rhs.p_) {}
+			explicit reverse_iterator(dlist * p) : p_(p) {}
+			reverse_iterator(const reverse_iterator & rhs) : p_(rhs.p_) {}
 
 			T & operator * () const {
 				return p_->data();
 			}
-			bool operator == (const backward_iterator & rhs) const {
+			bool operator == (const reverse_iterator & rhs) const {
 				return p_ == rhs.p_;
 			}
-			bool operator != (const backward_iterator& rhs) const {
+			bool operator != (const reverse_iterator& rhs) const {
 				return p_ != rhs.p_;
 			}
-			backward_iterator& operator ++ () {
+			reverse_iterator& operator ++ () {
 				p_ = p_->get_pre();
 				return *this;
 			}
-			backward_iterator operator ++ (int) {
-				backward_iterator temp(p_);
+			reverse_iterator operator ++ (int) {
+				reverse_iterator temp(p_);
 				p_ = p_->get_pre();
 				return temp;
 			}
-			backward_iterator & operator --() {
+			reverse_iterator & operator --() {
 				p_ = p_->get_next();
 				return *this;
 			}
-			backward_iterator operator -- (int) {
-				backward_iterator temp = *this;
+			reverse_iterator operator -- (int) {
+				reverse_iterator temp = *this;
 				p_ = p_->get_next();
 				return temp;
 			}
 		protected:
 			dlist	*	p_ = nullptr;
 		};
-		class const_backward_iterator : public std::iterator<std::bidirectional_iterator_tag, const T> {
+		class const_reverse_iterator : public std::iterator<std::bidirectional_iterator_tag, const T> {
 		public:
-			explicit const_backward_iterator(const dlist * p) : p_(p) {}
-			const_backward_iterator(const const_backward_iterator & rhs) : p_(rhs.p_) {}
-			const_backward_iterator(const backward_iterator & rhs) : p_(rhs.p_) {}
+			explicit const_reverse_iterator(const dlist * p) : p_(p) {}
+			const_reverse_iterator(const const_reverse_iterator & rhs) : p_(rhs.p_) {}
+			const_reverse_iterator(const reverse_iterator & rhs) : p_(rhs.p_) {}
 
 			const T & operator * () const {
 				return p_->data();
 			}
-			bool operator == (const const_backward_iterator & rhs) const {
+			bool operator == (const const_reverse_iterator & rhs) const {
 				return p_ == rhs.p_;
 			}
-			bool operator != (const const_backward_iterator& rhs) const {
+			bool operator != (const const_reverse_iterator& rhs) const {
 				return p_ != rhs.p_;
 			}
-			const_backward_iterator& operator ++ () {
+			const_reverse_iterator& operator ++ () {
 				p_ = p_->get_pre();
 				return *this;
 			}
-			const_backward_iterator operator ++ (int) {
-				const_backward_iterator temp(p_);
+			const_reverse_iterator operator ++ (int) {
+				const_reverse_iterator temp(p_);
 				p_ = p_->get_pre();
 				return temp;
 			}
-			const_backward_iterator & operator --() {
+			const_reverse_iterator & operator --() {
 				p_ = p_->get_next();
 				return *this;
 			}
-			const_backward_iterator operator -- (int) {
-				const_backward_iterator temp = *this;
+			const_reverse_iterator operator -- (int) {
+				const_reverse_iterator temp = *this;
 				p_ = p_->get_next();
 				return temp;
 			}
@@ -234,23 +234,23 @@ namespace ara {
 			return const_forward_iterator(this);
 		}
 
-		backward_iterator	rbegin() {
-			return backward_iterator(get_pre());
+		reverse_iterator	rbegin() {
+			return reverse_iterator(get_pre());
 		}
-		backward_iterator	rend() {
-			return backward_iterator(this);
+		reverse_iterator	rend() {
+			return reverse_iterator(this);
 		}
-		const_backward_iterator	rbegin() const {
-			return const_backward_iterator(get_pre());
+		const_reverse_iterator	rbegin() const {
+			return const_reverse_iterator(get_pre());
 		}
-		const_backward_iterator	rend() const {
-			return const_backward_iterator(this);
+		const_reverse_iterator	rend() const {
+			return const_reverse_iterator(this);
 		}
-		const_backward_iterator	crbegin() const {
-			return const_backward_iterator(get_pre());
+		const_reverse_iterator	crbegin() const {
+			return const_reverse_iterator(get_pre());
 		}
-		const_backward_iterator	crend() const {
-			return const_backward_iterator(this);
+		const_reverse_iterator	crend() const {
+			return const_reverse_iterator(this);
 		}
 
 		T	& data() {

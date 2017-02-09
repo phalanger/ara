@@ -1,5 +1,7 @@
 # ara
 
+Build status (on Travis CI) [![Build Status](https://travis-ci.org/phalanger/ara.svg?branch=master)](https://travis-ci.org/phalanger/ara)
+
 "ara" is a simple template C++14 library.
 
 * ara is **small**
@@ -15,6 +17,8 @@ If need the **async** class, which depend on BOOST **asio**, need to build the B
 
 ### Windows platform
 
+install BOOST such like this:
+
 ~~~~~~~~~~bat
     bootstrap.bat
     b2 variant=debug link=static threading=multi runtime-link=static --without-python
@@ -24,6 +28,8 @@ If need the **async** class, which depend on BOOST **asio**, need to build the B
 ~~~~~~~~~~
 
 ### linux platform
+
+install BOOST such like this:
 
 ~~~~~~~~~~bat
     b2 -j 4 toolset=gcc link=static  stage debug

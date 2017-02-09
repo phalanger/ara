@@ -37,6 +37,7 @@ Debug
 /build/vc2015/x64
 /build/vc2015/ara/x64
 /build/vc2015/test/x64
+bin
 *.opensdf
 *.sdf
 *.vcxproj.user

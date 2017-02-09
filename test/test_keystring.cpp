@@ -46,7 +46,7 @@ TEST_CASE("key_string", "[base]") {
 
 		str1 = ara::key_wstring::copy(L"aaaa");
 		REQUIRE(str1.size() == 4);
-		REQUIRE(str1.data_type() ==  (sizeof(wchar_t) == 2 ? ara::key_wstring::TYPE_BUF : ara::key_wstring::TYPE_STORE));
+		REQUIRE(str1.data_type() ==  (sizeof(wchar_t) * 4 <= sizeof(void *) ? ara::key_wstring::TYPE_BUF : ara::key_wstring::TYPE_STORE));
 
 		str1 = ara::key_wstring::copy(L"aaa123456");
 		REQUIRE(str1.size() == 9);

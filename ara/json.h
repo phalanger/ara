@@ -95,7 +95,7 @@ namespace ara {
 			return t;
 		}
 		template<typename typeStr>
-		static jsdoc	parse(const typeStr & s, typename std::enable_if_t<ara::is_string<typeStr>::value, void> * dummy = nullptr) {
+		static jsdoc	parse(const typeStr & s, typename std::enable_if<ara::is_string<typeStr>::value, void>::type * dummy = nullptr) {
 			const Ch * ch = string_traits<typeStr>::data(s);
 			size_t n = string_traits<typeStr>::size(s);
 			rapidjson::ara_json_string_stream<const Ch *, Ch>	stream(ch, ch + n);
