@@ -114,7 +114,12 @@ TEST_CASE("filesys", "[base]") {
 	SECTION("rwafile") {
 		ara::raw_file	rf;
 #ifdef ARA_WIN32_VER
-		std::string strFile = "D:\\test.txt";
+		std::string strFile;
+		TCHAR lpTempPathBuffer[MAX_PATH];
+		GetTempPath(MAX_PATH, lpTempPathBuffer);
+		ara::strext(strFile) += lpTempPathBuffer;
+		strFile += ara::file_sys::path_slash();
+		strFile += "123.txt";
 #else
 		std::string strFile = "/tmp/123.txt";
 #endif
