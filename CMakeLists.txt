@@ -4,19 +4,19 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
 PROJECT(ara)
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # require at least gcc 4.8.2
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8.2)
         message(FATAL_ERROR "GCC version must be at least 4.8.2!")
     endif()
-    set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -O2 ${CMAKE_CXX_FLAGS}")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     # require at least clang 3.2
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.2)
         message(FATAL_ERROR "Clang version must be at least 3.2!")
     endif()
-    set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -O2 ${CMAKE_CXX_FLAGS}")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     # require at least VS2015
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.0)
         message(FATAL_ERROR "VC version must be at least 2015!")
@@ -53,31 +53,43 @@ set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VE
 
 include_directories("./")
 
+file(GLOB ARA_HEADERS ara/*.h)
+file(GLOB ARA_INTERNAL_HEADERS "ara/internal/*.h")
+SOURCE_GROUP("ara" FILES ${ARA_HEADERS})
+SOURCE_GROUP("ara\\internal" FILES ${ARA_INTERNAL_HEADERS})
+install(DIRECTORY ara/ DESTINATION include/ara FILES_MATCHING PATTERN "*.h")
+
 file(GLOB ARA_ASYNC_TEST_SRC test/test_async_*.cpp)
 file(GLOB ARA_TEST_SRC test/*.cpp)
 list(REMOVE_ITEM ARA_TEST_SRC ${ARA_ASYNC_TEST_SRC})
-add_executable(ara_test ${ARA_TEST_SRC})
-
-find_package(Threads REQUIRED)
-if(THREADS_HAVE_PTHREAD_ARG)
-  target_compile_options(PUBLIC ara_test "-pthread -lrt")
-endif()
-if(CMAKE_THREAD_LIBS_INIT)
-  target_link_libraries(ara_test "${CMAKE_THREAD_LIBS_INIT}" rt)
-endif()
-
-INCLUDE(FindBoost)
 
 # Find boost
+INCLUDE(FindBoost)
 set(Boost_USE_STATIC_LIBS        ON) # only find static libs
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
 find_package(Boost 1.56.0 COMPONENTS date_time thread system)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-    add_executable(test ${ARA_ASYNC_TEST_SRC})
-    target_link_libraries(ARA_TEST_SRC ${Boost_LIBRARIES})
+    add_executable(unittest ${ARA_TEST_SRC} ${ARA_HEADERS} ${ARA_INTERNAL_HEADERS} ${ARA_ASYNC_TEST_SRC})
+    target_link_libraries(unittest ${Boost_LIBRARIES})
+else()
+    add_executable(unittest ${ARA_TEST_SRC} ${ARA_HEADERS} ${ARA_INTERNAL_HEADERS})
 endif()
 
+#############################################################
+# set link argument
+
+find_package(Threads REQUIRED)
+if(THREADS_HAVE_PTHREAD_ARG)
+  target_compile_options(PUBLIC unittest "-pthread -lrt")
+endif()
+if(CMAKE_THREAD_LIBS_INIT)
+  target_link_libraries(unittest "${CMAKE_THREAD_LIBS_INIT}" rt)
+endif()
+
+#############################################################
+# add test
+
 enable_testing()
-add_test(NAME AraTest COMMAND ara_test)
+add_test(NAME AraTest COMMAND unittest)

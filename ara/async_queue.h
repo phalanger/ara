@@ -132,7 +132,7 @@ namespace ara {
 				std::string strExpire;
 				if (timer_) {
 					strExpire = " Expires at:";
-					strExpire += async::ptime_to_string(timer_->expires_at());
+					strExpire += date_time(timer_->expires_at()).format();
 				}
 				out << strPrefix << "[" << todo_ << "]" << strExpire << std::endl;
 			}
@@ -384,4 +384,4 @@ namespace ara {
 	}
 }//ara
 
-#endif ARA_ASYNC_QUEUE_H
+#endif//ARA_ASYNC_QUEUE_H
