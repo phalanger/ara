@@ -93,7 +93,7 @@ namespace ara {
 				if (::lstat(file_name_.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
 				{
 					::unlink(file_name_.c_str());
-					::symlink(strFileName.c_str(), file_name_.c_str());
+					(void)::symlink(strFileName.c_str(), file_name_.c_str());
 				}
 #endif
 			}

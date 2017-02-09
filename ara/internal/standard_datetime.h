@@ -11,8 +11,10 @@
 #include <chrono>
 #include <memory>
 
-#ifdef ARA_WIN32_VER
+#if defined(ARA_WIN32_VER)
 	#include <windows.h>
+#elif defined(ARA_MAC_VER)
+	#include <sys/time.h>
 #endif
 
 namespace ara {
@@ -160,7 +162,7 @@ namespace ara {
 
 
 			static void get_current(time_t & t, long & ns) {
-#ifdef ARA_WIN32_VER
+#if defined(ARA_WIN32_VER)
 				static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
 				SYSTEMTIME  system_time;
 				FILETIME    file_time;
@@ -173,6 +175,12 @@ namespace ara {
 
 				t = (time_t)((time - EPOCH) / 10000000L);
 				ns = (long)(system_time.wMilliseconds * 1000000);
+#elif defined(ARA_MAC_VER)
+				struct timeval now;
+				if (gettimeofday(&now, NULL) == 0) {
+					t = now.tv_sec;
+					ns = now.tv_usec * 1000;
+				}
 #else
 				struct timespec ts;
 				clock_gettime(CLOCK_MONOTONIC, &ts);
