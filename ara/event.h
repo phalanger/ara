@@ -63,7 +63,8 @@ namespace ara {
 			else {
 				auto exp = std::chrono::system_clock::now() + w.to_duration();
 				while (n_ != n)
-					cond_.wait_until(lk, exp);
+					if (cond_.wait_until(lk, exp) == std::cv_status::timeout)
+						break;
 			}
 			return n_ == n;
 		}
@@ -74,8 +75,10 @@ namespace ara {
 			std::unique_lock<std::mutex> lk(lock_);
 			if (n_ == n)
 				return true;
-			while (n_ != n)
-				cond_.wait_until(lk, abstime);
+			while (n_ != n) {
+				if (cond_.wait_until(lk, abstime) == std::cv_status::timeout)
+					break;
+			}
 			return n_ == n;
 		}
 
@@ -107,12 +110,18 @@ namespace ara {
 		void	reset(EVType n) {
 			n_ = n;
 		}
-
 	protected:
 		std::mutex				lock_;
 		std::condition_variable	cond_;
 		EVType					n_;
 	};
+
+	template<class Rep, class Period>
+	void	sleep(const std::chrono::duration<Rep, Period> & v) {
+		ara::event<int> ev(0);
+		auto now = std::chrono::system_clock::now();
+		ev.wait_until(1, now + v);
+	}
 }
 
 #endif//ARA_EVENT_H

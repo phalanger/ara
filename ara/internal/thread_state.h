@@ -17,24 +17,13 @@ namespace ara {
 		class thread_call
 		{
 		public:
-			class ext_data
-			{
-			public:
-				ext_data(int code, void * data) : code_(code), ext_data_(data) {}
-				int		get_code() const { return code_; }
-				void *	get_data() const { return ext_data_; }
-			protected:
-				int				code_;
-				void *			ext_data_;
-			};
-
-			thread_call(const char * p, clock_t s = 0, ext_data * pext = nullptr)
+			thread_call(const char * p, clock_t s = 0, void * pext = nullptr)
 				: ptr_next_(nullptr), ptr_call_info_(p), clock_start_(s), ptr_ext_data_(pext) {}
-			thread_call(std::string && str, clock_t s = 0, ext_data * pext = nullptr)
+			thread_call(std::string && str, clock_t s = 0, void * pext = nullptr)
 				: ptr_next_(nullptr), ptr_call_info_(nullptr), clock_start_(s), ptr_ext_data_(pext), dummy_info_(str) {
 				ptr_call_info_ = dummy_info_.c_str();
 			}
-			thread_call(const std::string & str, clock_t s = 0, ext_data * pext = nullptr)
+			thread_call(const std::string & str, clock_t s = 0, void * pext = nullptr)
 				: ptr_next_(nullptr), ptr_call_info_(nullptr), clock_start_(s), ptr_ext_data_(pext), dummy_info_(str) {
 				ptr_call_info_ = dummy_info_.c_str();
 			}
@@ -46,14 +35,14 @@ namespace ara {
 				return ptr_next_;
 			}
 			inline const char *	get_call_info() const { return ptr_call_info_; }
-			inline clock_t			get_start_clock() const { return clock_start_; }
-			inline const ext_data * get_ext_data() const { return ptr_ext_data_; }
+			inline clock_t		get_start_clock() const { return clock_start_; }
+			inline void *		get_ext_data() const { return ptr_ext_data_; }
 			inline const thread_call *	get_caller() const { return ptr_next_; }
 		protected:
 			thread_call *	ptr_next_ = nullptr;
 			const char *	ptr_call_info_ = nullptr;
 			clock_t			clock_start_ = 0;
-			ext_data * 		ptr_ext_data_ = nullptr;
+			void * 			ptr_ext_data_ = nullptr;
 			std::string		dummy_info_;
 		private:
 			thread_call(const thread_call &) = delete;
@@ -113,6 +102,9 @@ namespace ara {
 			}
 			static	void	register_after_call(std::function<void(thread_call &)>	&& f) {
 				g_after_call = std::move(f);
+			}
+			static	void	unregister_after_call() {
+				g_after_call = nullptr;
 			}
 			void		dump_callstack(std::ostream & out) {
 				std::lock_guard<LockType>        _guard(lock_parent::lock_);

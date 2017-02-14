@@ -77,7 +77,7 @@ namespace ara { namespace internal {
 			return ptr;
 		}
 		static void	destroy() {
-			if (!key)
+			if (key == pthread_key_t(-1))
 				return;
 			T * ptr = reinterpret_cast<T *>(pthread_getspecific(key));
 			pthread_setspecific(key, nullptr);
@@ -89,7 +89,7 @@ namespace ara { namespace internal {
 	};
 
 	template<typename T>
-	pthread_key_t tls_holder<T>::key = 0;
+	pthread_key_t tls_holder<T>::key = pthread_key_t(-1);
 	template<typename T>
 	pthread_once_t tls_holder<T>::key_once = PTHREAD_ONCE_INIT;
 

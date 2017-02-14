@@ -14,9 +14,6 @@ namespace ara {
 		public:
 			singleton_mgr() {}
 			~singleton_mgr() {
-				for (auto & it1 : list_run_) {
-					it1();
-				}
 				for (auto & it2 : list_del_) {
 					delete it2;
 				}
@@ -39,16 +36,12 @@ namespace ara {
 			void	delete_on_app_exit(T * p) {
 				list_del_.push_back(new auto_del<T>(p));
 			}
-			void	run_on_thread_exit(std::function<void()> && func) {
-				list_run_.push_back(std::move(func));
-			}
 		protected:
 			static void destroy() {
 				delete instance_;
 			}
 
 			std::list<auto_del_base *>			list_del_;
-			std::list<std::function<void()>>	list_run_;
 			static singleton_mgr *		instance_;
 			static std::once_flag init_flag;
 		};

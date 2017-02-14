@@ -147,7 +147,7 @@ public:
 			nBegin = nMaxSize;
 		else if ( nBegin < 0 )  {
 			if ( -nBegin > nMaxSize )
-				nBegin = 0;
+				nBegin = nMaxSize;
 			else
 				nBegin = nMaxSize + nBegin;
 		}
@@ -157,7 +157,7 @@ public:
 			if ( -nEnd > nMaxSize )
 				nEnd = 0;
 			else
-				nEnd = nMaxSize + nEnd;
+				nEnd = nMaxSize + nEnd + 1;
 		}
 		if ( nEnd < nBegin )
 			nEnd = nBegin;
@@ -223,7 +223,7 @@ public:
 
 		return (npos);	// no match
 	}
-	size_t		rfind( const ref_string_base & s, size_t nOff = 0 ) const {
+	size_t		rfind( const ref_string_base & s, size_t nOff = npos ) const {
 		return rfind( s.data(), nOff, s.size() );
 	}
 
