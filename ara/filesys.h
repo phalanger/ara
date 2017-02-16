@@ -142,7 +142,7 @@ namespace ara {
 				return sPath;
 
 			typeStr res = sPath;
-			string_traits<typeStr>::append(res, detect_path_slash(sPath));
+			string_traits<typeStr>::append(res, 1, detect_path_slash(sPath));
 			return res;
 		}
 
@@ -215,16 +215,19 @@ namespace ara {
 				--pEnd;
 			auto pFin = pEnd;
 
+			string_traits<typeStr>::clear(sPath);
+			string_traits<typeStr>::clear(sFile);
+
 			for (; pEnd != p; --pEnd) {
 				int ch = *(pEnd - 1);
 				if (isPathSlashChar(ch)) {
-					string_traits<typeStr>::clear(sPath);
-					string_traits<typeStr>::clear(sFile);
-
 					string_traits<typeStr>::append(sPath, p, pEnd - p);
 					string_traits<typeStr>::append(sFile, pEnd, pFin - pEnd);
+					return;
 				}
 			}
+
+			string_traits<typeStr>::append(sFile, sFullPath);
 		}
 
 #if defined(ARA_WIN32_VER)

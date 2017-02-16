@@ -19,23 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\test\main.cpp" />
-    <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
-    <ClCompile Include="..\..\..\test\test_datetime.cpp" />
-    <ClCompile Include="..\..\..\test\test_dlist.cpp" />
-    <ClCompile Include="..\..\..\test\test_filesys.cpp" />
-    <ClCompile Include="..\..\..\test\test_fixedstring.cpp" />
-    <ClCompile Include="..\..\..\test\test_flags.cpp" />
-    <ClCompile Include="..\..\..\test\test_keystring.cpp" />
-    <ClCompile Include="..\..\..\test\test_log.cpp" />
-    <ClCompile Include="..\..\..\test\test_stringex.cpp" />
-    <ClCompile Include="..\..\..\test\test_threadext.cpp" />
-    <ClCompile Include="..\..\..\test\test_utf8.cpp" />
-    <ClCompile Include="..\..\..\test\test_utils.cpp" />
-    <ClCompile Include="..\..\..\test\test_json.cpp" />
+    <ClCompile Include="..\..\..\benchmark\benchmark_printf.cpp" />
+    <ClCompile Include="..\..\..\benchmark\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{48842B41-F404-4965-98CF-6B9B54B4EF76}</ProjectGuid>
+    <ProjectGuid>{EFF167D4-A8ED-457D-ACBE-4E2BFEB48703}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>test</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>

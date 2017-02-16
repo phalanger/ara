@@ -176,7 +176,7 @@ namespace ara {
 				appender_ = p;
 			}
 			void	set_pass_to_parent(bool b) { pass_to_parent_ = b; }
-			void	set_level(log::level l) { level_ = l; }
+			log::level	set_level(log::level l) { auto o = level_;  level_ = l; return o; }
 			bool	can_display(log::level l) const {
 				if (l > level_)
 					return false;

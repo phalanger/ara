@@ -45,8 +45,6 @@ namespace ara {
 			log::logger *  get_current_logger() { return logger_; }
 			void      set_current_logger(log::logger *  l) { logger_ = l; }
 
-			std::string &  get_cache_str() { return cache_str_; }
-
 			char *		get_log_cache(size_t n) {
 				if (cache_ && cache_size_ < n) {
 					release_cache();

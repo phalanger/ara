@@ -90,7 +90,7 @@ static void test_call_stack()
 
 		{
 			BEGIN_CALL(ara::str_printf<std::string>("Function 2: in time: %v", ara::date_time::get_current().format("%H%M%S"))
-					, clock());
+					, clock() + 10);
 
 			std::stringstream o4;
 			ara::thread_context::dump_all_thread_state(o4);
@@ -99,15 +99,15 @@ static void test_call_stack()
 			REQUIRE(find_call_count(str4) == 3);
 
 			int idx = 0;
-			clock_t	tBegin = 0;
+			clock_t	tLast = 0;
 			int tMax = 0;
-			ara::thread_context::get().navigate_callstack([&idx, &tBegin, &tMax](const ara::internal::thread_call & c) {
+			ara::thread_context::get().navigate_callstack([&idx, &tLast, &tMax](const ara::internal::thread_call & c) {
 				if (idx) {
-					int delta = c.get_start_clock() - tBegin;
+					int delta = tLast - c.get_start_clock();
 					if (delta > tMax)
 						tMax = delta;
 				}
-				tBegin = c.get_start_clock();
+				tLast = c.get_start_clock();
 				++idx;
 			});
 

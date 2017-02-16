@@ -54,9 +54,6 @@
     <ClCompile Include="..\..\..\test\test_fixedstring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\benchmark_printf.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\test\test_keystring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

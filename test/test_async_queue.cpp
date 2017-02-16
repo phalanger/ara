@@ -17,6 +17,10 @@ TEST_CASE("async queue", "[async]" ){
 	SECTION("base") {
 
 		ara::log::init_defaul_log();
+		auto oldLevel = ara::log::get_logger().set_level(ara::log::warning);
+		ara::defer	_auGuard([oldLevel]() {
+			ara::log::get_logger().set_level(oldLevel);
+		});
 
 		typedef ara::async_queue<std::string>	name_queue;
 
@@ -106,6 +110,10 @@ TEST_CASE("async queue", "[async]" ){
 	SECTION("base 2") {
 
 		ara::log::init_defaul_log();
+		auto oldLevel = ara::log::get_logger().set_level(ara::log::warning);
+		ara::defer	_auGuard([oldLevel]() {
+			ara::log::get_logger().set_level(oldLevel);
+		});
 
 		typedef ara::async_queue<std::string>	name_queue;
 

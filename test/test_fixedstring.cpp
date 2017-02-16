@@ -11,6 +11,8 @@ TEST_CASE("fixed_string", "[base]") {
 		char buf[16];
 		ara::fixed_string		str1(buf, 16);
 
+		REQUIRE(ara::is_string<ara::fixed_string>::value == true);
+
 		str1 = "hello world";
 		REQUIRE(str1.size() == 11);
 
@@ -174,6 +176,15 @@ TEST_CASE("fixed_string", "[base]") {
 		REQUIRE(str2.insert(1000, "a") == "abc1abc234aa");
 		REQUIRE(str2.insert(1000, "12345") == "abc1abc234aa1234");
 		REQUIRE(str2.insert(2, "ABCD") == "abABCDc1abc234aa");
+
+		str2 = "1234";
+		REQUIRE(str2.insert(0, std::string("abc")) == "abc1234");
+		REQUIRE(str2.insert(4, std::string("abc")) == "abc1abc234");
+		REQUIRE(str2.insert(ara::fixed_string::npos, std::string("a")) == "abc1abc234a");
+		REQUIRE(str2.insert(1000, std::string("a")) == "abc1abc234aa");
+		REQUIRE(str2.insert(1000, std::string("12345")) == "abc1abc234aa1234");
+		REQUIRE(str2.insert(2, std::string("ABCD")) == "abABCDc1abc234aa");
+
 		str2.reserve(10);
 		str2.resize(2);
 		REQUIRE(str2 == "ab");
