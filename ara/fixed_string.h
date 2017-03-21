@@ -27,17 +27,17 @@ namespace ara {
 		typedef Ch &			reference;
 		typedef chTraits		traits_type;
 
-		fixed_string_base(Ch * p, size_type nSize) : m_pCh(p), m_pChEnd(p), m_pChBufEnd(p + nSize) {}
-		fixed_string_base(Ch * p, size_type nDataSize, size_type nBufSize) : m_pCh(p), m_pChEnd(p + nDataSize), m_pChBufEnd(p + nBufSize) {}
-		fixed_string_base(Ch * p, Ch * pEnd) : m_pCh(p), m_pChEnd(p), m_pChBufEnd(pEnd) {}
-		fixed_string_base(Ch * p, Ch * pDataEnd, Ch * pEnd) : m_pCh(p), m_pChEnd(pDataEnd), m_pChBufEnd(pEnd) {}
-		fixed_string_base(const fixed_string_base & s) : m_pCh(s.m_pCh), m_pChEnd(s.m_pChEnd), m_pChBufEnd(s.m_pChBufEnd) {}
+		fixed_string_base(Ch * p, size_type nSize) : ptr_data_(p), ptr_data_end_(p), ptr_buf_end_(p + nSize) {}
+		fixed_string_base(Ch * p, size_type nDataSize, size_type nBufSize) : ptr_data_(p), ptr_data_end_(p + nDataSize), ptr_buf_end_(p + nBufSize) {}
+		fixed_string_base(Ch * p, Ch * pEnd) : ptr_data_(p), ptr_data_end_(p), ptr_buf_end_(pEnd) {}
+		fixed_string_base(Ch * p, Ch * pDataEnd, Ch * pEnd) : ptr_data_(p), ptr_data_end_(pDataEnd), ptr_buf_end_(pEnd) {}
+		fixed_string_base(const fixed_string_base & s) : ptr_data_(s.ptr_data_), ptr_data_end_(s.ptr_data_end_), ptr_buf_end_(s.ptr_buf_end_) {}
 
 		int	compare(const Ch * s, size_type nS2 = npos) const {
 			size_type nS1 = size();
-            nS2 = (nS2 == npos ? chTraits::length(s) : nS2);
+			nS2 = (nS2 == npos ? chTraits::length(s) : nS2);
 			size_type nCmpSize = nS1 > nS2 ? nS2 : nS1;
-			int n = chTraits::compare(m_pCh, s, nCmpSize);
+			int n = chTraits::compare(ptr_data_, s, nCmpSize);
 			if (n != 0)
 				return n;
 			if (nS1 > nS2)
@@ -105,8 +105,8 @@ namespace ara {
 			if (n > capacity())
 				n = capacity();
 			if (n)
-				chTraits::copy(m_pCh, pBegin, n);
-			m_pChEnd = m_pCh + n;
+				chTraits::copy(ptr_data_, pBegin, n);
+			ptr_data_end_ = ptr_data_ + n;
 			return *this;
 		}
 		const fixed_string_base & assign(const fixed_string_base & s) {
@@ -125,44 +125,46 @@ namespace ara {
 		}
 
 		inline const fixed_string_base & reset(Ch * pBegin, Ch * pDataEnd, Ch * pEnd) {
-			m_pCh = pBegin;
-			m_pChEnd = pDataEnd;
-			m_pChBufEnd = pEnd;
+			ptr_data_ = pBegin;
+			ptr_data_end_ = pDataEnd;
+			ptr_buf_end_ = pEnd;
 			return *this;
 		}
 
 		inline size_type		size(void) const {
-			return m_pChEnd - m_pCh;
+			return ptr_data_end_ - ptr_data_;
 		}
 		inline size_type		length(void) const {
-			return m_pChEnd - m_pCh;
+			return ptr_data_end_ - ptr_data_;
 		}
 		inline bool		empty(void) const {
-			return m_pCh == m_pChEnd;
+			return ptr_data_ == ptr_data_end_;
 		}
 		inline const Ch *	data(void) const {
-			return m_pCh;
+			return ptr_data_;
 		}
 		inline Ch			operator[](size_type nIndex) const {
-			return m_pCh[nIndex];
+			return ptr_data_[nIndex];
 		}
 		inline Ch			at(size_type nIndex) const {
-			return m_pCh[nIndex];
+			if (nIndex >= size())
+				throw std::out_of_range("fixed_string");
+			return ptr_data_[nIndex];
 		}
 		inline const_iterator	begin(void) const {
-			return m_pCh;
+			return ptr_data_;
 		}
 		inline const_iterator	end(void) const {
-			return m_pChEnd;
+			return ptr_data_end_;
 		}
 		inline size_type		capacity(void) const {
-			return m_pChBufEnd - m_pCh;
+			return ptr_buf_end_ - ptr_data_;
 		}
 		inline iterator	begin(void) {
-			return m_pCh;
+			return ptr_data_;
 		}
 		iterator	end(void) {
-			return m_pChEnd;
+			return ptr_data_end_;
 		}
 
 		fixed_string_base	substr(size_type nOff, size_type nC = npos) const {
@@ -171,7 +173,7 @@ namespace ara {
 				nOff = nMaxSize;
 			if (nC > nMaxSize || nOff + nC > nMaxSize)
 				nC = nMaxSize - nOff;
-			return fixed_string_base(m_pCh + nOff, m_pCh + nOff + nC, m_pChBufEnd);
+			return fixed_string_base(ptr_data_ + nOff, ptr_data_ + nOff + nC, ptr_buf_end_);
 		}
 
 		inline fixed_string_base & erase(size_type nOff, size_type nC = npos) {
@@ -182,8 +184,8 @@ namespace ara {
 				nC = nSize - nOff;
 			size_type nRest = nSize - nOff - nC;
 			if (nRest)
-				chTraits::move(m_pCh + nOff, m_pCh + nOff + nC, nRest);
-			m_pChEnd = m_pCh + nOff + nRest;
+				chTraits::move(ptr_data_ + nOff, ptr_data_ + nOff + nC, nRest);
+			ptr_data_end_ = ptr_data_ + nOff + nRest;
 			return *this;
 		}
 
@@ -208,15 +210,15 @@ namespace ara {
 			if (nEnd < nBegin)
 				nEnd = nBegin;
 
-			return fixed_string_base(m_pCh + nBegin, m_pCh + nEnd, m_pChBufEnd);
+			return fixed_string_base(ptr_data_ + nBegin, ptr_data_ + nEnd, ptr_buf_end_);
 		}
 
 		inline size_type		find(Ch ch, size_type nOff = 0) const {
 			size_type nMySize = size();
 			if (nOff == npos || nOff > nMySize)
 				return npos;
-			const Ch * p = chTraits::find(m_pCh + nOff, nMySize - nOff, ch);
-			return p == 0 ? npos : p - m_pCh;
+			const Ch * p = chTraits::find(ptr_data_ + nOff, nMySize - nOff, ch);
+			return p == 0 ? npos : p - ptr_data_;
 		}
 
 		size_type		find(const Ch * s, size_type nOff = 0, size_type nSize = npos) const {
@@ -230,11 +232,11 @@ namespace ara {
 			if (nOff < nMysize && nSize <= (Nm = nMysize - nOff)) {
 				const Ch * pUptr, *pVptr;
 				size_type	nCheckSize = (nSize - 1);
-				for (Nm -= nCheckSize, pVptr = m_pCh + nOff;
+				for (Nm -= nCheckSize, pVptr = ptr_data_ + nOff;
 					(pUptr = chTraits::find(pVptr, Nm, *s)) != 0;
 					Nm -= pUptr - pVptr + 1, pVptr = pUptr + 1)
 					if (chTraits::compare(pUptr + 1, s + 1, nCheckSize) == 0)
-						return (pUptr - m_pCh);
+						return (pUptr - ptr_data_);
 			}
 			return (npos);	// no match
 		}
@@ -247,10 +249,10 @@ namespace ara {
 			if (nOff == 0)
 				return npos;
 			size_type nMaxSize = size();
-			const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-			while (p > m_pCh)
+			const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+			while (p > ptr_data_)
 				if (*(--p) == ch)
-					return p - m_pCh;
+					return p - ptr_data_;
 			return npos;
 		}
 
@@ -262,13 +264,13 @@ namespace ara {
 				nSize = chTraits::length(s);
 
 			if (nSize <= nMaxSize) {
-				const Ch * p = m_pCh + (nOff < nMaxSize - nSize ? nOff : nMaxSize - nSize);
+				const Ch * p = ptr_data_ + (nOff < nMaxSize - nSize ? nOff : nMaxSize - nSize);
 				size_type	nCheckSize = (nSize - 1);
 
 				for (;; --p)
 					if (*p == *s && chTraits::compare(p + 1, s + 1, nCheckSize) == 0)
-						return p - m_pCh;
-					else if (p == m_pCh)
+						return p - ptr_data_;
+					else if (p == ptr_data_)
 						break;
 			}
 
@@ -284,10 +286,10 @@ namespace ara {
 				return npos;
 			if (nSize == npos)
 				nSize = chTraits::length(s);
-			const Ch * p = m_pCh + nOff;
-			for (; p < m_pChEnd; ++p)
+			const Ch * p = ptr_data_ + nOff;
+			for (; p < ptr_data_end_; ++p)
 				if (chTraits::find(s, nSize, *p) != 0)
-					return p - m_pCh;
+					return p - ptr_data_;
 			return npos;
 		}
 		template<typename typeStr>
@@ -300,10 +302,10 @@ namespace ara {
 				return npos;
 			if (nSize == npos)
 				nSize = chTraits::length(s);
-			const Ch * p = m_pCh + nOff;
-			for (; p < m_pChEnd; ++p)
+			const Ch * p = ptr_data_ + nOff;
+			for (; p < ptr_data_end_; ++p)
 				if (chTraits::find(s, nSize, *p) == 0)
-					return p - m_pCh;
+					return p - ptr_data_;
 			return npos;
 		}
 		template<typename typeStr>
@@ -317,10 +319,10 @@ namespace ara {
 			if (nSize == npos)
 				nSize = chTraits::length(s);
 			size_type nMaxSize = size();
-			const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-			while (p > m_pCh)
+			const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+			while (p > ptr_data_)
 				if (chTraits::find(s, nSize, *(--p)) != 0)
-					return p - m_pCh;
+					return p - ptr_data_;
 			return npos;
 		}
 		template<typename typeStr>
@@ -334,10 +336,10 @@ namespace ara {
 			if (nSize == npos)
 				nSize = chTraits::length(s);
 			size_type nMaxSize = size();
-			const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-			while (p > m_pCh)
+			const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+			while (p > ptr_data_)
 				if (chTraits::find(s, nSize, *(--p)) == 0)
-					return p - m_pCh;
+					return p - ptr_data_;
 			return npos;
 		}
 		template<typename typeStr>
@@ -354,25 +356,25 @@ namespace ara {
 		}
 
 		inline void	swap(fixed_string_base & s) {
-			std::swap(m_pCh, s.m_pCh);
-			std::swap(m_pChEnd, s.m_pChEnd);
-			std::swap(m_pChBufEnd, s.m_pChBufEnd);
+			std::swap(ptr_data_, s.ptr_data_);
+			std::swap(ptr_data_end_, s.ptr_data_end_);
+			std::swap(ptr_buf_end_, s.ptr_buf_end_);
 		}
 
 		inline void	clear(void) {
-			m_pChEnd = m_pCh;
+			ptr_data_end_ = ptr_data_;
 		}
 
 
 		inline fixed_string_base & append(Ch ch) {
-			if (m_pChEnd != m_pChBufEnd)
-				*(m_pChEnd++) = ch;
+			if (ptr_data_end_ != ptr_buf_end_)
+				*(ptr_data_end_++) = ch;
 			return *this;
 		}
 		fixed_string_base & append(size_type count, Ch ch) {
 			size_type n = std::min<size_type>( count, capacity() - size());
 			for (size_type i = 0;i < n; ++i)
-				*(m_pChEnd++) = ch;
+				*(ptr_data_end_++) = ch;
 			return *this;
 		}
 		inline fixed_string_base & append(const Ch * ch) {
@@ -381,8 +383,8 @@ namespace ara {
 		inline fixed_string_base & append(const Ch * ch, size_type n) {
 			size_type nCopy = std::min<size_type>(n, capacity() - size());
 			if (nCopy) {
-				chTraits::copy(m_pChEnd, ch, nCopy);
-				m_pChEnd += nCopy;
+				chTraits::copy(ptr_data_end_, ch, nCopy);
+				ptr_data_end_ += nCopy;
 			}
 			return *this;
 		}
@@ -390,8 +392,8 @@ namespace ara {
 		inline fixed_string_base & append(const typeStr & s, typename std::enable_if<is_string<typeStr>::value>::type * = nullptr) {
 			size_type nCopy = std::min<size_type>(string_traits<typeStr>::size(s), capacity() - size());
 			if (nCopy) {
-				chTraits::move(m_pChEnd, string_traits<typeStr>::data(s), nCopy);
-				m_pChEnd += nCopy;
+				chTraits::move(ptr_data_end_, string_traits<typeStr>::data(s), nCopy);
+				ptr_data_end_ += nCopy;
 			}
 			return *this;
 		}
@@ -423,11 +425,11 @@ namespace ara {
 				nToMove = nMaxSize - nWhere - count;
 
 			if (nToMove)
-				chTraits::move(m_pCh + nWhere + count, m_pCh + nWhere, nToMove);
+				chTraits::move(ptr_data_ + nWhere + count, ptr_data_ + nWhere, nToMove);
 			if (count)
-				chTraits::copy(m_pCh + nWhere, s, count);
+				chTraits::copy(ptr_data_ + nWhere, s, count);
 
-			m_pChEnd = m_pCh + nWhere + count + nToMove;
+			ptr_data_end_ = ptr_data_ + nWhere + count + nToMove;
 			return (*this);
 		}
 
@@ -452,16 +454,16 @@ namespace ara {
 			if (n > capacity())
 				n = capacity();
 			if (n < size())
-				m_pChEnd = m_pCh + n;
+				ptr_data_end_ = ptr_data_ + n;
 			else
 				append(n - size(), ch);
 		}
 
 		static size_type	npos;
 	private:
-		Ch *		m_pCh;
-		Ch *		m_pChEnd;
-		Ch *		m_pChBufEnd;
+		Ch *		ptr_data_;
+		Ch *		ptr_data_end_;
+		Ch *		ptr_buf_end_;
 	};
 
 	//////////////////////////////////////////////////////////////////////////

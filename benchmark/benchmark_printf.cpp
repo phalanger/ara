@@ -2,7 +2,7 @@
 
 #include "ara/stringext.h"
 
-TEST_CASE("stringext benchmark", "[.],[benchmark]") {
+TEST_CASE("stringext benchmark", "[benchmark]") {
 
 	const size_t nCount = 1000000;
 	char buf[16];
