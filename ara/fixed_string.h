@@ -9,6 +9,7 @@
 #include <map>
 #include <functional>
 #include <algorithm>
+#include <stdexcept>
 
 namespace ara {
 
