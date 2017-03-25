@@ -9,7 +9,10 @@
 	#endif
 
 	#ifdef _MSC_VER
-		#if (_MSC_VER >= 1900)
+		#if (_MSC_VER >= 1910)
+			#define ARA_WIN32_VS2017_VER
+			#define ARA_WIN32_MSVC15_VER
+		#elif (_MSC_VER >= 1900)
 			#define ARA_WIN32_VS2015_VER
 			#define ARA_WIN32_MSVC14_VER
 		#elif (_MSC_VER >= 1800)
