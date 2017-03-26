@@ -123,6 +123,9 @@ namespace ara {
 				std::string		s(strDate.data(), strDate.size());
 				parse(s.c_str(), format);
 			}
+			explicit date_time_imp(const std::string & strDate, const char * format = nullptr) : time_(0) {
+				parse(strDate.c_str(), format);
+			}
 			explicit date_time_imp(const char * lpDate, const char * format = nullptr) : time_(0) {
 				parse(lpDate, format);
 			}

@@ -114,5 +114,8 @@
     <ClInclude Include="..\..\..\ara\key_string.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\variant.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

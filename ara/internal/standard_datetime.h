@@ -13,6 +13,7 @@
 
 #if defined(ARA_WIN32_VER)
 	#include <windows.h>
+	#include <sstream>
 #elif defined(ARA_MAC_VER)
 	#include <sys/time.h>
 #endif

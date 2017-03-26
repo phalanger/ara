@@ -62,6 +62,16 @@ namespace ara {
 		std::function<void()>	func_;
 	};
 
+	///////////////////////////////////////////////
+
+	template<typename T>
+	class static_empty {
+	public:
+		static const T	val;
+	};
+	template<typename T>
+	const T	static_empty<T>::val;
+
 }
 
 #define ARA_JOIN_2(a, b)			a##b

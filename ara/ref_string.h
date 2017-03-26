@@ -28,26 +28,26 @@ public:
 	typedef const Ch *		iterator;
 	typedef chTraits		traits_type;
 
-	ref_string_base(void) : m_pCh( &g_nCh ),m_pChEnd( &g_nCh ) {}
-	ref_string_base(const Ch * p, size_t nSize) : m_pCh( p ),m_pChEnd( p + nSize ) {}
-	ref_string_base(const Ch * p, const Ch * pEnd) : m_pCh( p ),m_pChEnd( pEnd ) {}
-	ref_string_base(const ref_string_base & s) : m_pCh( s.m_pCh ),m_pChEnd( s.m_pChEnd ) {}
-	ref_string_base(const Ch * p ) : m_pCh( p ),m_pChEnd( p ) 		{
-		m_pChEnd += chTraits::length( p );
+	ref_string_base(void) : ptr_data_( &g_nCh ),ptr_end_( &g_nCh ) {}
+	ref_string_base(const Ch * p, size_t nSize) : ptr_data_( p ),ptr_end_( p + nSize ) {}
+	ref_string_base(const Ch * p, const Ch * pEnd) : ptr_data_( p ),ptr_end_( pEnd ) {}
+	ref_string_base(const ref_string_base & s) : ptr_data_( s.ptr_data_ ),ptr_end_( s.ptr_end_ ) {}
+	ref_string_base(const Ch * p ) : ptr_data_( p ),ptr_end_( p ) 		{
+		ptr_end_ += chTraits::length( p );
 	}
 	template<typename typeStr>
-	ref_string_base(const typeStr & s) :
-		m_pCh(string_traits<typeStr>::data(s)),m_pChEnd( m_pCh + string_traits<typeStr>::size(s) ) {}
+	explicit ref_string_base(const typeStr & s) :
+		ptr_data_(string_traits<typeStr>::data(s)),ptr_end_( ptr_data_ + string_traits<typeStr>::size(s) ) {}
 
 	template<typename typeStr>
 	ref_string_base(const typeStr & s,size_t off, size_t nCount) :
-		m_pCh(string_traits<typeStr>::data(s) + off), m_pChEnd(m_pCh + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
+		ptr_data_(string_traits<typeStr>::data(s) + off), ptr_end_(ptr_data_ + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
 
 	int	compare( const ref_string_base & s ) const    {
 		size_t nS1 = size();
 		size_t nS2 = s.size();
 		size_t nCmpSize = nS1 > nS2 ?  nS2 : nS1;
-		int n = chTraits::compare( m_pCh, s.m_pCh, nCmpSize );
+		int n = chTraits::compare( ptr_data_, s.ptr_data_, nCmpSize );
 		if ( n != 0 )
 			return n;
 		if ( nS1 > nS2 )
@@ -78,8 +78,8 @@ public:
 
 	const ref_string_base & operator=(const ref_string_base & s)    {
 		if ( this != &s )   {
-			m_pCh = s.m_pCh;
-			m_pChEnd = s.m_pChEnd;
+			ptr_data_ = s.ptr_data_;
+			ptr_end_ = s.ptr_end_;
 		}
 		return *this;
 	}
@@ -89,34 +89,34 @@ public:
 	}
 
 	const ref_string_base & assign(const Ch * pBegin, const Ch * pEnd )   {
-		m_pCh = pBegin;
-		m_pChEnd = pEnd;
+		ptr_data_ = pBegin;
+		ptr_end_ = pEnd;
 		return *this ;
 	}
 
 	size_t		size(void) const {
-		return m_pChEnd - m_pCh;
+		return ptr_end_ - ptr_data_;
 	}
 	size_t		length(void) const {
-		return m_pChEnd - m_pCh;
+		return ptr_end_ - ptr_data_;
 	}
 	bool		empty(void) const {
-		return m_pCh == m_pChEnd;
+		return ptr_data_ == ptr_end_;
 	}
 	const Ch *	data(void) const {
-		return m_pCh;
+		return ptr_data_;
 	}
 	Ch			operator[](size_t nIndex) const {
-		return m_pCh[nIndex];
+		return ptr_data_[nIndex];
 	}
 	Ch			at(size_t nIndex) const {
-		return m_pCh[nIndex];
+		return ptr_data_[nIndex];
 	}
 	const_iterator	begin(void) const {
-		return m_pCh;
+		return ptr_data_;
 	}
 	const_iterator	end(void) const {
-		return m_pChEnd;
+		return ptr_end_;
 	}
 
 	ref_string_base	substr( size_t nOff, size_t nC = npos ) const   {
@@ -125,7 +125,7 @@ public:
 			nOff = nMaxSize;
 		if ( nC == npos || nOff + nC > nMaxSize )
 			nC = nMaxSize - nOff;
-		return ref_string_base( m_pCh + nOff, m_pCh + nOff + nC );
+		return ref_string_base( ptr_data_ + nOff, ptr_data_ + nOff + nC );
 	}
 	
 	ref_string_base & erase( size_t nOff, size_t nC = npos ) {
@@ -133,11 +133,11 @@ public:
 			throw std::bad_function_call();
 		else if ( nOff == 0 ) {
 			if ( nC < size() )
-				m_pCh += nC;
+				ptr_data_ += nC;
 			else
 				clear();
 		} else if ( nOff < size() )
-			m_pChEnd = m_pCh + nOff;
+			ptr_end_ = ptr_data_ + nOff;
 		return *this;
 	}
 
@@ -162,15 +162,15 @@ public:
 		if ( nEnd < nBegin )
 			nEnd = nBegin;
 
-		return ref_string_base( m_pCh + nBegin, m_pCh + nEnd);
+		return ref_string_base( ptr_data_ + nBegin, ptr_data_ + nEnd);
 	}
 
 	size_t		find( Ch ch , size_t nOff = 0 ) const   {
 		size_t nMySize = size();
 		if ( nOff == npos || nOff > nMySize)
 			return npos;
-		const Ch * p = chTraits::find( m_pCh + nOff, nMySize - nOff, ch);
-		return p == 0 ? npos : p - m_pCh;
+		const Ch * p = chTraits::find( ptr_data_ + nOff, nMySize - nOff, ch);
+		return p == 0 ? npos : p - ptr_data_;
 	}
 
 	size_t		find( const Ch * s, size_t nOff, size_t nSize ) const  {
@@ -182,11 +182,11 @@ public:
 		if ( nOff < nMysize && nSize <= ( Nm = nMysize - nOff) )   {
 			const Ch * pUptr, * pVptr;
 			size_t	nCheckSize = (nSize - 1);
-			for ( Nm -= nCheckSize, pVptr = m_pCh + nOff;
+			for ( Nm -= nCheckSize, pVptr = ptr_data_ + nOff;
 			      (pUptr = chTraits::find( pVptr, Nm, *s)) != 0;
 			      Nm -= pUptr - pVptr + 1, pVptr = pUptr + 1)
 				if ( chTraits::compare( pUptr + 1, s + 1, nCheckSize ) == 0)
-					return ( pUptr - m_pCh );
+					return ( pUptr - ptr_data_ );
 		}
 		return (npos);	// no match
 	}
@@ -198,10 +198,10 @@ public:
 		if ( nOff == 0 )
 			return npos;
 		size_t nMaxSize = size();
-		const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-		while ( p > m_pCh )
+		const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+		while ( p > ptr_data_ )
 			if ( *(--p) == ch)
-				return p - m_pCh;
+				return p - ptr_data_;
 		return npos;
 	}
 
@@ -211,13 +211,13 @@ public:
 			return nOff < nMaxSize ? nOff : nMaxSize;
 
 		if ( nSize <= nMaxSize )   {
-			const Ch * p = m_pCh + ( nOff < nMaxSize - nSize ? nOff : nMaxSize - nSize);
+			const Ch * p = ptr_data_ + ( nOff < nMaxSize - nSize ? nOff : nMaxSize - nSize);
 			size_t	nCheckSize = (nSize - 1);
 
 			for (;; --p)
 				if ( *p == *s && chTraits::compare( p + 1, s + 1, nCheckSize ) == 0 )
-					return p - m_pCh;
-				else if ( p == m_pCh )
+					return p - ptr_data_;
+				else if ( p == ptr_data_ )
 					break;
 		}
 
@@ -230,10 +230,10 @@ public:
 	size_t		find_first_of( const Ch * s, size_t nOff, size_t nSize ) const {
 		if ( nOff == npos )
 			return npos;
-		const Ch * p = m_pCh + nOff;
-		for ( ; p < m_pChEnd; ++p)
+		const Ch * p = ptr_data_ + nOff;
+		for ( ; p < ptr_end_; ++p)
 			if ( chTraits::find( s, nSize, *p) != 0 )
-				return p - m_pCh;
+				return p - ptr_data_;
 		return npos;
 	}
 	size_t		find_first_of( const ref_string_base & s, size_t nOff = 0 ) const {
@@ -243,10 +243,10 @@ public:
 	size_t		find_first_not_of( const Ch * s, size_t nOff, size_t nSize ) const {
 		if ( nOff == npos )
 			return npos;
-		const Ch * p = m_pCh + nOff;
-		for ( ; p < m_pChEnd; ++p)
+		const Ch * p = ptr_data_ + nOff;
+		for ( ; p < ptr_end_; ++p)
 			if ( chTraits::find( s, nSize, *p) == 0 )
-				return p - m_pCh;
+				return p - ptr_data_;
 		return npos;
 	}
 	size_t		find_first_not_of( const ref_string_base & s, size_t nOff = 0 ) const {
@@ -257,10 +257,10 @@ public:
 		if ( nOff == 0 )
 			return npos;
 		size_t nMaxSize = size();
-		const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-		while ( p > m_pCh )
+		const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+		while ( p > ptr_data_ )
 			if ( chTraits::find( s, nSize, *(--p)) != 0 )
-				return p - m_pCh;
+				return p - ptr_data_;
 		return npos;
 	}
 	size_t		find_last_of( const ref_string_base & s , size_t nOff = npos ) const  {
@@ -271,10 +271,10 @@ public:
 		if ( nOff == 0 )
 			return npos;
 		size_t nMaxSize = size();
-		const Ch * p = m_pCh + (nOff > nMaxSize ? nMaxSize : nOff);
-		while ( p > m_pCh )
+		const Ch * p = ptr_data_ + (nOff > nMaxSize ? nMaxSize : nOff);
+		while ( p > ptr_data_ )
 			if ( chTraits::find( s, nSize, *(--p)) == 0 )
-				return p - m_pCh;
+				return p - ptr_data_;
 		return npos;
 	}
 	size_t		find_last_not_of( const ref_string_base & s , size_t nOff = npos ) const  {
@@ -290,19 +290,19 @@ public:
 	}
 
 	void	swap( const ref_string_base & s ) {
-		std::swap( m_pCh, s.m_pCh );
-		std::swap( m_pChEnd, s.m_pChEnd );
+		std::swap( ptr_data_, s.ptr_data_ );
+		std::swap( ptr_end_, s.ptr_end_ );
 	}
 
 	void	clear(void) {
-		m_pCh = m_pChEnd = &g_nCh;
+		ptr_data_ = ptr_end_ = &g_nCh;
 	}
 
 	static size_t	npos;
 private:
 	static const Ch	g_nCh;
-	const Ch *		m_pCh;
-	const Ch *		m_pChEnd;
+	const Ch *		ptr_data_;
+	const Ch *		ptr_end_;
 };
 
 //////////////////////////////////////////////////////////////////////////
