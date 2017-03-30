@@ -373,8 +373,8 @@ namespace ara {
 			return *this;
 		}
 		fixed_string_base & append(size_type count, Ch ch) {
-			size_type n = std::min<size_type>( count, capacity() - size());
-			for (size_type i = 0;i < n; ++i)
+			size_type n = std::min<size_type>(count, capacity() - size());
+			for (size_type i = 0; i < n; ++i)
 				*(ptr_data_end_++) = ch;
 			return *this;
 		}
@@ -409,7 +409,7 @@ namespace ara {
 		inline fixed_string_base & operator+=(const typeStr & s) {
 			return append(s);
 		}
-		
+
 		fixed_string_base & insert(size_type nWhere, const Ch * s, size_type count) {
 
 			size_type nSize = size();

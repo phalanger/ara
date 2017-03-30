@@ -1,32 +1,32 @@
 
 #if 0
-	int example() {
+int example() {
 
-		ara::log::init_defaul_log();
+	ara::log::init_defaul_log();
 
-		glog	g;
-		g(log::debug).printfln("Debug log");
+	glog	g;
+	g(log::debug).printfln("Debug log");
 
-		LOG_INFO().printfln("Hello");
-		LOG_INFO("App.Server").printfln("Hello");
+	LOG_INFO().printfln("Hello");
+	LOG_INFO("App.Server").printfln("Hello");
 
-		//Define user self log appender:
-		std::stringstream	s;
-		auto	appender_ptr = std::make_shared<ara::log::appender_stdstream>(s);
+	//Define user self log appender:
+	std::stringstream	s;
+	auto	appender_ptr = std::make_shared<ara::log::appender_stdstream>(s);
 
-		//change the root append. that will display all logs to the appender
-		ara::log::get_logger().set_appender(appender_ptr);
-		//or
-		ara::log::register_appender(appender_ptr);
-		
-		//change some layer appender
-		ara::log::get_logger("App.Server").set_appender(appender_ptr);
-		//or
-		ara::log::register_appender("App.Server", appender_ptr);
-		//then this log will append to the string
-		LOG_INFO("App.Server").printfln("Hello");
+	//change the root append. that will display all logs to the appender
+	ara::log::get_logger().set_appender(appender_ptr);
+	//or
+	ara::log::register_appender(appender_ptr);
 
-	}
+	//change some layer appender
+	ara::log::get_logger("App.Server").set_appender(appender_ptr);
+	//or
+	ara::log::register_appender("App.Server", appender_ptr);
+	//then this log will append to the string
+	LOG_INFO("App.Server").printfln("Hello");
+
+}
 #endif//
 
 #ifndef ARA_LOG_H
@@ -60,7 +60,7 @@ namespace ara {
 		}
 
 		static log::logger &		get_logger_by_name(const char * name = nullptr) {
-			if ( LIKELY(name == nullptr) ) {
+			if (LIKELY(name == nullptr)) {
 				auto & context = thread_context::get()._get_log_context();
 				auto p = context.get_current_logger();
 				if (UNLIKELY(p == nullptr)) {
@@ -77,14 +77,15 @@ namespace ara {
 		void		init_logger(const char * name) {
 			auto & context = thread_context::get()._get_log_context();
 			ori_logger_ = context.get_current_logger();
-			if ( UNLIKELY(ori_logger_ == nullptr) ) {
+			if (UNLIKELY(ori_logger_ == nullptr)) {
 				ori_logger_ = log::logger_mgr::get().get_root();
 				context.set_current_logger(ori_logger_);
 			}
 			if (UNLIKELY(name != nullptr)) {
 				logger_ = log::logger_mgr::get().get_logger(name);
 				context.set_current_logger(logger_);
-			} else
+			}
+			else
 				logger_ = ori_logger_;
 		}
 

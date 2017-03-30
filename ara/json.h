@@ -10,60 +10,60 @@
 
 RAPIDJSON_NAMESPACE_BEGIN
 
-	template <typename iterator, typename Char = typename iterator::value_type>
-	struct ara_json_string_stream {
-		typedef Char Ch;
-		ara_json_string_stream(const iterator beg, const iterator end) : src_(beg), head_(beg), end_(end) {}
+template <typename iterator, typename Char = typename iterator::value_type>
+struct ara_json_string_stream {
+	typedef Char Ch;
+	ara_json_string_stream(const iterator beg, const iterator end) : src_(beg), head_(beg), end_(end) {}
 
-		Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
-		Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
-		size_t Tell() const { return static_cast<size_t>(src_ - head_); }
+	Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
+	Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
+	size_t Tell() const { return static_cast<size_t>(src_ - head_); }
 
-		Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
-		void Put(Ch) { RAPIDJSON_ASSERT(false); }
-		void Flush() { RAPIDJSON_ASSERT(false); }
-		size_t PutEnd(Ch *) { RAPIDJSON_ASSERT(false); return 0; }
+	Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
+	void Put(Ch) { RAPIDJSON_ASSERT(false); }
+	void Flush() { RAPIDJSON_ASSERT(false); }
+	size_t PutEnd(Ch *) { RAPIDJSON_ASSERT(false); return 0; }
 
-		iterator src_;     //!< Current read position.
-		iterator head_;    //!< Original head of the string.
-		iterator end_;
-	};
+	iterator src_;     //!< Current read position.
+	iterator head_;    //!< Original head of the string.
+	iterator end_;
+};
 
-	template <typename iterator, typename Ch>
-	struct StreamTraits<ara_json_string_stream<iterator,Ch>> {
-		enum { copyOptimization = 1 };
-	};
+template <typename iterator, typename Ch>
+struct StreamTraits<ara_json_string_stream<iterator, Ch>> {
+	enum { copyOptimization = 1 };
+};
 
-	template <typename Char>
-	struct ara_json_insitu_string_stream {
-		typedef Char Ch;
-		ara_json_insitu_string_stream(Ch * beg, Ch * end) : src_(beg), dst_(0), head_(beg), end_(end) {}
+template <typename Char>
+struct ara_json_insitu_string_stream {
+	typedef Char Ch;
+	ara_json_insitu_string_stream(Ch * beg, Ch * end) : src_(beg), dst_(0), head_(beg), end_(end) {}
 
-		Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
-		Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
-		size_t Tell() { return static_cast<size_t>(src_ - head_); }
+	Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
+	Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
+	size_t Tell() { return static_cast<size_t>(src_ - head_); }
 
-		// Write
-		void Put(Ch c) { RAPIDJSON_ASSERT(dst_ != 0); *dst_++ = c; }
+	// Write
+	void Put(Ch c) { RAPIDJSON_ASSERT(dst_ != 0); *dst_++ = c; }
 
-		Ch* PutBegin() { return dst_ = src_; }
-		size_t PutEnd(Ch* begin) { return static_cast<size_t>(dst_ - begin); }
-		void Flush() {}
+	Ch* PutBegin() { return dst_ = src_; }
+	size_t PutEnd(Ch* begin) { return static_cast<size_t>(dst_ - begin); }
+	void Flush() {}
 
-		Ch* Push(size_t count) { Ch* begin = dst_; dst_ += count; return begin; }
-		void Pop(size_t count) { dst_ -= count; }
+	Ch* Push(size_t count) { Ch* begin = dst_; dst_ += count; return begin; }
+	void Pop(size_t count) { dst_ -= count; }
 
-		Ch * src_;     //!< Current read position.
-		Ch * dst_;
-		Ch * head_;    //!< Original head of the string.
-		Ch * end_;
-	};
+	Ch * src_;     //!< Current read position.
+	Ch * dst_;
+	Ch * head_;    //!< Original head of the string.
+	Ch * end_;
+};
 
-	template <typename Ch>
-	struct StreamTraits<ara_json_insitu_string_stream<Ch>> {
-		enum { copyOptimization = 1 };
-	};
-	RAPIDJSON_NAMESPACE_END
+template <typename Ch>
+struct StreamTraits<ara_json_insitu_string_stream<Ch>> {
+	enum { copyOptimization = 1 };
+};
+RAPIDJSON_NAMESPACE_END
 
 namespace ara {
 
@@ -76,7 +76,7 @@ namespace ara {
 		typedef typename Encoding::Ch								Ch;
 
 		template<typename StackAllocator = rapidjson::CrtAllocator>
-			jsvar_imp(rapidjson::GenericDocument<Encoding, Allocator,StackAllocator> & doc) : val_(doc), at_(doc.GetAllocator()) {}
+		jsvar_imp(rapidjson::GenericDocument<Encoding, Allocator, StackAllocator> & doc) : val_(doc), at_(doc.GetAllocator()) {}
 		jsvar_imp(jsvalue & val, Allocator & at) : val_(val), at_(at) {}
 		jsvar_imp(const jsvar_imp & js) : val_(js.val_), at_(js.at_) {}
 

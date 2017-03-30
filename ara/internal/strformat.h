@@ -50,7 +50,7 @@ namespace ara {
 
 		template<typename strType>
 		class string_stream : protected std::basic_streambuf<typename strType::value_type, typename strType::traits_type>
-							, public std::basic_ostream<typename strType::value_type, typename strType::traits_type>
+			, public std::basic_ostream<typename strType::value_type, typename strType::traits_type>
 		{
 		public:
 			typedef typename strType::value_type char_type;
@@ -90,7 +90,7 @@ namespace ara {
 				this->setp(buf + size_, buf + maxsize);
 				if (grow_ < 1024)
 					grow_ <<= 1;
-				return c; 
+				return c;
 			}
 			strType	&		buf_;
 			size_type		size_ = 0;
@@ -138,7 +138,7 @@ namespace ara {
 
 			template<class T2>
 			void	append(const T2 & t, int nWidth, int chFill = '0'
-					, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				std::ios::fmtflags nFlags = stream_.flags();
 				stream_.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
@@ -196,9 +196,11 @@ namespace ara {
 
 				if (base == 8) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE8), std::ios::basefield);
-				} else if (base == 10) {
+				}
+				else if (base == 10) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE10), std::ios::basefield);
-				} else if (base == 16) {
+				}
+				else if (base == 16) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE16), std::ios::basefield);
 				}
 				stream_ << static_cast<T2>(t);
@@ -207,12 +209,12 @@ namespace ara {
 
 			template<typename typeDouble>
 			void	append(const typeDouble & dbVal,
-						format::FIX_FLAG bFixed,
-						format::POINT_FLAG bShowPoint = format::SHOW_POINT,
-						format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
-						format::POS_FLAG bShowPos = format::HIDE_POS,
-						format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
-							int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
+				format::FIX_FLAG bFixed,
+				format::POINT_FLAG bShowPoint = format::SHOW_POINT,
+				format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
+				format::POS_FLAG bShowPos = format::HIDE_POS,
+				format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
+				int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
 				std::ios::fmtflags nFlags = stream_.flags();
 				if (bFixed == format::FIXED)
 					stream_.setf(std::ios::fixed, std::ios::floatfield);
@@ -326,23 +328,23 @@ namespace ara {
 			template<typename T2, int base = 10, bool boLowCase = false>
 			void	append_int(T2 t) {
 
-					static const char * Number_Low = "0123456789abcdef";
-					static const char * Number_Up = "0123456789ABCDEF";
-					const char * Number = boLowCase ? Number_Low : Number_Up;
+				static const char * Number_Low = "0123456789abcdef";
+				static const char * Number_Up = "0123456789ABCDEF";
+				const char * Number = boLowCase ? Number_Low : Number_Up;
 
-					if (t == 0) {
-						typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
-						return;
-					}
+				if (t == 0) {
+					typeStrTraits::append(str_, 1, static_cast<typeCh>(Number[0]));
+					return;
+				}
 
-					const	size_t	bufsize = 72;
-					typeCh	buf[bufsize];
-					typeCh * p = buf + bufsize;
-					while (t) {
-						*(--p) = static_cast<typeCh>(Number[t % static_cast<T2>(base)]);
-						t /= static_cast<T2>(base);
-					}
-					typeStrTraits::append(str_, p, buf + bufsize - p);
+				const	size_t	bufsize = 72;
+				typeCh	buf[bufsize];
+				typeCh * p = buf + bufsize;
+				while (t) {
+					*(--p) = static_cast<typeCh>(Number[t % static_cast<T2>(base)]);
+					t /= static_cast<T2>(base);
+				}
+				typeStrTraits::append(str_, p, buf + bufsize - p);
 			}
 
 			template<class T2>
@@ -362,10 +364,10 @@ namespace ara {
 
 			template<class T2>
 			void	append(const T2 & t, format::INT_BASE nBase, int nWidth, int chFill = '0'
-						, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
-						, format::POS_FLAG bShowPos = format::HIDE_POS
-						, format::BASE_FLAG bShowBase = format::HIDE_BASE
-						, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
+				, format::CHAR_CASE bUpcase = format::CHAR_UPCASE
+				, format::POS_FLAG bShowPos = format::HIDE_POS
+				, format::BASE_FLAG bShowBase = format::HIDE_BASE
+				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				typeStream	out(str_);
 
@@ -393,12 +395,12 @@ namespace ara {
 
 			template<typename typeDouble>
 			void	append(const typeDouble & dbVal,
-							format::FIX_FLAG bFixed,
-							format::POINT_FLAG bShowPoint = format::SHOW_POINT,
-							format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
-							format::POS_FLAG bShowPos = format::HIDE_POS,
-							format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
-							int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
+				format::FIX_FLAG bFixed,
+				format::POINT_FLAG bShowPoint = format::SHOW_POINT,
+				format::CHAR_CASE bUpcase = format::CHAR_UPCASE,
+				format::POS_FLAG bShowPos = format::HIDE_POS,
+				format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_LEFT,
+				int nPrecision = -1, int nWidth = -1, int chFill = ' ') {
 
 				typeStream	out(str_);
 				if (bFixed == format::FIXED)
@@ -481,7 +483,7 @@ namespace ara {
 		}
 
 		template<typename char_type, typename T1>
-		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1, typename std::enable_if<std::is_integral<T1>::value>::type * a= nullptr) {
+		size_t	append_fmt_val(const char_type * fmt, size_t nSize, const T1 & t1, typename std::enable_if<std::is_integral<T1>::value>::type * a = nullptr) {
 			size_t i = 1;	//fmt[0] is %
 			char_type	ch = fmt[i];
 			switch (ch) {
@@ -525,7 +527,7 @@ namespace ara {
 
 		template<typename char_type, typename T1>
 		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1
-											, typename std::enable_if<std::is_arithmetic<T1>::value>::type * = nullptr) {
+			, typename std::enable_if<std::is_arithmetic<T1>::value>::type * = nullptr) {
 			int                 nWidth = -1;
 			int                 nPrecision = -1;
 			char_type           chFill = ' ';
@@ -535,14 +537,14 @@ namespace ara {
 			format::BASE_FLAG bShowBase = format::HIDE_BASE;
 			format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT;
 
-			for(;;) {
+			for (;;) {
 				if (fmt >= pEnd)
 					break;
 				CHECK_CH('#', bShowBase = format::SHOW_BASE)
-				CHECK_CH('-', nAdjust = format::ADJUST_LEFT)
-				CHECK_CH('+', bShowPos = format::SHOW_POS)
-				CHECK_CH(' ', chFill = ' ')
-				CHECK_CH('0', chFill = '0')
+					CHECK_CH('-', nAdjust = format::ADJUST_LEFT)
+					CHECK_CH('+', bShowPos = format::SHOW_POS)
+					CHECK_CH(' ', chFill = ' ')
+					CHECK_CH('0', chFill = '0')
 				else
 					break;
 			}
@@ -589,7 +591,7 @@ namespace ara {
 
 		template<typename char_type, typename T1>
 		size_t output_fmt_val_with_format(const char_type * fmt, size_t n, const T1 & t1
-									, typename std::enable_if<!std::is_arithmetic<T1>::value>::type * = nullptr) {
+			, typename std::enable_if<!std::is_arithmetic<T1>::value>::type * = nullptr) {
 			int                 nWidth = -1;
 			int                 nPrecision = -1;
 			char_type           chFill = ' ';
@@ -604,9 +606,9 @@ namespace ara {
 					break;
 				//CHECK_CH('#', bShowBase = format::SHOW_BASE)
 				CHECK_CH('-', nAdjust = format::ADJUST_LEFT)
-				//CHECK_CH('+', bShowPos = format::SHOW_POS)
-				CHECK_CH(' ', chFill = ' ')
-				CHECK_CH('0', chFill = '0')
+					//CHECK_CH('+', bShowPos = format::SHOW_POS)
+					CHECK_CH(' ', chFill = ' ')
+					CHECK_CH('0', chFill = '0')
 				else
 					break;
 			}

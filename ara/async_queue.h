@@ -26,7 +26,7 @@ namespace ara {
 	typedef std::shared_ptr<internal::asyc_token_impl_base> async_token;
 
 	template<class typeKey, class typeKeyHash = std::hash<typeKey>>
-	class async_queue : public std::enable_shared_from_this<async_queue<typeKey,typeKeyHash>>
+	class async_queue : public std::enable_shared_from_this<async_queue<typeKey, typeKeyHash>>
 	{
 	public:
 		typedef std::function<void(boost::system::error_code const& ec, async_token token)> funcCallback;
@@ -84,7 +84,7 @@ namespace ara {
 			}
 
 			~mission() {
-				if (parent_ptr_) 	{
+				if (parent_ptr_) {
 					parent_ptr_->do_finish(this);
 					if (trace_)
 						ara::glog(log::debug).printfln("Token Release for : %v", todo_);

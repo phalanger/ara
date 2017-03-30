@@ -16,10 +16,10 @@ namespace ara {
 				, const timer_val & rolltime = 1_day
 				, size_t	max_file_size = 0
 				, size_t	keep_file_count = 0
-			) 	: file_name_(file_sys::fix_path(file))
+			) : file_name_(file_sys::fix_path(file))
 				, roll_time_(rolltime)
 				, max_file_size_(max_file_size)
-				, keep_file_count_(keep_file_count) 
+				, keep_file_count_(keep_file_count)
 			{}
 
 			virtual bool		before_write(const log_data & data, std::ostream & out) {
@@ -67,8 +67,8 @@ namespace ara {
 					auto t = next_roll_time_.get();
 					next_roll_time_.set(t - t % roll_time_.sec());
 				}
-				next_roll_time_.step( 0, 0 , 0, 0, 0, static_cast<int>(roll_time_.sec()));
-				
+				next_roll_time_.step(0, 0, 0, 0, 0, static_cast<int>(roll_time_.sec()));
+
 				std::string strFileName = file_name_;
 
 				if (roll_time_ >= 1_day) {
@@ -85,7 +85,7 @@ namespace ara {
 
 				rf_.open(strFileName).create().write_only().append().done();
 				current_size_ = 0;
-				
+
 
 #ifndef ARA_WIN32_VER
 				struct stat statbuf;

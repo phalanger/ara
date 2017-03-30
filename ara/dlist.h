@@ -27,8 +27,8 @@ namespace ara {
 	{
 	public:
 		dlist() {}
-		~dlist() { 
-			unlink(); 
+		~dlist() {
+			unlink();
 		}
 
 		dlist(const dlist &) = delete;

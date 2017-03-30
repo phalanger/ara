@@ -11,11 +11,11 @@
 #include <atomic>
 
 namespace ara {
-	
+
 	namespace internal {
 		template<size_t>
 		struct detect_int {
-			typedef		uint8_t		int_type; 
+			typedef		uint8_t		int_type;
 		};
 		template<>
 		struct detect_int<4> {
@@ -182,7 +182,7 @@ namespace ara {
 
 		key_string_base	substr(size_t nOff, size_t nC = npos) const {
 			size_t nMaxSize = size();
-			if (nOff > nMaxSize)	
+			if (nOff > nMaxSize)
 				nOff = nMaxSize;
 			if (nC == npos || nOff + nC > nMaxSize)
 				nC = nMaxSize - nOff;

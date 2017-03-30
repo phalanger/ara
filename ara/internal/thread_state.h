@@ -61,7 +61,7 @@ namespace ara {
 			static Root			root_;
 		};
 		template<typename LockType, typename Root>
-		LockType	thread_state_lock<LockType,Root>::g_lock;
+		LockType	thread_state_lock<LockType, Root>::g_lock;
 		template<typename LockType, typename Root>
 		std::function<void(thread_call &)>	thread_state_lock<LockType, Root>::g_after_call;
 		template<typename LockType, typename Root>
@@ -153,7 +153,7 @@ namespace ara {
 			thread_state & operator=(const thread_state &) = delete;
 			thread_state & operator=(thread_state &&) = delete;
 		};
-	
+
 	}//internal
 }//ara
 

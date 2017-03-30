@@ -12,9 +12,9 @@ namespace ara {
 		public:
 			appender_stdstream(std::ostream  &	out) : out_(out) {}
 
-			virtual bool		before_write(const log_data & data, std::ostream & out) { 
+			virtual bool		before_write(const log_data & data, std::ostream & out) {
 				default_log_format::output(out, data, nullptr);
-				return true; 
+				return true;
 			}
 			virtual bool		on_flush(const log_data & data, const ref_string & content) {
 				std::lock_guard<std::mutex>		_guard(lock_);

@@ -26,11 +26,11 @@
 	ara::thread_context::register_after_call([](ara::internal::thread_call & call){
 		ara::stream_printf(std::cout, "Finish %v, used: %v", call.get_call_info() , clock() - call.get_start_clock()) << std::endl;
 	});
-		
+
 	// Create thread that auto clear the thread context
 	ara::make_thread( []() {
-		
-	}); 
+
+	});
 
 	// Or
 
@@ -106,7 +106,7 @@ namespace ara {
 			_get_thread_state().navigate_callstack(std::move(func));
 		}
 
-		uint64_t        next_sn()	{ return next_sn_++; }
+		uint64_t        next_sn() { return next_sn_++; }
 
 		static void		destroy_context() {
 			internal::tls_holder<thread_context>::destroy();
@@ -115,7 +115,7 @@ namespace ara {
 		static void		dump_all_thread_state(std::ostream & out) {
 			internal::thread_state::dump_all(out);
 		}
-		static void		navigate_all_thread_state(std::function<void (internal::thread_state &)> && func) {
+		static void		navigate_all_thread_state(std::function<void(internal::thread_state &)> && func) {
 			internal::thread_state::navigate_all(std::move(func));
 		}
 		static void		register_after_call(std::function<void(internal::thread_call &)> && func) {
@@ -133,8 +133,8 @@ namespace ara {
 			return tls_mgr_.template get<T>(idx);
 		}
 
-		internal::thread_state	& _get_thread_state() { 
-			return thread_state_; 
+		internal::thread_state	& _get_thread_state() {
+			return thread_state_;
 		}
 
 		static void	_global_init() {
@@ -217,11 +217,11 @@ namespace ara {
 	};
 
 	template<typename data, typename tag>
-	std::once_flag thread_local_data_ptr<data,tag>::init_flag_;
+	std::once_flag thread_local_data_ptr<data, tag>::init_flag_;
 	template<typename data, typename tag>
 	volatile int thread_local_data_ptr<data, tag>::id_ = -1;
 
-	template<typename data,typename tag = void>
+	template<typename data, typename tag = void>
 	data &	thread_local_data() {
 		thread_local_data_ptr<data, tag>	p;
 		if (p.empty())
@@ -230,7 +230,7 @@ namespace ara {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-			
+
 	class call_begin : public internal::thread_call
 	{
 	public:

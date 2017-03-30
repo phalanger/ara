@@ -549,10 +549,10 @@ namespace ara {
 				std::chrono::nanoseconds __ns = nsec_;
 				return __s + __ns;
 			}
-			
+
 			std::chrono::nanoseconds	to_duration() const {
-				std::chrono::seconds __s( sec_ );
-				std::chrono::nanoseconds __ns( nsec_ );
+				std::chrono::seconds __s(sec_);
+				std::chrono::nanoseconds __ns(nsec_);
 				return __s + __ns;
 			}
 

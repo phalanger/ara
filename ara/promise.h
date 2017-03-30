@@ -21,7 +21,7 @@ namespace ara {
 
 			ara_promise &	on_error(err_CallBack && func) {
 				err_func_ = std::move(func)£»
-				return *this;
+					return *this;
 			}
 			ara_promise & on_exception(exception_CallBack && func) {
 				exception_func_ = std::move(func);

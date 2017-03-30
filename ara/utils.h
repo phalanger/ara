@@ -27,8 +27,8 @@ namespace ara {
 		template<typename container>
 		class reverse_range_helper {
 		public:
-			typedef typename select_type<std::is_const<container>::value, 
-				typename container::const_reverse_iterator, 
+			typedef typename select_type<std::is_const<container>::value,
+				typename container::const_reverse_iterator,
 				typename container::reverse_iterator>::type iterator;
 
 			reverse_range_helper(container & c) : c_(c) {}
@@ -72,6 +72,9 @@ namespace ara {
 	template<typename T>
 	const T	static_empty<T>::val;
 
+	//////////////////////////////////////////////
+	template<typename T>
+	struct type_id {};
 }
 
 #define ARA_JOIN_2(a, b)			a##b

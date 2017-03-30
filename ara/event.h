@@ -17,7 +17,7 @@
 		n.singal_all(EVENT_OPEN_THE_WINDOW);
 	}
 
-	or 
+	or
 
 	ara::event<int>		num(0);
 	thread 1 {
