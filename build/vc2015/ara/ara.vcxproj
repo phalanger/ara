@@ -53,6 +53,7 @@
     <ClInclude Include="..\..\..\ara\threadext.h" />
     <ClInclude Include="..\..\..\ara\utf8.h" />
     <ClInclude Include="..\..\..\ara\utils.h" />
+    <ClInclude Include="..\..\..\ara\variant.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{504157E6-AF5A-42D8-9740-1B8EEA49C037}</ProjectGuid>

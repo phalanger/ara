@@ -4,6 +4,7 @@
 
 #include "ref_string.h"
 #include "key_string.h"
+#include "stringext.h"
 
 #include <vector>
 #include <map>
@@ -13,20 +14,22 @@ namespace ara {
 
 	class var {
 		template<class T, size_t>
-		struct var_holder{
+		struct var_holder {
 			inline void	init(T v) { f_ = v; }
 			inline void destroy() {}
 			inline void set(T d) { f_ = d; }
-			inline T get() const { return f_; }
+			inline const T & get() const { return f_; }
+			inline T & get() { return f_; }
 		protected:
 			T f_;
 		};
 		template<class T>
-		struct var_holder<T, 4>{
+		struct var_holder<T, 4> {
 			inline void	init(T v) { f_ = new T; *f_ = v; }
 			inline void destroy() { delete f_; }
 			inline void set(T d) { *f_ = d; }
-			inline T get() const { return *f_; }
+			inline const T & get() const { return *f_; }
+			inline T & get() { return *f_; }
 		protected:
 			T * f_;
 		};
@@ -37,17 +40,17 @@ namespace ara {
 		enum TYPE {
 			TYPE_NULL = 0x00,
 			TYPE_BOOL = 0x01,
-			TYPE_BOOL_FALSE = 0x02,
-			TYPE_INT = 0x03,
-			TYPE_INT64 = 0x04,
-			TYPE_DOUBLE = 0x05,
-			TYPE_STRING = 0x06,
-			TYPE_REF_STRING = 0x07,
-			TYPE_ARRAY = 0x08,
-			TYPE_DICT = 0x09,
+			TYPE_INT = 0x02,
+			TYPE_INT64 = 0x03,
+			TYPE_DOUBLE = 0x04,
+			TYPE_STRING = 0x05,
+			TYPE_ARRAY = 0x06,
+			TYPE_DICT = 0x07,
 
-			TYPE_MASK = 0xff,
-			TYPE_REF = 0x100,
+			TYPE_MASK = 0x0f,
+			TYPE_BOOL_FALSE = 0xf0,
+			TYPE_CONST = 0x100,	//used only for string type. std::string or ara::ref_string
+			TYPE_REF = 0x200,
 		};
 		inline ~var() { destroy(); }
 
@@ -74,7 +77,12 @@ namespace ara {
 		var(const std::string & s) : str_(new std::string(s)), type_(TYPE_STRING) {}
 		var(std::string && s) : str_(new std::string(std::move(s))), type_(TYPE_STRING) {}
 		var(std::string * s) : str_(s), type_(TYPE_STRING) {}
-		
+
+		var(const char * s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
+		var(const ref_string & s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
+		var(ref_string && s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
+		var(ref_string * s) : ref_str_(s), type_(TYPE_STRING | TYPE_CONST) {}
+
 		var(const var_array & s) : array_(new var_array(s)), type_(TYPE_ARRAY) {}
 		var(var_array && s) : array_(new var_array(std::move(s))), type_(TYPE_ARRAY) {}
 		var(var_array * s) : array_(s), type_(TYPE_ARRAY) {}
@@ -83,15 +91,17 @@ namespace ara {
 		var(var_dict && s) : dict_(new var_dict(std::move(s))), type_(TYPE_DICT) {}
 		var(var_dict * s) : dict_(s), type_(TYPE_DICT) {}
 
+		var(std::initializer_list<var> list) : array_(new var_array(std::move(list))), type_(TYPE_ARRAY) {}
+
 		var(const var & r) : ptr_(r.ptr_), type_(r.type_) {
 			switch (type_) {
 			case TYPE_INT64:
-				i64_.init( r.i64_.get() );	break;
+				i64_.init(r.i64_.get());	break;
 			case TYPE_DOUBLE:
-				f_.init( r.f_.get() );	break;
+				f_.init(r.f_.get());	break;
 			case TYPE_STRING:
 				str_ = new std::string(*r.str_);	break;
-			case TYPE_REF_STRING:
+			case TYPE_STRING | TYPE_CONST:
 				ref_str_ = new ref_string(*r.ref_str_);	break;
 			case TYPE_ARRAY:
 				array_ = new var_array(*r.array_);	break;
@@ -106,8 +116,154 @@ namespace ara {
 			r.ptr_ = 0;
 		}
 
-		inline bool	is_null() const {
-			return type_ == TYPE_NULL;
+		template<typename T>
+		var(const key_string & k, const T & t) : dict_(new var_dict), type_(TYPE_DICT) {
+			var tmp(t);
+			(*dict_)[k].swap( tmp );
+		}
+		template<typename T>
+		var(const key_string & k, T && t) : dict_(new var_dict), type_(TYPE_DICT) {
+			var tmp(std::move(t));
+			(*dict_)[k].swap( tmp );
+		}
+
+		var & ref(const var & v) {
+			destroy();
+			type_ = v.type_;
+			switch (type_) {
+			case TYPE_INT64:
+				i64_.init(v.i64_.get());	break;
+			case TYPE_DOUBLE:
+				f_.init(v.f_.get());	break;
+			case TYPE_STRING:
+			case TYPE_STRING | TYPE_CONST:
+			case TYPE_ARRAY:
+			case TYPE_DICT:
+				ptr_ = v.ptr_;
+				type_ |= TYPE_REF;	break;
+			default:
+				ptr_ = v.ptr_;
+				break;
+			}
+			return *this;
+		}
+
+		inline TYPE	get_type() const {
+			return static_cast<TYPE>(type_ & TYPE_MASK);
+		}
+
+		inline bool	is_null() const { return type_ == TYPE_NULL; }
+		inline bool is_bool() const { return get_type() == TYPE_BOOL; }
+		inline bool is_int() const { return get_type() == TYPE_INT; }
+		inline bool is_int64() const { return get_type() == TYPE_INT64; }
+		inline bool is_double() const { return get_type() == TYPE_DOUBLE; }
+		inline bool is_string() const { return get_type() == TYPE_STRING; }
+		inline bool is_ref_string() const { return (type_ & (~TYPE_REF)) == (TYPE_STRING | TYPE_CONST); }
+		inline bool is_std_string() const { return (type_ & (~TYPE_REF)) == TYPE_STRING; }
+		inline bool is_array() const { return get_type() == TYPE_ARRAY; }
+		inline bool is_dict() const { return get_type() == TYPE_DICT; }
+
+		bool	get_bool() const { check_type(TYPE_BOOL); return b_; }
+		bool &	get_bool_modify() { check_type(TYPE_BOOL); return b_; }
+		int		get_int() const { check_type(TYPE_INT); return i_; }
+		int	&	get_int_modify() { check_type(TYPE_INT); return i_; }
+		int64_t		get_int64() const { check_type(TYPE_INT64); return i64_.get(); }
+		int64_t	&	get_int64_modify() { check_type(TYPE_INT64); return i64_.get(); }
+		double_t		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
+		double_t	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
+		ref_string	get_string() const {
+			check_type(TYPE_STRING);
+			if (type_ & TYPE_CONST)
+				return *ref_str_;
+			else
+				return ref_string(*str_);
+		}
+		std::string &	get_string_modify() { 
+			check_type(TYPE_STRING); 
+			if (type_ & TYPE_CONST) {
+				std::string	r(ref_str_->str());
+				if ((type_ & TYPE_REF) == 0)
+					delete ref_str_;
+				str_ = new std::string(std::move(r));
+				type_ = TYPE_STRING;
+			}
+			return *str_;
+		}
+		const var_array	&	get_array() const { check_type(TYPE_ARRAY); return *array_; }
+		var_array	&	get_array() { check_type(TYPE_ARRAY); return *array_; }
+		const var_dict	&	get_dict() const { check_type(TYPE_DICT); return *dict_; }
+		var_dict	&	get_dict() { check_type(TYPE_DICT); return *dict_; }
+
+		var_dict	&	to_dict() { 
+			if (get_type() != TYPE_DICT)
+				convert_to_type(TYPE_DICT);
+			return *dict_; 
+		}
+		var_array&	to_array() {
+			if (get_type() != TYPE_ARRAY)
+				convert_to_type(TYPE_ARRAY);
+			return *array_;
+		}
+		size_t	array_size() const {
+			return (get_type() == TYPE_ARRAY) ? array_->size() : 0;
+		}
+		size_t	dict_size() const {
+			return (get_type() == TYPE_DICT) ? dict_->size() : 0;
+		}
+
+		const var &	operator[](size_t index) const {
+			check_type(TYPE_ARRAY);
+			return (*array_)[index];
+		}
+		var &	operator[](size_t index) {
+			if (get_type() != TYPE_ARRAY) 
+				convert_to_type(TYPE_ARRAY); 
+			return (*array_)[index];
+		}
+		const var &	operator[](const key_string & key) const {
+			check_type(TYPE_ARRAY);
+			auto it = dict_->find(key);
+			if (it == dict_->end())
+				return static_empty<var>::val;
+			return it->second;
+		}
+		var &	operator[](const key_string & key) {
+			if (get_type() != TYPE_DICT)
+				convert_to_type(TYPE_DICT);
+			return (*dict_)[key];
+		}
+
+		template<typename T>
+		var & operator=(const T & v) {
+			var tmp(v);
+			swap(tmp);
+			return *this;
+		}
+		template<typename T>
+		var & operator=(T && v) {
+			var tmp( std::move(v) );
+			swap(tmp);
+			return *this;
+		}
+
+		template<typename T>
+		var & operator()(const key_string & key, const T & v) {
+			var tmp(v);
+			(*this)[key].swap( tmp );
+			return *this;
+		}
+		template<typename T>
+		var & operator()(const key_string & key, T && v) {
+			var tmp(std::move(v));
+			(*this)[key].swap( tmp );
+			return *this;
+		}
+
+		void	swap(var & v) {
+			if (&v == this)
+				return;
+			std::swap(v.ptr_, ptr_);
+			std::swap(v.type_, type_);
 		}
 
 	protected:
@@ -119,7 +275,7 @@ namespace ara {
 				f_.destroy();	break;
 			case TYPE_STRING:
 				delete str_;	break;
-			case TYPE_REF_STRING:
+			case TYPE_STRING | TYPE_CONST:
 				delete ref_str_;	break;
 			case TYPE_ARRAY:
 				delete array_;	break;
@@ -128,6 +284,62 @@ namespace ara {
 			default:
 				break;
 			}
+		}
+		static const char * get_type_name(TYPE n) {
+			switch (n) {
+			case TYPE_NULL:
+				return "NULL";
+			case TYPE_BOOL:
+				return "BOOL";
+			case TYPE_INT:
+				return "INT";
+			case TYPE_INT64:
+				return "INT64";
+			case TYPE_DOUBLE:
+				return "DOUBLE";
+			case TYPE_STRING:
+			case TYPE_STRING | TYPE_CONST:
+				return "STRING";
+			case TYPE_ARRAY:
+				return "ARRAY";
+			case TYPE_DICT:
+				return "DICT";
+			default:
+				break;
+			}
+			return "";
+		}
+
+		void	check_type(TYPE n) const {
+			if (n != get_type())
+				throw std::invalid_argument(ara::printf<std::string>("type is %v not %v", get_type_name(get_type()), get_type_name(n)));
+		}
+		void	convert_to_type(TYPE n) {
+			destroy();
+			switch (n)
+			{
+			case TYPE_NULL:
+				break;
+			case TYPE_BOOL:
+				b_ = false;	break;
+			case TYPE_INT:
+				i_ = 0;		break;
+			case TYPE_INT64:
+				i64_.init(0);	break;
+			case TYPE_DOUBLE:
+				f_.init(0.0);	break;
+			case TYPE_STRING:
+				str_ = new std::string;	break;
+			case TYPE_STRING | TYPE_CONST:
+				ref_str_ = new ref_string;	break;
+			case TYPE_ARRAY:
+				array_ = new var_array;
+			case ara::var::TYPE_DICT:
+				dict_ = new var_dict;
+			default:
+				break;
+			}
+			type_ = n;
 		}
 		union {
 			bool	b_;
