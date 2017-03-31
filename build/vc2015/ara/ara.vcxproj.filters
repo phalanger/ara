@@ -117,5 +117,8 @@
     <ClInclude Include="..\..\..\ara\variant.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\variant_convert.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

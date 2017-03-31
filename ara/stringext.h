@@ -119,7 +119,7 @@ namespace ara {
 				else
 					break;
 			}
-			return boNegative ? (-t) : t;
+			return boNegative ? negative_int(t) : t;
 		}
 		template<typename T, int base = 10, bool boLowCase = false>
 		string_ext &	append_int(T t) {
@@ -185,6 +185,15 @@ namespace ara {
 		}
 
 	protected:
+		template<typename T, typename std::enable_if<std::is_signed<T>::value,int>::type = 0>
+		static inline T	negative_int(T n) {
+			return -n;
+		}
+		template<typename T, typename std::enable_if<std::is_unsigned<T>::value,int>::type = 0>
+		static inline T	negative_int(T n) {
+			return (~n) + 1;
+		}
+
 		typeStr	&	str_;
 	};
 

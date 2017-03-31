@@ -41,6 +41,7 @@
     <ClInclude Include="..\..\..\ara\internal\thread_state.h" />
     <ClInclude Include="..\..\..\ara\internal\tls_imp.h" />
     <ClInclude Include="..\..\..\ara\internal\utf8_core.h" />
+    <ClInclude Include="..\..\..\ara\internal\variant_convert.h" />
     <ClInclude Include="..\..\..\ara\key_string.h" />
     <ClInclude Include="..\..\..\ara\log.h" />
     <ClInclude Include="..\..\..\ara\promise.h" />

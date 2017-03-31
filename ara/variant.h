@@ -5,6 +5,7 @@
 #include "ref_string.h"
 #include "key_string.h"
 #include "stringext.h"
+#include "internal/variant_convert.h"
 
 #include <vector>
 #include <map>
@@ -194,6 +195,50 @@ namespace ara {
 		const var_dict	&	get_dict() const { check_type(TYPE_DICT); return *dict_; }
 		var_dict	&	get_dict() { check_type(TYPE_DICT); return *dict_; }
 
+		template<typename T>
+		inline T 	get() const { return get_imp(ara::type_id<T>()); }
+
+		template<typename T, typename keyType>
+		inline T  get(const keyType & key, const T & default) const {
+			return get_path_imp(key_string::ref(key), default);
+		}
+		template<typename keyType>
+		inline const std::string &	get(const keyType & key, const std::string & default) const {
+			return get_path_imp(key_string::ref(key), default);
+		}
+		template<typename keyType>
+		inline const std::string &	get(const keyType & key, const ref_string & default) const {
+			return get_path_imp(key_string::ref(key), default);
+		}
+		template<typename keyType>
+		inline const var &	get(const keyType & key, const var & default) const {
+			return get_path_imp(key_string::ref(key), default);
+		}
+
+		template<typename T, typename Convertor = internal::default_variant_convert>
+		T	to() const {
+			switch (get_type()) {
+			case TYPE_NULL:
+				return Convertor::to(ara::type_id<T>());
+			case TYPE_BOOL:
+				return Convertor::to(ara::type_id<T>(), b_);
+			case TYPE_INT:
+				return Convertor::to(ara::type_id<T>(), i_);
+			case TYPE_INT64:
+				return Convertor::to(ara::type_id<T>(), i64_.get());
+			case TYPE_DOUBLE:
+				return Convertor::to(ara::type_id<T>(), f_.get());
+			case TYPE_STRING:
+				if (type_ & TYPE_CONST)
+					return Convertor::to(ara::type_id<T>(), *ref_str_);
+				else
+					return Convertor::to(ara::type_id<T>(), *str_);
+			default:
+				break;
+			}
+			return T();
+		}
+
 		var_dict	&	to_dict() { 
 			if (get_type() != TYPE_DICT)
 				convert_to_type(TYPE_DICT);
@@ -204,6 +249,7 @@ namespace ara {
 				convert_to_type(TYPE_ARRAY);
 			return *array_;
 		}
+
 		size_t	array_size() const {
 			return (get_type() == TYPE_ARRAY) ? array_->size() : 0;
 		}
@@ -341,6 +387,66 @@ namespace ara {
 			}
 			type_ = n;
 		}
+		inline bool	get_imp(ara::type_id<bool> a) const {	return get_bool(); }
+		inline int8_t	get_imp(ara::type_id<int8_t> a) const { return static_cast<int8_t>(get_int()); }
+		inline uint8_t	get_imp(ara::type_id<uint8_t> a) const { return static_cast<uint8_t>(get_int()); }
+		inline int16_t	get_imp(ara::type_id<int16_t> a) const { return static_cast<int16_t>(get_int()); }
+		inline uint16_t	get_imp(ara::type_id<uint16_t> a) const { return static_cast<uint16_t>(get_int()); }
+		inline int32_t	get_imp(ara::type_id<int32_t> a) const { return static_cast<int32_t>(get_int()); }
+		inline uint32_t	get_imp(ara::type_id<uint32_t> a) const { return static_cast<uint32_t>(get_int()); }
+		inline int64_t	get_imp(ara::type_id<int64_t> a) const { return static_cast<int64_t>(get_int64()); }
+		inline uint64_t	get_imp(ara::type_id<uint64_t> a) const { return static_cast<uint64_t>(get_int64()); }
+		inline double	get_imp(ara::type_id<double> a) const { return static_cast<double>(get_double()); }
+		inline float	get_imp(ara::type_id<float> a) const { return static_cast<float>(get_double()); }
+		inline ref_string	get_imp(ara::type_id<ref_string> a) const { return get_string(); }
+		inline const std::string & get_imp(ara::type_id<std::string> a) const {
+			if ( is_ref_string() )
+				throw std::invalid_argument("type is REF_STRING not STRING");
+			else if ( !is_string() )
+				throw std::invalid_argument(ara::printf<std::string>("type is %v not STRING", get_type_name(get_type())));
+			return *str_;
+		}
+
+		template<typename T>
+		inline T  get_path_imp(const key_string & key, const T & default) const {
+			if ( !is_dict() )
+				return default;
+			auto it = dict_->find(key);
+			if (it == dict_->end())
+				return default;
+			return it->second.get_imp(ara::type_id<T>());
+		}
+		const std::string & get_path_imp(const key_string & key, const std::string & default) const {
+			if ( !is_dict() )
+				return default;
+			auto it = dict_->find(key);
+			if (it == dict_->end())
+				return default;
+			else if (it->second.is_ref_string())
+				throw std::invalid_argument("type is REF_STRING not STRING");
+			it->second.check_type(TYPE_STRING);
+			return *(it->second.str_);
+		}
+		ref_string	get_path_imp(const key_string & key, const ref_string & default) const {
+			if (!is_dict())
+				return default;
+			auto it = dict_->find(key);
+			if (it == dict_->end())
+				return default;
+			else if (it->second.is_string())
+				return ref_string(*it->second.str_);
+			it->second.check_type(TYPE_STRING);
+			return *(it->second.ref_str_);
+		}
+		const var &	get_path_imp(const key_string & key, const var & default) const {
+			if (!is_dict())
+				return default;
+			auto it = dict_->find(key);
+			if (it == dict_->end())
+				return default;
+			return it->second;
+		}
+
 		union {
 			bool	b_;
 			int		i_;
