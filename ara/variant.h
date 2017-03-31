@@ -199,20 +199,20 @@ namespace ara {
 		inline T 	get() const { return get_imp(ara::type_id<T>()); }
 
 		template<typename T, typename keyType>
-		inline T  get(const keyType & key, const T & default) const {
-			return get_path_imp(key_string::ref(key), default);
+		inline T  get(const keyType & key, const T & defaultVal) const {
+			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
-		inline const std::string &	get(const keyType & key, const std::string & default) const {
-			return get_path_imp(key_string::ref(key), default);
+		inline const std::string &	get(const keyType & key, const std::string & defaultVal) const {
+			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
-		inline const std::string &	get(const keyType & key, const ref_string & default) const {
-			return get_path_imp(key_string::ref(key), default);
+		inline const std::string &	get(const keyType & key, const ref_string & defaultVal) const {
+			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
-		inline const var &	get(const keyType & key, const var & default) const {
-			return get_path_imp(key_string::ref(key), default);
+		inline const var &	get(const keyType & key, const var & defaultVal) const {
+			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 
 		template<typename T, typename Convertor = internal::default_variant_convert>
@@ -408,42 +408,42 @@ namespace ara {
 		}
 
 		template<typename T>
-		inline T  get_path_imp(const key_string & key, const T & default) const {
+		inline T  get_path_imp(const key_string & key, const T & defaultVal) const {
 			if ( !is_dict() )
-				return default;
+				return defaultVal;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
-				return default;
+				return defaultVal;
 			return it->second.get_imp(ara::type_id<T>());
 		}
-		const std::string & get_path_imp(const key_string & key, const std::string & default) const {
+		const std::string & get_path_imp(const key_string & key, const std::string & defaultVal) const {
 			if ( !is_dict() )
-				return default;
+				return defaultVal;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
-				return default;
+				return defaultVal;
 			else if (it->second.is_ref_string())
 				throw std::invalid_argument("type is REF_STRING not STRING");
 			it->second.check_type(TYPE_STRING);
 			return *(it->second.str_);
 		}
-		ref_string	get_path_imp(const key_string & key, const ref_string & default) const {
+		ref_string	get_path_imp(const key_string & key, const ref_string & defaultVal) const {
 			if (!is_dict())
-				return default;
+				return defaultVal;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
-				return default;
+				return defaultVal;
 			else if (it->second.is_string())
 				return ref_string(*it->second.str_);
 			it->second.check_type(TYPE_STRING);
 			return *(it->second.ref_str_);
 		}
-		const var &	get_path_imp(const key_string & key, const var & default) const {
+		const var &	get_path_imp(const key_string & key, const var & defaultVal) const {
 			if (!is_dict())
-				return default;
+				return defaultVal;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
-				return default;
+				return defaultVal;
 			return it->second;
 		}
 
@@ -462,4 +462,4 @@ namespace ara {
 	};
 }
 
-#endif ARA_VARIANT_H
+#endif//ARA_VARIANT_H
