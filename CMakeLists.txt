@@ -55,6 +55,7 @@ set(LIB_PATCH_VERSION "1")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 include_directories("./")
+include_directories("./3rd/rapidjson/include")
 
 file(GLOB ARA_HEADERS ara/*.h)
 file(GLOB ARA_INTERNAL_HEADERS "ara/internal/*.h")

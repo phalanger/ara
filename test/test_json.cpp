@@ -5,35 +5,51 @@
 TEST_CASE("json", "[base]") {
 
 	SECTION("base") {
+		ara::var	v;
 
-		auto doc = ara::jsvar::init();
-		ara::jsvar		var(doc);
-		REQUIRE(var.is_null());
+		REQUIRE( ara::json::parse(v, "", 0) );
+
+		v = ara::json::parse("100");
+		REQUIRE(v.is_int());
+		REQUIRE(v.get_int() == 100);
+
+		v = ara::json::parse("{  \
+			\"a\" : 100,				\
+			\"b\" : \"hello world\"		\
+			}");
+		REQUIRE(v.is_dict());
+		REQUIRE(v.dict_size() == 2);
+		REQUIRE(v["b"].is_string());
+		REQUIRE(v["b"].is_std_string());
+		REQUIRE(v["b"].get_string() == "hello world");
+
+		v = "[{\"abcdefghijk\" : 0.6, \"1234567890asd\" : \"11111111111111\"}, 100]"_json;
+		REQUIRE(v.is_array());
+		REQUIRE(v[0].is_dict());
+		REQUIRE(v[1].is_int());
 	}
 
-	SECTION("parse1") {
-		auto doc = ara::jsvar::parse("{\"a\": 100}");
-		ara::jsvar	var(doc);
-		REQUIRE(var.is_object());
-		REQUIRE(var.member_count() == 1);
-		REQUIRE(var.has_member("a"));
-	}
+	SECTION("ref") {
+		ara::var	v;
 
-	SECTION("parse2") {
-		std::string strContent = "{\"a\": 100}";
-		auto doc = ara::jsvar::parse(strContent);
+		std::string str1 = "100";
 
-		ara::jsvar	var(doc);
-		REQUIRE(var.is_object());
-		REQUIRE(var.member_count() == 1);
-	}
+		v = ara::json::parse_ref("100");
+		REQUIRE(v.is_int());
+		REQUIRE(v.get_int() == 100);
 
-	SECTION("parse insitu") {
-		std::string strContent = "{\"a\": 100}";
-		auto doc = ara::jsvar::parse(std::move(strContent));
-
-		ara::jsvar	var(doc);
-		REQUIRE(var.is_object());
-		REQUIRE(var.member_count() == 1);
+		std::string str2 = "{  \
+			\"a\" : 100,				\
+			\"b\" : \"hello world\"		\
+			}";
+		v = ara::json::parse_ref( std::move(str2) );
+		REQUIRE(v.is_dict());
+		REQUIRE(v.dict_size() == 2);
+		REQUIRE(v["b"].is_string());
+		REQUIRE(v["b"].is_ref_string());
+		REQUIRE(v["b"].get_string() == "hello world");
+		std::string::size_type p = str2.find('o');
+		str2[p] = 'O';
+		REQUIRE(v["b"].get_string() == "hellO world");
 	}
 }

@@ -191,9 +191,9 @@ namespace ara {
 			return *str_;
 		}
 		const var_array	&	get_array() const { check_type(TYPE_ARRAY); return *array_; }
-		var_array	&	get_array() { check_type(TYPE_ARRAY); return *array_; }
+		var_array	&	get_array_modify() { check_type(TYPE_ARRAY); return *array_; }
 		const var_dict	&	get_dict() const { check_type(TYPE_DICT); return *dict_; }
-		var_dict	&	get_dict() { check_type(TYPE_DICT); return *dict_; }
+		var_dict	&	get_dict_modify() { check_type(TYPE_DICT); return *dict_; }
 
 		template<typename T>
 		inline T 	get() const { return get_imp(ara::type_id<T>()); }
@@ -379,9 +379,9 @@ namespace ara {
 			case TYPE_STRING | TYPE_CONST:
 				ref_str_ = new ref_string;	break;
 			case TYPE_ARRAY:
-				array_ = new var_array;
+				array_ = new var_array;	break;
 			case ara::var::TYPE_DICT:
-				dict_ = new var_dict;
+				dict_ = new var_dict;	break;
 			default:
 				break;
 			}

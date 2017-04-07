@@ -1,205 +1,282 @@
 
-#ifndef ARA_RAPIDJSON_H
-#define ARA_RAPIDJSON_H
+#ifndef ARA_JSON_H
+#define ARA_JSON_H
 
-#include "stringext.h"
+#include "variant.h"
+#include <list>
 
-#include "../3rd/rapidjson/include/rapidjson/reader.h"
-#include "../3rd/rapidjson/include/rapidjson/writer.h"
-#include "../3rd/rapidjson/include/rapidjson/document.h"
-
-RAPIDJSON_NAMESPACE_BEGIN
-
-template <typename iterator, typename Char = typename iterator::value_type>
-struct ara_json_string_stream {
-	typedef Char Ch;
-	ara_json_string_stream(const iterator beg, const iterator end) : src_(beg), head_(beg), end_(end) {}
-
-	Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
-	Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
-	size_t Tell() const { return static_cast<size_t>(src_ - head_); }
-
-	Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
-	void Put(Ch) { RAPIDJSON_ASSERT(false); }
-	void Flush() { RAPIDJSON_ASSERT(false); }
-	size_t PutEnd(Ch *) { RAPIDJSON_ASSERT(false); return 0; }
-
-	iterator src_;     //!< Current read position.
-	iterator head_;    //!< Original head of the string.
-	iterator end_;
-};
-
-template <typename iterator, typename Ch>
-struct StreamTraits<ara_json_string_stream<iterator, Ch>> {
-	enum { copyOptimization = 1 };
-};
-
-template <typename Char>
-struct ara_json_insitu_string_stream {
-	typedef Char Ch;
-	ara_json_insitu_string_stream(Ch * beg, Ch * end) : src_(beg), dst_(0), head_(beg), end_(end) {}
-
-	Ch Peek() const { return  src_ == end_ ? 0 : (*src_); }
-	Ch Take() { Ch c = (src_ == end_) ? 0 : *src_; ++src_; return c; }
-	size_t Tell() { return static_cast<size_t>(src_ - head_); }
-
-	// Write
-	void Put(Ch c) { RAPIDJSON_ASSERT(dst_ != 0); *dst_++ = c; }
-
-	Ch* PutBegin() { return dst_ = src_; }
-	size_t PutEnd(Ch* begin) { return static_cast<size_t>(dst_ - begin); }
-	void Flush() {}
-
-	Ch* Push(size_t count) { Ch* begin = dst_; dst_ += count; return begin; }
-	void Pop(size_t count) { dst_ -= count; }
-
-	Ch * src_;     //!< Current read position.
-	Ch * dst_;
-	Ch * head_;    //!< Original head of the string.
-	Ch * end_;
-};
-
-template <typename Ch>
-struct StreamTraits<ara_json_insitu_string_stream<Ch>> {
-	enum { copyOptimization = 1 };
-};
-RAPIDJSON_NAMESPACE_END
+#include "rapidjson/reader.h"
+#include "rapidjson/writer.h"
 
 namespace ara {
 
-	template<typename Encoding, typename Allocator>
-	class jsvar_imp
-	{
+	namespace internal {
+
+		template<bool boCanRef>
+		class	ara_json_handler {
+		public:
+			ara_json_handler(var & doc) {
+				list_stack_.push_back(&doc);
+				doc.set_null();
+			}
+
+			bool Null() { 
+				auto last = get_last();
+				if (last == nullptr)
+					return false;
+				last->set_null(); 
+				return true;
+			}
+			bool Bool(bool b) { return assign(b); }
+			bool Int(int i) { return assign(i); }
+			bool Uint(unsigned i) { return assign(i); }
+			bool Int64(int64_t i) { return assign(i); }
+			bool Uint64(uint64_t i) { return assign(i); }
+			bool Double(double d) { return assign(d); }
+			bool String(const char * str, size_t length, bool copy) {
+				if (boCanRef && !copy)
+					return assign(ref_string(str, length));
+				return assign( std::string(str, length) );
+			}
+			bool StartObject() { 
+				auto last = get_last();
+				if (last == nullptr)
+					return false;
+				last->to_dict();
+				list_stack_.push_back(last);
+				return true;
+			}
+			bool Key(const char * str, size_t length, bool copy) {
+				if (boCanRef && !copy)
+					key_ = key_string::ref(str, length);
+				else
+					key_ = key_string::copy(str, length);
+				return true;
+			}
+			bool EndObject(size_t memberCount) {
+				if (list_stack_.empty())
+					return false;
+				list_stack_.pop_back();
+				return true;
+			}
+			bool StartArray() {
+				auto last = get_last();
+				if (last == nullptr)
+					return false;
+				last->to_array();
+				list_stack_.push_back(last);
+				return true;
+			}
+			bool EndArray(size_t elementCount) {
+				if (list_stack_.empty())
+					return false;
+				list_stack_.pop_back();
+				return true;
+			}
+		protected:
+			template<typename T>
+			bool		assign(T && t) {
+				auto last = get_last();
+				if (last == nullptr)
+					return false;
+				*last = std::move(t);
+				return true;
+			}
+			var *	get_last() {
+				if (list_stack_.empty())
+					return nullptr;
+				var * last = list_stack_.back();
+				if (last->is_dict())
+					return &((*last)[key_]);
+				else if (last->is_array()) {
+					auto & ary = last->get_array_modify();
+					ary.push_back(var());
+					return &(ary.back());
+				}
+				return last;
+			}
+			key_string		key_;
+			std::list<var *>	list_stack_;
+		};
+
+		template <typename Encoding>
+		struct GenericStringStream {
+			typedef typename Encoding::Ch Ch;
+
+			GenericStringStream(const Ch *src, size_t nSize) : src_(src), head_(src), end_(src + nSize) {}
+
+			Ch Peek() const { return src_ == end_ ? 0 : *src_; }
+			Ch Take() { return src_ == end_ ? 0 : *src_++; }
+			size_t Tell() const { return static_cast<size_t>(src_ - head_); }
+
+			Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
+			void Put(Ch) { RAPIDJSON_ASSERT(false); }
+			void Flush() { RAPIDJSON_ASSERT(false); }
+			size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
+
+			const Ch* src_;     //!< Current read position.
+			const Ch* head_;    //!< Original head of the string.
+			const Ch* end_;    //!< Original head of the string.
+		};
+
+		template <typename Encoding>
+		struct GenericInsituStringStream {
+			typedef typename Encoding::Ch Ch;
+
+			GenericInsituStringStream(Ch *src, size_t nSize) : src_(src), dst_(0), head_(src), end_(src + nSize) {}
+
+			// Read
+			Ch Peek() const { return src_ == end_ ? 0 : *src_; }
+			Ch Take() { return src_ == end_ ? 0 : *src_++; }
+			size_t Tell() { return static_cast<size_t>(src_ - head_); }
+
+			// Write
+			void Put(Ch c) { RAPIDJSON_ASSERT(dst_ != 0); *dst_++ = c; }
+
+			Ch* PutBegin() { return dst_ = src_; }
+			size_t PutEnd(Ch* begin) { return static_cast<size_t>(dst_ - begin); }
+			void Flush() {}
+
+			Ch* Push(size_t count) { Ch* begin = dst_; dst_ += count; return begin; }
+			void Pop(size_t count) { dst_ -= count; }
+
+			Ch* src_;
+			Ch* dst_;
+			Ch* head_;
+			Ch* end_;
+		};
+	}
+
+	class json{
 	public:
-		typedef rapidjson::GenericValue<Encoding, Allocator>		jsvalue;
-		typedef rapidjson::GenericDocument<Encoding, Allocator>		jsdoc;
-		typedef typename Encoding::Ch								Ch;
+		using utf8 = RAPIDJSON_NAMESPACE::UTF8<>;
+		using utf16 = RAPIDJSON_NAMESPACE::UTF16<>;
+		using utf16le = RAPIDJSON_NAMESPACE::UTF16LE<>;
+		using utf16be = RAPIDJSON_NAMESPACE::UTF16BE<>;
+		using utf32be = RAPIDJSON_NAMESPACE::UTF32BE<>;
+		using utf32le = RAPIDJSON_NAMESPACE::UTF32LE<>;
+		using ascii = RAPIDJSON_NAMESPACE::ASCII<>;
 
-		template<typename StackAllocator = rapidjson::CrtAllocator>
-		jsvar_imp(rapidjson::GenericDocument<Encoding, Allocator, StackAllocator> & doc) : val_(doc), at_(doc.GetAllocator()) {}
-		jsvar_imp(jsvalue & val, Allocator & at) : val_(val), at_(at) {}
-		jsvar_imp(const jsvar_imp & js) : val_(js.val_), at_(js.at_) {}
+		enum ParseFlag {
+			kParseNoFlags = 0,              //!< No flags are set.
+			kParseInsituFlag = 1,           //!< In-situ(destructive) parsing.
+			kParseValidateEncodingFlag = 2, //!< Validate encoding of JSON strings.
+			kParseIterativeFlag = 4,        //!< Iterative(constant complexity in terms of function call stack size) parsing.
+			kParseStopWhenDoneFlag = 8,     //!< After parsing a complete JSON root from stream, stop further processing the rest of stream. When this flag is used, parser will not generate kParseErrorDocumentRootNotSingular error.
+			kParseFullPrecisionFlag = 16,   //!< Parse number in full precision (but slower).
+			kParseCommentsFlag = 32,        //!< Allow one-line (//) and multi-line (/**/) comments.
+			kParseRef = 64,
+			kParseDefaultFlags = kParseNoFlags  //!< Default parse flags. Can be customized by defining RAPIDJSON_PARSE_DEFAULT_FLAGS
+		};
 
-		~jsvar_imp() {}
-
-		template<typename Ch>
-		static jsdoc	parse(const Ch * s) {
-			jsdoc	t;
-			t.Parse(s);
-			return t;
+	
+		static bool	parse(var & v, const char * str, size_t n) {
+			return generic_parse<kParseNoFlags>(v, str, n);
 		}
-		template<typename Ch>
-		static jsdoc	parse(Ch * s) {
-			jsdoc	t;
-			t.ParseInsitu(s);
-			return t;
-		}
-		template<typename typeStr>
-		static jsdoc	parse(const typeStr & s, typename std::enable_if<ara::is_string<typeStr>::value, void>::type * dummy = nullptr) {
-			const Ch * ch = string_traits<typeStr>::data(s);
-			size_t n = string_traits<typeStr>::size(s);
-			rapidjson::ara_json_string_stream<const Ch *, Ch>	stream(ch, ch + n);
-			jsdoc	t;
-			t.template ParseStream<rapidjson::kParseDefaultFlags, Encoding>(stream);
-			return t;
-		}
-		static jsdoc	parse(std::basic_string<Ch> && str) {
-			Ch * ch = const_cast<Ch *>(str.data());
-			size_t n = str.size();
-			rapidjson::ara_json_insitu_string_stream<Ch>	stream(ch, ch + n);
-			jsdoc	t;
-			t.template ParseStream<rapidjson::kParseInsituFlag, Encoding>(stream);
+		static var	parse(const char * str, size_t n) {
+			var t;
+			generic_parse<kParseNoFlags>(t, str, n);
 			return t;
 		}
 
-		static jsdoc	init() { return jsdoc(); }
+		static bool	parse(var & v, const std::string & str) {
+			return generic_parse<kParseNoFlags>(v, str.data(), str.size());
+		}
+		static var	parse(const std::string & str) {
+			var t;
+			generic_parse<kParseNoFlags>(t, str.data(), str.size());
+			return t;
+		}
 
-		inline bool	is_null() const { return val_.IsNull(); }
-		inline bool	is_number() const { return val_.IsNumber(); }
-		inline bool	is_bool() const { return val_.IsBool(); }
-		inline bool	is_string() const { return val_.IsString(); }
-		inline bool	is_object() const { return val_.IsObject(); }
-		inline bool	is_array() const { return val_.IsArray(); }
-		inline bool	is_int() const { return val_.IsInt(); }
-		inline bool	is_uint() const { return val_.IsUint(); }
-		inline bool	is_int64() const { return val_.IsInt64(); }
-		inline bool	is_uint64() const { return val_.IsUint64(); }
-		inline bool	is_double() const { return val_.IsDouble(); }
-		inline bool is_true() const { return val_.IsTrue(); }
-		inline bool is_false() const { return val_.IsFalse(); }
+		static bool	parse(var & v, std::string && str) {
+			return generic_parse<kParseInsituFlag>(v, const_cast<char *>(str.data()), str.size());
+		}
+		static var	parse(std::string && str) {
+			var t;
+			generic_parse<kParseInsituFlag>(t, const_cast<char *>(str.data()), str.size());
+			return t;
+		}
 
-		bool append_to_string(std::basic_string<Ch> & str) const {
-			rapidjson::StringBuffer buffer;
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-			if (!val_.Accept(writer))
+		static bool	parse(var & v, char * str, size_t n) {
+			return generic_parse<kParseInsituFlag>(v, str, n);
+		}
+		static var	parse(char * str, size_t n) {
+			var t;
+			generic_parse<kParseInsituFlag>(t, str, n);
+			return t;
+		}
+
+		/////////////////////////////////////////////////////////////////////////////////
+
+		static bool	parse_ref(var & v, const char * str, size_t n) {
+			return generic_parse<kParseRef>(v, str, n);
+		}
+		static var	parse_ref(const char * str, size_t n) {
+			var t;
+			generic_parse<kParseRef>(t, str, n);
+			return t;
+		}
+
+		static bool	parse_ref(var & v, const std::string & str) {
+			return generic_parse<kParseRef>(v, str.data(), str.size());
+		}
+		static var	parse_ref(const std::string & str) {
+			var t;
+			generic_parse<kParseRef>(t, str.data(), str.size());
+			return t;
+		}
+
+		static bool	parse_ref(var & v, std::string && str) {
+			return generic_parse<kParseInsituFlag|kParseRef>(v, const_cast<char *>(str.data()), str.size());
+		}
+		static var	parse_ref(std::string && str) {
+			var t;
+			generic_parse<kParseInsituFlag|kParseRef>(t, const_cast<char *>(str.data()), str.size());
+			return t;
+		}
+
+		static bool	parse_ref(var & v, char * str, size_t n) {
+			return generic_parse<kParseInsituFlag|kParseRef>(v, str, n);
+		}
+		static var	parse_ref(char * str, size_t n) {
+			var t;
+			generic_parse<kParseInsituFlag|kParseRef>(t, str, n);
+			return t;
+		}
+
+		/////////////////////////////////////////////////////////////////
+
+		template <unsigned parseFlags, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+			static bool		generic_parse(var & v, const typename SourceEncoding::Ch * str, size_t nSize) {
+
+				ara::internal::GenericStringStream<SourceEncoding> s(str, nSize);
+				RAPIDJSON_NAMESPACE::GenericReader<SourceEncoding, TargetEncoding> reader;
+				ara::internal::ara_json_handler<(parseFlags & kParseRef) != 0>	handler(v);
+				auto parseResult_ = reader.template Parse<parseFlags>(s, handler);
+				if (parseResult_ || parseResult_ == RAPIDJSON_NAMESPACE::kParseErrorDocumentEmpty)
+					return true;
+
 				return false;
-			str.append(buffer.GetString(), buffer.GetSize());
-			return true;
-		}
+			}
+		template <unsigned parseFlags, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+			static bool		generic_parse(var & v, typename SourceEncoding::Ch * str, size_t nSize) {
 
-		std::basic_string<Ch> to_string() const {
-			std::basic_string<Ch> res;
-			append_to_string(res);
-			return res;
-		}
+				ara::internal::GenericInsituStringStream<SourceEncoding> s(str, nSize);
+				RAPIDJSON_NAMESPACE::GenericReader<SourceEncoding, TargetEncoding> reader;
+				ara::internal::ara_json_handler<(parseFlags & kParseRef) != 0>	handler(v);
+				auto parseResult_ = reader.template Parse<parseFlags | kParseInsituFlag>(s, handler);
+				if (parseResult_ || parseResult_ == RAPIDJSON_NAMESPACE::kParseErrorDocumentEmpty)
+					return true;
 
-		template<typename V>
-		jsvar_imp & set(const Ch * strKey, const V & v) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			val_.AddMember(rapidjson::StringRef(strKey), rapidjson::Value(v), at_);
-			return *this;
-		}
-		jsvar_imp & set(const Ch * strKey, const std::basic_string<Ch> & v) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			rapidjson::Value ra(v.data(), v.size());
-			val_.AddMember(rapidjson::StringRef(strKey), std::move(ra), at_);
-			return *this;
-		}
-		jsvar_imp & set(const char * strKey, const char * v) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			val_.AddMember(rapidjson::StringRef(strKey), rapidjson::StringRef(v), at_);
-			return *this;
-		}
-		jsvar_imp & set(const char * strKey, rapidjson::Value && val) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			val_.AddMember(rapidjson::StringRef(strKey), val, at_);
-			return *this;
-		}
-		jsvar_imp & set(const char * strKey, jsvar_imp && val) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			val_.AddMember(rapidjson::StringRef(strKey), val.val_, at_);
-			return *this;
-		}
-
-		inline bool has_member(const char * strKey) const {
-			auto it = val_.FindMember(rapidjson::StringRef(strKey));
-			return it != val_.MemberEnd();
-		}
-
-		inline size_t member_count() const {
-			return val_.MemberCount();
-		}
-
-		jsvar_imp & member(const char * strKey) {
-			if (!val_.IsObject())
-				val_.SetObject();
-			jsvalue	& v = val_.AddMember(rapidjson::StringRef(strKey), v, at_);
-			return jsvar_imp(v, at_);
-		}
-
-
-	private:
-		jsvalue	&	val_;
-		Allocator	& at_;
+				return false;
+			}
 	};
-
-	typedef jsvar_imp<rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>		jsvar;
 }
 
-#endif // ARA_RAPIDJSON_H
+inline ara::var operator "" _json(const char * p, size_t n) {
+	return ara::json::parse(p, n);
+}
+
+
+#endif // ARA_JSON_H
 
