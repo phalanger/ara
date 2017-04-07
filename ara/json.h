@@ -145,6 +145,27 @@ namespace ara {
 			Ch* head_;
 			Ch* end_;
 		};
+
+		template<typename Ch>
+		struct json_mem_encoding	{
+			using encoding_type = RAPIDJSON_NAMESPACE::ASCII<Ch>;
+		};
+		template<>
+		struct json_mem_encoding<char>	{
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF8<>;
+		};
+		template<>
+		struct json_mem_encoding<wchar_t>	{
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<wchar_t>;
+		};
+		template<>
+		struct json_mem_encoding<char16_t>	{
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<char16_t>;
+		};
+		template<>
+		struct json_mem_encoding<char32_t>	{
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF32<char32_t>;
+		};
 	}
 
 	class json{
@@ -170,77 +191,90 @@ namespace ara {
 		};
 
 	
-		static bool	parse(var & v, const char * str, size_t n) {
-			return generic_parse<kParseNoFlags>(v, str, n);
+		template<typename Char>
+		inline static bool	parse(var & v, const Char * str, size_t n = 0) {
+			return generic_parse<kParseNoFlags, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, str, n == 0 ? std::char_traits<Char>::length(str) : n);
 		}
-		static var	parse(const char * str, size_t n) {
+		template<typename Char>
+		inline static var	parse(const Char * str, size_t n = 0) {
 			var t;
-			generic_parse<kParseNoFlags>(t, str, n);
+			parse(t, str, n);
 			return t;
 		}
 
-		static bool	parse(var & v, const std::string & str) {
-			return generic_parse<kParseNoFlags>(v, str.data(), str.size());
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static bool	parse(var & v, const typeStr & str) {
+			typedef typename string_traits<typeStr>::value_type	Char;
+			return generic_parse<kParseNoFlags, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, string_traits<typeStr>::data( str ), string_traits<typeStr>::size( str ));
 		}
-		static var	parse(const std::string & str) {
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static var	parse(const typeStr & str) {
 			var t;
-			generic_parse<kParseNoFlags>(t, str.data(), str.size());
+			parse(t, str);
 			return t;
 		}
 
-		static bool	parse(var & v, std::string && str) {
-			return generic_parse<kParseInsituFlag>(v, const_cast<char *>(str.data()), str.size());
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static bool	parse(var & v, typeStr && str) {
+			typedef typename string_traits<typeStr>::value_type	Char;
+			return generic_parse<kParseInsituFlag, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, const_cast<Char *>(string_traits<typeStr>::data(str)), string_traits<typeStr>::size(str));
 		}
-		static var	parse(std::string && str) {
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static var	parse(typeStr && str) {
 			var t;
-			generic_parse<kParseInsituFlag>(t, const_cast<char *>(str.data()), str.size());
+			parse(t, std::move(str));
 			return t;
 		}
 
-		static bool	parse(var & v, char * str, size_t n) {
-			return generic_parse<kParseInsituFlag>(v, str, n);
+		template<typename Char>
+		inline static bool	parse(var & v, Char * str, size_t n = 0) {
+			return generic_parse<kParseInsituFlag, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, str, n == 0 ? std::char_traits<Char>::length(str) : n);
 		}
-		static var	parse(char * str, size_t n) {
+		template<typename Char>
+		inline static var	parse(Char * str, size_t n = 0) {
 			var t;
-			generic_parse<kParseInsituFlag>(t, str, n);
+			parse(t, str, n);
 			return t;
 		}
 
 		/////////////////////////////////////////////////////////////////////////////////
 
-		static bool	parse_ref(var & v, const char * str, size_t n) {
-			return generic_parse<kParseRef>(v, str, n);
+		inline static bool	parse_ref(var & v, const char * str, size_t n = 0) {
+			return generic_parse<kParseRef>(v, str, n == 0 ? std::char_traits<char>::length(str) : n);
 		}
-		static var	parse_ref(const char * str, size_t n) {
+		inline static var	parse_ref(const char * str, size_t n = 0) {
 			var t;
-			generic_parse<kParseRef>(t, str, n);
+			parse_ref(t, str, n);
 			return t;
 		}
 
-		static bool	parse_ref(var & v, const std::string & str) {
-			return generic_parse<kParseRef>(v, str.data(), str.size());
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static bool	parse_ref(var & v, const typeStr & str) {
+			typedef typename string_traits<typeStr>::value_type	Char;
+			return generic_parse<kParseRef, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, string_traits<typeStr>::data( str ), string_traits<typeStr>::size( str ));
 		}
-		static var	parse_ref(const std::string & str) {
+		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		inline static var	parse_ref(const typeStr & str) {
 			var t;
-			generic_parse<kParseRef>(t, str.data(), str.size());
+			parse_ref(t, str);
 			return t;
 		}
 
-		static bool	parse_ref(var & v, std::string && str) {
+		inline static bool	parse_ref(var & v, std::string && str) {
 			return generic_parse<kParseInsituFlag|kParseRef>(v, const_cast<char *>(str.data()), str.size());
 		}
-		static var	parse_ref(std::string && str) {
+		inline static var	parse_ref(std::string && str) {
 			var t;
-			generic_parse<kParseInsituFlag|kParseRef>(t, const_cast<char *>(str.data()), str.size());
+			parse_ref(t, std::move(str));
 			return t;
 		}
 
-		static bool	parse_ref(var & v, char * str, size_t n) {
-			return generic_parse<kParseInsituFlag|kParseRef>(v, str, n);
+		inline static bool	parse_ref(var & v, char * str, size_t n = 0) {
+			return generic_parse<kParseInsituFlag|kParseRef>(v, str, n == 0 ? std::char_traits<char>::length(str) : n);
 		}
-		static var	parse_ref(char * str, size_t n) {
+		inline static var	parse_ref(char * str, size_t n = 0) {
 			var t;
-			generic_parse<kParseInsituFlag|kParseRef>(t, str, n);
+			parse_ref(t, str, n);
 			return t;
 		}
 
@@ -276,7 +310,6 @@ namespace ara {
 inline ara::var operator "" _json(const char * p, size_t n) {
 	return ara::json::parse(p, n);
 }
-
 
 #endif // ARA_JSON_H
 

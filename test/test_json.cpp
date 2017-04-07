@@ -27,6 +27,13 @@ TEST_CASE("json", "[base]") {
 		REQUIRE(v.is_array());
 		REQUIRE(v[0].is_dict());
 		REQUIRE(v[1].is_int());
+
+		std::wstring str1 = L"[100, 0.5, \"Hello\"]";
+		v = ara::json::parse(str1);
+		REQUIRE(v.is_array());
+		REQUIRE(v.array_size() == 3);
+		REQUIRE(v[2].is_string());
+		REQUIRE(v[2].get_string() == "Hello");
 	}
 
 	SECTION("ref") {
@@ -34,7 +41,7 @@ TEST_CASE("json", "[base]") {
 
 		std::string str1 = "100";
 
-		v = ara::json::parse_ref("100");
+		v = ara::json::parse_ref( str1 );
 		REQUIRE(v.is_int());
 		REQUIRE(v.get_int() == 100);
 
@@ -51,5 +58,19 @@ TEST_CASE("json", "[base]") {
 		std::string::size_type p = str2.find('o');
 		str2[p] = 'O';
 		REQUIRE(v["b"].get_string() == "hellO world");
+
+		std::wstring str3 = L"{  \
+			\"a\" : 100,				\
+			\"b\" : \"hello world\"		\
+			}";
+		v = ara::json::parse_ref( std::move(str3) );
+		REQUIRE(v.is_dict());
+		REQUIRE(v.dict_size() == 2);
+		REQUIRE(v["b"].is_string());
+		REQUIRE(v["b"].is_std_string());
+		REQUIRE(v["b"].get_string() == "hello world");
+		std::wstring::size_type p2 = str3.find('o');
+		str3[p2] = 'O';
+		REQUIRE(v["b"].get_string() == "hello world");	
 	}
 }
