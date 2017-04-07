@@ -52,6 +52,8 @@ namespace ara {
 			TYPE_BOOL_FALSE = 0xf0,
 			TYPE_CONST = 0x100,	//used only for string type. std::string or ara::ref_string
 			TYPE_REF = 0x200,
+
+			TYPE_CONST_STRING = TYPE_STRING | TYPE_CONST,
 		};
 		inline ~var() { destroy(); }
 
@@ -79,10 +81,10 @@ namespace ara {
 		var(std::string && s) : str_(new std::string(std::move(s))), type_(TYPE_STRING) {}
 		var(std::string * s) : str_(s), type_(TYPE_STRING) {}
 
-		var(const char * s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
-		var(const ref_string & s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
-		var(ref_string && s) : ref_str_(new ref_string(s)), type_(TYPE_STRING | TYPE_CONST) {}
-		var(ref_string * s) : ref_str_(s), type_(TYPE_STRING | TYPE_CONST) {}
+		var(const char * s) : ref_str_(new ref_string(s)), type_(TYPE_CONST_STRING) {}
+		var(const ref_string & s) : ref_str_(new ref_string(s)), type_(TYPE_CONST_STRING) {}
+		var(ref_string && s) : ref_str_(new ref_string(s)), type_(TYPE_CONST_STRING) {}
+		var(ref_string * s) : ref_str_(s), type_(TYPE_CONST_STRING) {}
 
 		var(const var_array & s) : array_(new var_array(s)), type_(TYPE_ARRAY) {}
 		var(var_array && s) : array_(new var_array(std::move(s))), type_(TYPE_ARRAY) {}
@@ -102,7 +104,7 @@ namespace ara {
 				f_.init(r.f_.get());	break;
 			case TYPE_STRING:
 				str_ = new std::string(*r.str_);	break;
-			case TYPE_STRING | TYPE_CONST:
+			case TYPE_CONST_STRING:
 				ref_str_ = new ref_string(*r.ref_str_);	break;
 			case TYPE_ARRAY:
 				array_ = new var_array(*r.array_);	break;
@@ -137,7 +139,7 @@ namespace ara {
 			case TYPE_DOUBLE:
 				f_.init(v.f_.get());	break;
 			case TYPE_STRING:
-			case TYPE_STRING | TYPE_CONST:
+			case TYPE_CONST_STRING:
 			case TYPE_ARRAY:
 			case TYPE_DICT:
 				ptr_ = v.ptr_;
@@ -159,7 +161,7 @@ namespace ara {
 		inline bool is_int64() const { return get_type() == TYPE_INT64; }
 		inline bool is_double() const { return get_type() == TYPE_DOUBLE; }
 		inline bool is_string() const { return get_type() == TYPE_STRING; }
-		inline bool is_ref_string() const { return (type_ & (~TYPE_REF)) == (TYPE_STRING | TYPE_CONST); }
+		inline bool is_ref_string() const { return (type_ & (~TYPE_REF)) == (TYPE_CONST_STRING); }
 		inline bool is_std_string() const { return (type_ & (~TYPE_REF)) == TYPE_STRING; }
 		inline bool is_array() const { return get_type() == TYPE_ARRAY; }
 		inline bool is_dict() const { return get_type() == TYPE_DICT; }
@@ -321,7 +323,7 @@ namespace ara {
 				f_.destroy();	break;
 			case TYPE_STRING:
 				delete str_;	break;
-			case TYPE_STRING | TYPE_CONST:
+			case TYPE_CONST_STRING:
 				delete ref_str_;	break;
 			case TYPE_ARRAY:
 				delete array_;	break;
@@ -344,7 +346,7 @@ namespace ara {
 			case TYPE_DOUBLE:
 				return "DOUBLE";
 			case TYPE_STRING:
-			case TYPE_STRING | TYPE_CONST:
+			case TYPE_CONST_STRING:
 				return "STRING";
 			case TYPE_ARRAY:
 				return "ARRAY";
@@ -376,7 +378,7 @@ namespace ara {
 				f_.init(0.0);	break;
 			case TYPE_STRING:
 				str_ = new std::string;	break;
-			case TYPE_STRING | TYPE_CONST:
+			case TYPE_CONST_STRING:
 				ref_str_ = new ref_string;	break;
 			case TYPE_ARRAY:
 				array_ = new var_array;	break;

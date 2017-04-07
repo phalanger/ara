@@ -202,24 +202,24 @@ namespace ara {
 			return t;
 		}
 
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static bool	parse(var & v, const typeStr & str) {
 			typedef typename string_traits<typeStr>::value_type	Char;
 			return generic_parse<kParseNoFlags, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, string_traits<typeStr>::data( str ), string_traits<typeStr>::size( str ));
 		}
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static var	parse(const typeStr & str) {
 			var t;
 			parse(t, str);
 			return t;
 		}
 
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static bool	parse(var & v, typeStr && str) {
 			typedef typename string_traits<typeStr>::value_type	Char;
 			return generic_parse<kParseInsituFlag, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, const_cast<Char *>(string_traits<typeStr>::data(str)), string_traits<typeStr>::size(str));
 		}
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static var	parse(typeStr && str) {
 			var t;
 			parse(t, std::move(str));
@@ -248,12 +248,12 @@ namespace ara {
 			return t;
 		}
 
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static bool	parse_ref(var & v, const typeStr & str) {
 			typedef typename string_traits<typeStr>::value_type	Char;
 			return generic_parse<kParseRef, typename ara::internal::json_mem_encoding<Char>::encoding_type>(v, string_traits<typeStr>::data( str ), string_traits<typeStr>::size( str ));
 		}
-		template<typename typeStr, typename = std::enable_if<is_string<typeStr>::value>::type>
+		template<typename typeStr, typename = typename std::enable_if<is_string<typeStr>::value>::type>
 		inline static var	parse_ref(const typeStr & str) {
 			var t;
 			parse_ref(t, str);
