@@ -73,4 +73,37 @@ TEST_CASE("json", "[base]") {
 		str3[p2] = 'O';
 		REQUIRE(v["b"].get_string() == "hello world");	
 	}
+
+
+	SECTION("save") {
+
+		ara::var	v;
+
+		std::string str1 = "100";
+
+		v = ara::json::parse_ref(str1);
+		REQUIRE(v.is_int());
+		REQUIRE(v.get_int() == 100);
+
+		REQUIRE(ara::json::save<std::string>(v) == "100");
+
+		std::string str2 = "{  \
+			\"a\" : 100,				\
+			\"b\" : \"hello world\"		\
+			}";
+		v = ara::json::parse_ref(std::move(str2));
+		std::string s2 = ara::json::save<std::string>(v);
+		REQUIRE(s2 == "{\"a\":100,\"b\":\"hello world\"}");
+		REQUIRE(ara::json::save_to<std::string>(v, s2));
+		REQUIRE(s2 == "{\"a\":100,\"b\":\"hello world\"}{\"a\":100,\"b\":\"hello world\"}");
+
+		std::wstring str3 = L"{  \
+			\"a\" : 100,				\
+			\"b\" : \"hello world\"		\
+			}";
+		v = ara::json::parse_ref(std::move(str3));
+		std::wstring s3 = ara::json::pretty_save<std::wstring>(v);
+		std::wstring s3_pretty = L"{\n    \"a\": 100,\n    \"b\": \"hello world\"\n}";
+		REQUIRE(s3 == s3_pretty);
+	}
 }

@@ -7,6 +7,7 @@
 
 #include "rapidjson/reader.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 
 namespace ara {
 
@@ -166,6 +167,105 @@ namespace ara {
 		struct json_mem_encoding<char32_t>	{
 			using encoding_type = RAPIDJSON_NAMESPACE::UTF32<char32_t>;
 		};
+
+		/////////////////////////////////////////////////////////////////////
+
+		template <typename Ch>
+		class GenericStringBuffer {
+		public:
+			typedef	Ch			Ch;
+			typedef std::basic_string<Ch, std::char_traits<Ch>>		typeStr;
+
+			GenericStringBuffer(typeStr & str) : str_(str), old_size_(str_.size()) {}
+
+			inline void Put(Ch c) { str_ += c; }
+			inline void Flush() {}
+
+			inline void Clear() { str_.resize(old_size_); }
+			inline void ShrinkToFit() {}
+
+			Ch* Push(size_t count) { 
+				size_t n = str_.size();
+				str_.resize(n + count);
+				return const_cast<Ch *>(str_.data() + n);
+			}
+			void Pop(size_t count) { 
+				size_t n = str_.size();
+				if (n > count && n - count >= old_size_)
+					str_.resize(n - count);
+				else
+					Clear();
+			}
+
+			const Ch* GetString() const {
+				// Push and pop a null terminator. This is safe.
+				return str_.c_str();
+			}
+
+			size_t GetSize() const { return str_.size(); }
+
+		private:
+			typeStr		& str_;
+			size_t		old_size_ = 0;
+		};
+
+		class VarWriter
+		{
+		public:
+			template<class typeWriter>
+			static bool	output(const var & v, typeWriter & w) {
+				switch (v.get_type()) {
+				case var::TYPE_NULL:
+					return w.Null();
+				case var::TYPE_BOOL:
+					return w.Bool(v.get_bool());
+				case var::TYPE_INT:
+					return w.Int(v.get_int());
+				case var::TYPE_INT64:
+					return w.Int64(v.get_int64());
+				case var::TYPE_DOUBLE:
+					return w.Double(v.get_double());
+				case var::TYPE_STRING: 
+				case var::TYPE_CONST_STRING:
+				{
+					auto s = v.get_string();
+					return w.String(s.data(), static_cast<RAPIDJSON_NAMESPACE::SizeType>(s.size()), false);
+				}
+				case var::TYPE_ARRAY:
+				{
+					if (!w.StartArray())
+						return false;
+					const auto & a = v.get_array();
+					RAPIDJSON_NAMESPACE::SizeType count = 0;
+					for (const auto & i : a) {
+						if (!output(i, w))
+							break;
+						++count;
+					}
+					return w.EndArray(count);
+				}
+				case var::TYPE_DICT:
+				{
+					if (!w.StartObject())
+						return false;
+					const auto & a = v.get_dict();
+					RAPIDJSON_NAMESPACE::SizeType count = 0;
+					for (const auto & i : a) {
+						const auto & key = i.first;
+						if (!w.Key(key.data(), static_cast<RAPIDJSON_NAMESPACE::SizeType>(key.size())))
+							break;
+						else if (!output(i.second, w))
+							break;
+						++count;
+					}
+					return w.EndObject(count);
+				}
+				default:
+					break;
+				}
+				return false;
+			}
+		};
 	}
 
 	class json{
@@ -280,6 +380,44 @@ namespace ara {
 
 		/////////////////////////////////////////////////////////////////
 
+		template<typename typeString>
+		inline static typeString	save(const var & v) {
+
+			typeString		strStore;
+			typedef typename typeString::value_type	Char;
+
+			generic_save<Char, std::char_traits<Char>, ara::json::utf8, typename ara::internal::json_mem_encoding<Char>::encoding_type >(v, strStore);
+			return strStore;
+		}
+
+		template<typename typeString>
+		inline static bool	save_to(const var & v, typeString & strStore) {
+
+			typedef typename typeString::value_type	Char;
+			return generic_save<Char, std::char_traits<Char>, ara::json::utf8, typename ara::internal::json_mem_encoding<Char>::encoding_type >(v, strStore);
+		}
+
+		/////////////////////////////////////////////////////////////////
+
+		template<typename typeString>
+		inline static typeString	pretty_save(const var & v, int indentChar = ' ', unsigned indentCharCount = 4) {
+
+			typeString		strStore;
+			typedef typename typeString::value_type	Char;
+
+			generic_pretty_save<Char, std::char_traits<Char>, ara::json::utf8, typename ara::internal::json_mem_encoding<Char>::encoding_type >(v, strStore, indentChar, indentCharCount);
+			return strStore;
+		}
+
+		template<typename typeString>
+		inline static bool	pretty_save_to(const var & v, typeString & strStore, int indentChar = ' ', unsigned indentCharCount = 4) {
+
+			typedef typename typeString::value_type	Char;
+			return generic_pretty_save<Char, std::char_traits<Char>, ara::json::utf8, typename ara::internal::json_mem_encoding<Char>::encoding_type >(v, strStore, indentChar, indentCharCount);
+		}
+
+		/////////////////////////////////////////////////////////////////
+
 		template <unsigned parseFlags, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			static bool		generic_parse(var & v, const typename SourceEncoding::Ch * str, size_t nSize) {
 
@@ -303,6 +441,31 @@ namespace ara {
 					return true;
 
 				return false;
+			}
+
+		/////////////////////////////////////////////////////////////
+		template<typename Char, typename CharTraits = std::char_traits<Ch>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+			inline static bool	generic_save(const var & v, std::basic_string<Char, CharTraits>	& strStore) {
+
+				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
+				StringBuffer	buf(strStore);
+				typedef typename ara::internal::json_mem_encoding<Char>::encoding_type	encoding_type;
+				RAPIDJSON_NAMESPACE::Writer<StringBuffer, SourceEncoding, TargetEncoding> writer(buf);
+
+				return internal::VarWriter::output(v, writer);
+			}
+
+		/////////////////////////////////////////////////////////////
+		template<typename Char, typename CharTraits = std::char_traits<Ch>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+			inline static bool	generic_pretty_save(const var & v, std::basic_string<Char, CharTraits> & strStore, Char indentChar = ' ', unsigned indentCharCount = 4) {
+
+				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
+				StringBuffer	buf(strStore);
+				typedef typename ara::internal::json_mem_encoding<Char>::encoding_type	encoding_type;
+				RAPIDJSON_NAMESPACE::PrettyWriter<StringBuffer, SourceEncoding, TargetEncoding> writer(buf);
+				writer.SetIndent(indentChar, indentCharCount);
+
+				return internal::VarWriter::output(v, writer);
 			}
 	};
 }
