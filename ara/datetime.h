@@ -123,6 +123,9 @@ namespace ara {
 				std::string		s(strDate.data(), strDate.size());
 				parse(s.c_str(), format);
 			}
+			explicit date_time_imp(const std::string & strDate, const char * format = nullptr) : time_(0) {
+				parse(strDate.c_str(), format);
+			}
 			explicit date_time_imp(const char * lpDate, const char * format = nullptr) : time_(0) {
 				parse(lpDate, format);
 			}
@@ -540,17 +543,15 @@ namespace ara {
 			/// Set milliseconds.
 			void milli_sec(long milli_sec) { nsec_ = static_cast<TNs>(milli_sec * date_time::get_nanoseconds_per_millisecond()); }
 
-			template<typename _Clock, typename _Duration>
+			template<typename _Clock, typename _Duration = typename _Clock::duration>
 			std::chrono::time_point<_Clock, _Duration>	to_time_point() const {
-				std::chrono::seconds __s = sec_;
-				std::chrono::nanoseconds __ns = nsec_;
-				return __s + __ns;
+				return std::chrono::time_point<_Clock, _Duration>(to_duration<_Duration>());
 			}
-			
-			std::chrono::nanoseconds	to_duration() const {
-				std::chrono::seconds __s( sec_ );
-				std::chrono::nanoseconds __ns( nsec_ );
-				return __s + __ns;
+
+			template<typename _Duration = std::chrono::nanoseconds>
+			_Duration	to_duration() const {
+				return std::chrono::duration_cast<_Duration>(std::chrono::seconds(sec_)) 
+					+ std::chrono::duration_cast<_Duration>(std::chrono::nanoseconds(nsec_));
 			}
 
 			int			compare(const timer_val_imp & nVal) const {

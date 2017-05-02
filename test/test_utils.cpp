@@ -4,6 +4,10 @@
 
 #include <vector>
 
+static size_t test_func(const std::wstring & s = ara::static_empty<std::wstring>::val) {
+	return s.size();
+}
+
 TEST_CASE("utils", "[base]") {
 
 	SECTION("reverse_range") {
@@ -37,5 +41,13 @@ TEST_CASE("utils", "[base]") {
 		REQUIRE(n == 16);
 	}
 
+	SECTION("static null") {
+
+		auto s = ara::static_empty<std::string>::val;
+
+		REQUIRE(s.empty());
+		REQUIRE(test_func() == 0);
+
+	}
 
 }

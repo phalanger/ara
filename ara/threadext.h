@@ -26,11 +26,11 @@
 	ara::thread_context::register_after_call([](ara::internal::thread_call & call){
 		ara::stream_printf(std::cout, "Finish %v, used: %v", call.get_call_info() , clock() - call.get_start_clock()) << std::endl;
 	});
-		
+
 	// Create thread that auto clear the thread context
 	ara::make_thread( []() {
-		
-	}); 
+
+	});
 
 	// Or
 
@@ -48,6 +48,7 @@
 
 #include "stringext.h"
 #include "utils.h"
+#include "promise.h"
 #include "internal/tls_imp.h"
 #include "internal/thread_state.h"
 #include "internal/log_base.h"
@@ -92,12 +93,12 @@ namespace ara {
 			}
 		}
 
+		template<typename T>
+		void	delete_on_thread_exit(T * p, typename std::enable_if<!std::is_base_of<auto_del_base, T>::value>::type * = 0) {
+			list_del_.push_back(new internal::auto_del<T>(p));
+		}
 		void	delete_on_thread_exit(auto_del_base * p) {
 			list_del_.push_back(p);
-		}
-		template<typename T>
-		void	delete_on_thread_exit(T * p) {
-			list_del_.push_back( new internal::auto_del<T>(p) );
 		}
 		void	run_on_thread_exit(std::function<void()> && func) {
 			list_run_.push_back(std::move(func));
@@ -106,7 +107,7 @@ namespace ara {
 			_get_thread_state().navigate_callstack(std::move(func));
 		}
 
-		uint64_t        next_sn()	{ return next_sn_++; }
+		uint64_t        next_sn() { return next_sn_++; }
 
 		static void		destroy_context() {
 			internal::tls_holder<thread_context>::destroy();
@@ -115,12 +116,16 @@ namespace ara {
 		static void		dump_all_thread_state(std::ostream & out) {
 			internal::thread_state::dump_all(out);
 		}
-		static void		navigate_all_thread_state(std::function<void (internal::thread_state &)> && func) {
+		static void		navigate_all_thread_state(std::function<void(internal::thread_state &)> && func) {
 			internal::thread_state::navigate_all(std::move(func));
 		}
 		static void		register_after_call(std::function<void(internal::thread_call &)> && func) {
 			internal::thread_state::register_after_call(std::move(func));
 		}
+		static void		unregister_after_call() {
+			internal::thread_state::unregister_after_call();
+		}
+
 	public:
 		//internal interface
 
@@ -129,8 +134,8 @@ namespace ara {
 			return tls_mgr_.template get<T>(idx);
 		}
 
-		internal::thread_state	& _get_thread_state() { 
-			return thread_state_; 
+		internal::thread_state	& _get_thread_state() {
+			return thread_state_;
 		}
 
 		static void	_global_init() {
@@ -155,7 +160,7 @@ namespace ara {
 	class thread_local_data_ptr
 	{
 	public:
-		thread_local_data_ptr() = default;
+		thread_local_data_ptr() {}
 
 		inline data * get() const {
 			_check();
@@ -213,11 +218,11 @@ namespace ara {
 	};
 
 	template<typename data, typename tag>
-	std::once_flag thread_local_data_ptr<data,tag>::init_flag_;
+	std::once_flag thread_local_data_ptr<data, tag>::init_flag_;
 	template<typename data, typename tag>
 	volatile int thread_local_data_ptr<data, tag>::id_ = -1;
 
-	template<typename data,typename tag = void>
+	template<typename data, typename tag = void>
 	data &	thread_local_data() {
 		thread_local_data_ptr<data, tag>	p;
 		if (p.empty())
@@ -226,21 +231,21 @@ namespace ara {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-			
+
 	class call_begin : public internal::thread_call
 	{
 	public:
 		typedef internal::thread_call	typeParent;
-		call_begin(const char * p, clock_t s = 0, typeParent::ext_data * pExt = nullptr)
+		call_begin(const char * p, clock_t s = 0, void * pExt = nullptr)
 			: typeParent(p, s, pExt), ts_(thread_context::get()._get_thread_state()) {
 			ts_.push(this);
 		}
-		call_begin(const std::string & p, clock_t s = 0, typeParent::ext_data * pExt = nullptr)
+		call_begin(const std::string & p, clock_t s = 0, void * pExt = nullptr)
 			: typeParent(p, s, pExt), ts_(thread_context::get()._get_thread_state()) {
 			ts_.push(this);
 		}
-		call_begin(std::string && p, clock_t s = 0, typeParent::ext_data * pExt = nullptr)
-			: typeParent(p, s, pExt), ts_(thread_context::get()._get_thread_state()) {
+		call_begin(std::string && p, clock_t s = 0, void * pExt = nullptr)
+			: typeParent(std::move(p), s, pExt), ts_(thread_context::get()._get_thread_state()) {
 			ts_.push(this);
 		}
 		~call_begin() {
@@ -256,14 +261,54 @@ namespace ara {
 	std::thread		make_thread(_Callable && f, _Args&&... args) {
 		auto func = std::bind<void>(std::forward<_Callable>(f), std::forward<_Args>(args)...);
 		std::thread res([func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
 			func();
-			thread_context::destroy_context();
 		});
 		return res;
 	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+	RetType	async_exec(FunCall && func) {
+		RetType res;
+		std::thread t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.move_result( func() );
+			} catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+		async_result<RetType>	async_exec(FunCall && func) {
+		async_result<RetType> res;
+		std::thread  t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.set( func() );
+			}
+			catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
+
 }
 
 #define BEGIN_CALL_AUTOINFO		ara::call_begin		ARA_TMP_VAR(_call)( ara::str_printf<std::string>("%v@%v#%v", ARA_FUNC_NAME, __FILE__, __LINE__) )
-#define BEGIN_CALL(...)			ara::call_begin		ARA_TMP_VAR(_call)( __VA_ARGS__)
+#define BEGIN_CALL(...)			ara::call_begin		ARA_TMP_VAR(_call)( __VA_ARGS__ )
 
 #endif//ARA_THREADEXT_H

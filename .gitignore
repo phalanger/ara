@@ -37,6 +37,12 @@ Debug
 /build/vc2015/x64
 /build/vc2015/ara/x64
 /build/vc2015/test/x64
+/build/vc2015/benchmark/x64
+/build/vc2017/ara/*
+/build/vc2017/test
+/build/vc2017/benchmark
+/build/vc2017/x64
+/build/vc2017/Release
 bin
 *.opensdf
 *.sdf

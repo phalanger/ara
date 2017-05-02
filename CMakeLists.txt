@@ -43,6 +43,9 @@ if(GB_GENERATE_COVERAGE_INFO)
         # this seems to be the best option to generate the naming gcov expects.
         set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
         set(GCOV_COMMAND gcov CACHE STRING "Command to invoke to run gcov.")
+        
+		SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+		SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")        
     endif()
 endif()
 
@@ -52,6 +55,7 @@ set(LIB_PATCH_VERSION "1")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 include_directories("./")
+include_directories("./3rd/rapidjson/include")
 
 file(GLOB ARA_HEADERS ara/*.h)
 file(GLOB ARA_INTERNAL_HEADERS "ara/internal/*.h")
@@ -63,16 +67,32 @@ file(GLOB ARA_ASYNC_TEST_SRC test/test_async_*.cpp)
 file(GLOB ARA_TEST_SRC test/*.cpp)
 list(REMOVE_ITEM ARA_TEST_SRC ${ARA_ASYNC_TEST_SRC})
 
+file(GLOB ARA_BENCHMARK_SRC benchmark/*.cpp)
+add_executable(benchmark ${ARA_BENCHMARK_SRC})
+
+set(ARA_SUPPORT_ASYNC OFF)
+
 # Find boost
 INCLUDE(FindBoost)
 set(Boost_USE_STATIC_LIBS        ON) # only find static libs
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
-find_package(Boost 1.56.0 COMPONENTS date_time thread system)
+find_package(Boost COMPONENTS date_time thread system)
 if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-    add_executable(unittest ${ARA_TEST_SRC} ${ARA_HEADERS} ${ARA_INTERNAL_HEADERS} ${ARA_ASYNC_TEST_SRC})
-    target_link_libraries(unittest ${Boost_LIBRARIES})
+	# Find openssl
+	find_package(OpenSSL)
+	if(OPENSSL_FOUND)
+		set(ARA_SUPPORT_ASYNC ON)
+	endif()
+endif()
+
+if(ARA_SUPPORT_ASYNC)
+	include_directories(${Boost_INCLUDE_DIRS})
+	include_directories(${OPENSSL_INCLUDE_DIR})
+	add_executable(unittest ${ARA_TEST_SRC} ${ARA_HEADERS} ${ARA_INTERNAL_HEADERS} ${ARA_ASYNC_TEST_SRC})
+	target_link_libraries(unittest ${Boost_LIBRARIES})
+	target_link_libraries(unittest ${OPENSSL_LIBRARIES})
+	target_link_libraries(benchmark ${Boost_LIBRARIES})
 else()
     add_executable(unittest ${ARA_TEST_SRC} ${ARA_HEADERS} ${ARA_INTERNAL_HEADERS})
 endif()

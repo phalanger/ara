@@ -121,8 +121,9 @@ TEST_CASE("filesys", "[base]") {
 
 		ara::file_sys::unlink(strFile);
 
-		if (!rf.open(strFile).create().random().read_write().done())
-			FAIL("Open file " << strFile << " fail:" << ara::error::info());
+		bool boOpenFile = rf.open(strFile).create().random().read_write().done();
+		INFO("Open file " << strFile << " result:" << ara::error::info());
+		REQUIRE(boOpenFile);
 
 		REQUIRE(rf.write("Hello", 5) == 5);
 		REQUIRE(rf.tell() == 5);

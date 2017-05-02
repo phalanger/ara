@@ -19,9 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\test\benchmark_printf.cpp" />
     <ClCompile Include="..\..\..\test\main.cpp" />
+    <ClCompile Include="..\..\..\test\test_async_httpclient.cpp" />
     <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
+    <ClCompile Include="..\..\..\test\test_async_rwqueue.cpp" />
+    <ClCompile Include="..\..\..\test\test_async_session.cpp" />
     <ClCompile Include="..\..\..\test\test_datetime.cpp" />
     <ClCompile Include="..\..\..\test\test_dlist.cpp" />
     <ClCompile Include="..\..\..\test\test_filesys.cpp" />
@@ -29,11 +31,18 @@
     <ClCompile Include="..\..\..\test\test_flags.cpp" />
     <ClCompile Include="..\..\..\test\test_keystring.cpp" />
     <ClCompile Include="..\..\..\test\test_log.cpp" />
+    <ClCompile Include="..\..\..\test\test_promise.cpp" />
+    <ClCompile Include="..\..\..\test\test_session.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />
+    <ClCompile Include="..\..\..\test\test_token.cpp" />
     <ClCompile Include="..\..\..\test\test_utf8.cpp" />
     <ClCompile Include="..\..\..\test\test_utils.cpp" />
     <ClCompile Include="..\..\..\test\test_json.cpp" />
+    <ClCompile Include="..\..\..\test\test_variant.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\test\test_async_helper.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48842B41-F404-4965-98CF-6B9B54B4EF76}</ProjectGuid>
@@ -88,20 +97,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>D:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -115,6 +126,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto32MTd.lib;libssl32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>"$(TargetDir)\$(TargetName).exe" --result_code=no --report_level=no</Command>
@@ -126,13 +138,17 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
+      <OptimizeReferences>false</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto64MTd.lib;libssl64MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -154,6 +170,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto32MT.lib;libssl32MT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -172,6 +189,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto64MT.lib;libssl64MT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

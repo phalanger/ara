@@ -21,26 +21,13 @@
 
 ara is a header-only C++ library. Just copy the `ara` folder to system or project's include path.
 
-If need the **async** class, which depend on BOOST **asio**, need to build the BOOST library.
+If need the **async** class, which depend on BOOST **asio** and **openssl**, need to build the BOOST library.
 
-### Windows platform
+[Windows platform install guide](docs/install_win.md)
 
-install BOOST such like this:
+[Linux platform install guide](docs/install_linux.md)
 
-~~~~~~~~~~bat
-    bootstrap.bat
-    b2 variant=debug link=static threading=multi runtime-link=static --without-python
-    b2 variant=release link=static threading=multi runtime-link=static --without-python
-    b2 variant=debug link=static threading=multi runtime-link=static address-model=64 --without-python
-    b2 variant=release link=static threading=multi runtime-link=static address-model=64 --without-python
-~~~~~~~~~~
+## Reference section
 
-### linux platform
-
-install BOOST such like this:
-
-~~~~~~~~~~bat
-    b2 -j 4 toolset=gcc link=static  stage debug
-    b2 -j 4 toolset=gcc-32 link=static  stage debug
-    b2 -j 4 toolset=gcc-64 link=static  stage debug
-~~~~~~~~~~
+* [datetime](docs/datetime.md) : a simple class to handle the date/time
+* [timer_val](docs/timer_val.md) : a simple class look likes **timeval** to store **seconds** and **nanoseconds**

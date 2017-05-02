@@ -8,6 +8,7 @@
 #include "dlist.h"
 #include "datetime.h"
 #include "log.h"
+#include "promise.h"
 
 #include <functional>
 #include <mutex>
@@ -26,7 +27,7 @@ namespace ara {
 	typedef std::shared_ptr<internal::asyc_token_impl_base> async_token;
 
 	template<class typeKey, class typeKeyHash = std::hash<typeKey>>
-	class async_queue : public std::enable_shared_from_this<async_queue<typeKey,typeKeyHash>>
+	class async_queue : public std::enable_shared_from_this<async_queue<typeKey, typeKeyHash>>
 	{
 	public:
 		typedef std::function<void(boost::system::error_code const& ec, async_token token)> funcCallback;
@@ -53,6 +54,14 @@ namespace ara {
 		void	dump(const std::string & strPrefix, std::ostream & out);
 
 		void	apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo);
+
+		async_result<boost::system::error_code, async_token>	apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, std::string && strTodo) {
+			async_result<boost::system::error_code, async_token> res;
+			apply(io, key, tTimeout, [res](boost::system::error_code const& ec, async_token token) {
+				res.set(ec, token);
+			}, std::move(strTodo));
+			return res;
+		}
 
 	protected:
 		async_queue();
@@ -84,7 +93,7 @@ namespace ara {
 			}
 
 			~mission() {
-				if (parent_ptr_) 	{
+				if (parent_ptr_) {
 					parent_ptr_->do_finish(this);
 					if (trace_)
 						ara::glog(log::debug).printfln("Token Release for : %v", todo_);
@@ -108,7 +117,8 @@ namespace ara {
 					if (ec != boost::asio::error::operation_aborted) {
 						if (mission_base::cando()) {
 							funcCallback func = std::move(func_);
-							func(boost::asio::error::timed_out, nullptr);
+							if (func)
+								func(boost::asio::error::timed_out, nullptr);
 						}
 					}
 				}
@@ -144,7 +154,12 @@ namespace ara {
 						timer_->cancel(temp);
 					if (!ec && trace_)
 						ara::glog(ara::log::debug).printfln("Token get for : %v", todo_);
-					func_(ec, token);
+					if (func_)
+					{
+						func_(ec, token);
+						func_ = nullptr;
+					}
+					
 				}
 			}
 
@@ -311,6 +326,7 @@ namespace ara {
 			}
 		};
 
+		std::mutex	lock_;
 		std::vector<std::shared_ptr<HashNode>> hash_ary_;
 		typeKeyHash hash_func_;
 		bool trace_ = false;
@@ -360,8 +376,13 @@ namespace ara {
 		}
 		else {
 			size_t nIndex = nHash % hash_ary_.size();
-			if (!hash_ary_[nIndex])
-				hash_ary_[nIndex] = std::make_shared<HashNode>(trace_);
+			if (UNLIKELY(!hash_ary_[nIndex])) {
+				std::lock_guard<std::mutex>		_guard(lock_);
+				if (!hash_ary_[nIndex]) {
+					auto p = std::make_shared<HashNode>(trace_);
+					hash_ary_[nIndex] = p;
+				}
+			}
 
 			pNode = hash_ary_[nIndex]->get(key);
 		}

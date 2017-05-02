@@ -19,7 +19,7 @@
 
 namespace ara {
 
-	template<class T, class tag = void> 
+	template<class T, class tag = void>
 	class singleton
 	{
 	public:
@@ -52,10 +52,10 @@ namespace ara {
 		static std::once_flag init_flag;
 	};
 
-	template<class T,class tag>
-		T * singleton<T, tag>::instance_ = nullptr;
 	template<class T, class tag>
-		std::once_flag singleton<T, tag>::init_flag;
+	T * singleton<T, tag>::instance_ = nullptr;
+	template<class T, class tag>
+	std::once_flag singleton<T, tag>::init_flag;
 }
 
 #endif//ARA_SINGLETON_H

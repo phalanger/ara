@@ -9,7 +9,10 @@
 	#endif
 
 	#ifdef _MSC_VER
-		#if (_MSC_VER >= 1900)
+		#if (_MSC_VER >= 1910)
+			#define ARA_WIN32_VS2017_VER
+			#define ARA_WIN32_MSVC141_VER
+		#elif (_MSC_VER >= 1900)
 			#define ARA_WIN32_VS2015_VER
 			#define ARA_WIN32_MSVC14_VER
 		#elif (_MSC_VER >= 1800)
@@ -70,7 +73,9 @@
 
 #ifdef __GNUC__
 	#define ARA_GCC_VER
-	#if __GNUC__ > 3
+	#if __GNUC__ > 4
+		#define ARA_GCC_5_VER
+	#elif __GNUC__ > 3
 		#define ARA_GCC_4_VER
 	#elif __GNUC__ > 2
 		#define ARA_GCC_3_VER

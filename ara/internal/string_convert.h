@@ -11,7 +11,7 @@
 namespace ara {
 
 	namespace internal {
-		
+
 		template<class T>
 		struct string_appender {
 			typedef string_traits<T>	traits;
@@ -20,7 +20,7 @@ namespace ara {
 			inline string_appender(const string_appender & t) : str_(t.str_) {}
 
 			inline string_appender & operator=(const string_appender & r) { return *this; }
-			
+
 			inline string_appender & operator * () { return *this; }
 			inline string_appender & operator ++ () { return *this; }
 			inline string_appender operator ++ (int) { return *this; }
@@ -48,7 +48,7 @@ namespace ara {
 		struct string_convert {
 
 			template<typename typeTarStr>
-			inline static void	append(typeTarStr & str , const char * p, size_t n, const char) {
+			inline static void	append(typeTarStr & str, const char * p, size_t n, const char) {
 				string_traits<typeTarStr>::append(str, p, n);
 			}
 			template<typename typeTarStr>
@@ -69,7 +69,7 @@ namespace ara {
 				traits::reserve(str, traits::size(str) + n * 3);
 				utf8::utf32to8(p, p + n, string_appender<typeTarStr>(str));
 			}
-			
+
 			template<typename typeTarStr>
 			inline static void	append(typeTarStr & str, const char * p, size_t n, const wchar_t) {
 				typedef string_traits<typeTarStr>	traits;
@@ -139,7 +139,7 @@ namespace ara {
 			template<typename typeTarStr, typename typeCh>
 			inline static void	append(typeTarStr & str, const typeCh * p, size_t n) {
 				using typeTarCh = typename string_traits<typeTarStr>::value_type;
-				append(str, p, n, typeTarCh() );
+				append(str, p, n, typeTarCh());
 			}
 
 			template<typename typeTarStr, typename typeSrcStr>

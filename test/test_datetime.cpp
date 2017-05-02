@@ -95,4 +95,14 @@ TEST_CASE("datetime", "[base]") {
 		sout << t4;
 		REQUIRE(sout.str() == "1s2ms3us4ns");
 	}
+
+	SECTION("timer_avl convert") {
+
+		auto a = std::chrono::system_clock::now();
+		ara::timer_val t1(a);
+		auto t2 = t1.to_time_point<std::chrono::system_clock>();
+
+		REQUIRE(a == t2);
+	}
+
 }

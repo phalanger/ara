@@ -94,7 +94,7 @@ namespace ara {
 				}
 				return c;
 			}
-			virtual void before_data() = 0; 
+			virtual void before_data() = 0;
 			virtual void on_data(const char * s, size_t n) = 0;
 		protected:
 			char *					cache_ = nullptr;
@@ -119,7 +119,7 @@ namespace ara {
 			inline log::level				get_level() const { return level_; }
 
 			inline static const char *		get_level_name(level l) {
-				static const char * p[] =	{
+				static const char * p[] = {
 					"Emergency",
 					"Alert",
 					"Critical",
@@ -176,7 +176,7 @@ namespace ara {
 				appender_ = p;
 			}
 			void	set_pass_to_parent(bool b) { pass_to_parent_ = b; }
-			void	set_level(log::level l) { level_ = l; }
+			log::level	set_level(log::level l) { auto o = level_;  level_ = l; return o; }
 			bool	can_display(log::level l) const {
 				if (l > level_)
 					return false;
@@ -211,7 +211,7 @@ namespace ara {
 				for (auto it : mapLogger_)
 					delete it.second;
 			}
-			
+
 			logger *	get_logger(const std::string & name) {
 				std::lock_guard<std::mutex>		_aguard(lock_);
 				return get_logger_withoulock(name);
@@ -250,7 +250,7 @@ namespace ara {
 		public:
 			typedef str_format<log_stream>	typeFormat;
 
-			log_imp(logger * logger) : formator_(*((log_stream *)this)),logger_(logger) {}
+			log_imp(logger * logger) : formator_(*((log_stream *)this)), logger_(logger) {}
 
 			log_imp &	operator()(log::level l) {
 				level_ = l;

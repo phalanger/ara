@@ -341,7 +341,7 @@ namespace ara {
 						cp = (cp << 10) + trail_surrogate + ara::utf8::internal::SURROGATE_OFFSET;
 					}
 				}
-				else 
+				else
 					utf8_policy::check_utf16_not_trail_surrogate(cp);
 
 				result = utf8::append<utf8_policy, octet_iterator>(cp, result);
@@ -484,18 +484,18 @@ namespace ara {
 		}; // class iterator
 
 		namespace internal {
-			template<class utf8_policy,size_t from, size_t to, typename typeStrFrom, typename typeStrTo>
+			template<class utf8_policy, size_t from, size_t to, typename typeStrFrom, typename typeStrTo>
 			struct append_string {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 				}
 				inline static size_t cal_size(size_t n) {
 					return n;
 				}
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
-			struct append_string<utf8_policy,8,8,typeStrFrom,typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
-					strTar.append( strSrc.begin(), strSrc.end() );
+			struct append_string<utf8_policy, 8, 8, typeStrFrom, typeStrTo> {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
+					strTar.append(strSrc.begin(), strSrc.end());
 				}
 				inline static size_t cal_size(size_t n) {
 					return n;
@@ -503,7 +503,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 8, 16, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf8to16<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -512,7 +512,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 8, 32, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf8to32<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -521,7 +521,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 16, 16, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					strTar.append(strSrc.begin(), strSrc.end());
 				}
 				inline static size_t cal_size(size_t n) {
@@ -530,7 +530,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 16, 8, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf16to8<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -539,7 +539,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 16, 32, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf16to32<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -548,7 +548,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 32, 32, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					strTar.append(strSrc.begin(), strSrc.end());
 				}
 				inline static size_t cal_size(size_t n) {
@@ -557,7 +557,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 32, 8, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf32to8<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -566,7 +566,7 @@ namespace ara {
 			};
 			template<class utf8_policy, typename typeStrFrom, typename typeStrTo>
 			struct append_string<utf8_policy, 32, 16, typeStrFrom, typeStrTo> {
-				inline static void append( typeStrTo & strTar, const typeStrFrom & strSrc) {
+				inline static void append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 					ara::utf8::utf32to16<utf8_policy>(strSrc.begin(), strSrc.end(), std::back_inserter(strTar));
 				}
 				inline static size_t cal_size(size_t n) {
@@ -579,7 +579,7 @@ namespace ara {
 			, typename typeStrTo, typename typeStrFrom
 			, typename charFrom = typename typeStrFrom::value_type
 			, typename charTar = typename typeStrTo::value_type>
-		typeStrTo & append(typeStrTo & strTar, const typeStrFrom & strSrc) {
+			typeStrTo & append(typeStrTo & strTar, const typeStrFrom & strSrc) {
 			ara::utf8::internal::append_string<utf8_policy, unicode_char<charFrom>::utf_type, unicode_char<charTar>::utf_type, typeStrFrom, typeStrTo>::append(strTar, strSrc);
 			return strTar;
 		}
@@ -588,7 +588,7 @@ namespace ara {
 			, typename typeStrFrom
 			, typename charFrom = typename typeStrFrom::value_type
 			, typename charTar = typename typeStrTo::value_type>
-		typeStrTo convert(const typeStrFrom & strSrc) {
+			typeStrTo convert(const typeStrFrom & strSrc) {
 			typeStrTo strTar;
 			typedef ara::utf8::internal::append_string<utf8_policy, unicode_char<charFrom>::utf_type, unicode_char<charTar>::utf_type, typeStrFrom, typeStrTo>	helper;
 			strTar.reserve(helper::cal_size(strSrc.length()));

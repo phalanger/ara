@@ -40,9 +40,9 @@ namespace ara {
 		using typeStrTraits = string_traits<typeOrgStr>;
 		using value_type = typename typeStrTraits::value_type;
 		using typeRefStr = ref_string_base<value_type, typename  typeStrTraits::traits_type>;
-		using iterator = typename select_type<std::is_const<typeStr>::value, 
-										typename typeOrgStr::const_iterator, 
-										typename typeOrgStr::iterator>::type;
+		using iterator = typename select_type<std::is_const<typeStr>::value,
+			typename typeOrgStr::const_iterator,
+			typename typeOrgStr::iterator>::type;
 
 
 		string_ext(typeStr & s) : str_(s) {}
@@ -93,37 +93,48 @@ namespace ara {
 		}
 
 		template<typename T, int base = 10>
-			T	to_int() const {
-				T t = 0;
-				auto p = typeStrTraits::data(str_);
-				auto end = p + typeStrTraits::size(str_);
-				bool boNegative = false;
-				if (p != end && *p == '-') {
-					boNegative = true;
-					++p;
-				}
-				for (; p != end; ++p) {
-					auto ch = *p;
-					if (ch >= '0' && ch <= '9') {
-						t *= base;
-						t += ch - '0';
-					} else if (base == 16 && ch >= 'a' && ch <= 'f') {
-						t *= base;
-						t += ch - 'a' + 10;
-					} else if (base == 16 && ch >= 'A' && ch <= 'F') {
-						t *= base;
-						t += ch - 'A' + 10;
-					} else
-						break;
-				}
-				return boNegative ? (-t) : t;
+		T	to_int(size_t off = 0) const {
+			T t = 0;
+			if (off >= typeStrTraits::size(str_))
+				return t;
+			auto p = typeStrTraits::data(str_) + off;
+			auto end = typeStrTraits::data(str_) + typeStrTraits::size(str_);
+			bool boNegative = false;
+			if (p != end && *p == '-') {
+				boNegative = true;
+				++p;
 			}
-		template<typename T,int base = 10, bool boLowCase = false>
-			string_ext &	append_int(T t) {
-				internal::format_appender<typeStr>	appender(str_);
-				appender.template append_int<T, base, boLowCase>(t);
-				return *this;
+			for (; p != end; ++p) {
+				auto ch = *p;
+				if (ch >= '0' && ch <= '9') {
+					t *= base;
+					t += ch - '0';
+				}
+				else if (base == 16 && ch >= 'a' && ch <= 'f') {
+					t *= base;
+					t += ch - 'a' + 10;
+				}
+				else if (base == 16 && ch >= 'A' && ch <= 'F') {
+					t *= base;
+					t += ch - 'A' + 10;
+				}
+				else
+					break;
 			}
+			return boNegative ? negative_int(t) : t;
+		}
+
+		string_ext & clear() {
+			typeStrTraits::clear(str_);
+			return *this;
+		}
+
+		template<typename T, int base = 10, bool boLowCase = false>
+		string_ext &	append_int(T t) {
+			internal::format_appender<typeStr>	appender(str_);
+			appender.template append_int<T, base, boLowCase>(t);
+			return *this;
+		}
 
 		template<class T>
 		inline string_ext & append(const T & t, typename std::enable_if<is_string<T>::value>::type * p = 0) {
@@ -177,11 +188,20 @@ namespace ara {
 		template<class ch, typename...TypeList>
 		string_ext &	printf(const ch * s, TypeList&&... t2) {
 			str_format<typeStr>		f(str_);
-			f.printf(s , std::forward<TypeList>(t2)...);
+			f.printf(s, std::forward<TypeList>(t2)...);
 			return *this;
 		}
 
 	protected:
+		template<typename T, typename std::enable_if<std::is_signed<T>::value,int>::type = 0>
+		static inline T	negative_int(T n) {
+			return -n;
+		}
+		template<typename T, typename std::enable_if<std::is_unsigned<T>::value,int>::type = 0>
+		static inline T	negative_int(T n) {
+			return (~n) + 1;
+		}
+
 		typeStr	&	str_;
 	};
 
@@ -189,7 +209,7 @@ namespace ara {
 	inline string_ext<typeStr>	strext(typeStr & s) {
 		return string_ext<typeStr>(s);
 	}
-	
+
 	template<class typeStr>
 	inline string_ext<const typeStr>	strext(const typeStr & s) {
 		return string_ext<const typeStr>(s);
@@ -233,6 +253,33 @@ namespace ara {
 			str.append(bufCh());
 		return n;
 	}
+
+	template<class typeStr>
+	class nocase_string_compare : public std::binary_function<typeStr, typeStr, bool>
+	{
+	public:
+		struct nocase_compare : public std::binary_function<int, int, bool> {
+			bool operator() (const unsigned char& c1, const unsigned char& c2) const	{
+				return std::tolower(c1) < std::tolower(c2);
+			}
+		};
+
+		bool operator()(const typeStr & s1, const typeStr & s2) const {
+			auto first1 = s1.begin();
+			auto last1 = s1.end();
+			auto first2 = s2.begin();
+			auto last2 = s2.end();
+
+			for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2) {
+				auto c1 = std::tolower(*first1);
+				auto c2 = std::tolower(*first2);
+				if (c1 < c2) return true;
+				else if (c2 < c1) return false;
+			}
+			return (first1 == last1) && (first2 != last2);
+		}
+	};
+
 }
 
 #endif // !ARA_STRINGEXT_H

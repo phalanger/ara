@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{0fd5804d-b693-4a56-9722-e4da4138190b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\internal">
+      <UniqueIdentifier>{389ae187-1d17-48c9-9b8d-186ae16e0d1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{ec1fb9d0-7c69-4a4a-a111-b31a24cfa665}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\ara\utf8.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\stringext.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\ara_def.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\ref_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\strformat.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\string_convert.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\default_string_traits.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\string_traits.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\promise.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_queue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\dlist.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\datetime.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\standard_datetime.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\threadext.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\tls_imp.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\flags.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\thread_state.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_base.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_imp.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\singleton.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\singleton_mgr.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\filesys.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\raw_file.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\error.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\utf8_core.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\event.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\json.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\fixed_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\key_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\variant.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\variant_convert.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_rwqueue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_context.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_session.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_threadpool.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\session.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\url.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\token.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_httpclient.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\httpbase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

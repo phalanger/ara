@@ -86,6 +86,9 @@ install:
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       which cmake || brew install cmake 
       which ccache || brew install ccache
+      brew upgrade openssl
+      export LDFLAGS="-L/usr/local/opt/openssl/lib ${LDFLAGS}"
+      export CPPFLAGS="-I/usr/local/opt/openssl/include ${CPPFLAGS}"
     fi
 
 before_script:
