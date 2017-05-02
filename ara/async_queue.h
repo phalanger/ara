@@ -311,6 +311,7 @@ namespace ara {
 			}
 		};
 
+		std::mutex	lock_;
 		std::vector<std::shared_ptr<HashNode>> hash_ary_;
 		typeKeyHash hash_func_;
 		bool trace_ = false;
@@ -360,8 +361,13 @@ namespace ara {
 		}
 		else {
 			size_t nIndex = nHash % hash_ary_.size();
-			if (!hash_ary_[nIndex])
-				hash_ary_[nIndex] = std::make_shared<HashNode>(trace_);
+			if (UNLIKELY(!hash_ary_[nIndex])) {
+				std::lock_guard<std::mutex>		_guard(lock_);
+				if (!hash_ary_[nIndex]) {
+					auto p = std::make_shared<HashNode>(trace_);
+					hash_ary_[nIndex] = p;
+				}
+			}
 
 			pNode = hash_ary_[nIndex]->get(key);
 		}

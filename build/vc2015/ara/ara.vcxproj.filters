@@ -120,5 +120,8 @@
     <ClInclude Include="..\..\..\ara\internal\variant_convert.h">
       <Filter>include\internal</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_rwqueue.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
