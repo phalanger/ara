@@ -480,7 +480,7 @@ namespace ara {
 	void async_rwqueue<typeKey, typeKeyHash>::dump(const std::string & strPrefix, std::ostream & out)
 	{
 		size_t	nIndex = 0;
-		for (shared_ptr<HashNode> & pNode : hash_ary_) {
+		for (std::shared_ptr<HashNode> & pNode : hash_ary_) {
 			if (pNode && !pNode->empty()) {
 				out << strPrefix << "[" << nIndex << "] :" << std::endl;
 				pNode->dump(strPrefix + "  ", out);
