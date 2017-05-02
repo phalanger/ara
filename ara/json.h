@@ -170,10 +170,10 @@ namespace ara {
 
 		/////////////////////////////////////////////////////////////////////
 
-		template <typename Ch>
+		template <typename Char>
 		class GenericStringBuffer {
 		public:
-			typedef	Ch			Ch;
+			typedef	Char			Ch;
 			typedef std::basic_string<Ch, std::char_traits<Ch>>		typeStr;
 
 			GenericStringBuffer(typeStr & str) : str_(str), old_size_(str_.size()) {}
@@ -444,7 +444,7 @@ namespace ara {
 			}
 
 		/////////////////////////////////////////////////////////////
-		template<typename Char, typename CharTraits = std::char_traits<Ch>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+		template<typename Char, typename CharTraits = std::char_traits<Char>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			inline static bool	generic_save(const var & v, std::basic_string<Char, CharTraits>	& strStore) {
 
 				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
@@ -456,7 +456,7 @@ namespace ara {
 			}
 
 		/////////////////////////////////////////////////////////////
-		template<typename Char, typename CharTraits = std::char_traits<Ch>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
+		template<typename Char, typename CharTraits = std::char_traits<Char>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			inline static bool	generic_pretty_save(const var & v, std::basic_string<Char, CharTraits> & strStore, Char indentChar = ' ', unsigned indentCharCount = 4) {
 
 				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
