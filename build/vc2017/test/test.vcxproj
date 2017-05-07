@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\test\main.cpp" />
     <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
+    <ClCompile Include="..\..\..\test\test_async_rwqueue.cpp" />
     <ClCompile Include="..\..\..\test\test_datetime.cpp" />
     <ClCompile Include="..\..\..\test\test_dlist.cpp" />
     <ClCompile Include="..\..\..\test\test_filesys.cpp" />

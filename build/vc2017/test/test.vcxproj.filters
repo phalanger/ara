@@ -60,5 +60,8 @@
     <ClCompile Include="..\..\..\test\test_async_queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\test\test_async_rwqueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

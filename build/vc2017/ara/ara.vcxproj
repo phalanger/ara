@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\ara_def.h" />
     <ClInclude Include="..\..\..\ara\async_queue.h" />
+    <ClInclude Include="..\..\..\ara\async_rwqueue.h" />
     <ClInclude Include="..\..\..\ara\datetime.h" />
     <ClInclude Include="..\..\..\ara\dlist.h" />
     <ClInclude Include="..\..\..\ara\error.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
+    <ClInclude Include="..\..\..\ara\internal\log_context.h" />
     <ClInclude Include="..\..\..\ara\internal\log_imp.h" />
     <ClInclude Include="..\..\..\ara\internal\raw_file.h" />
     <ClInclude Include="..\..\..\ara\internal\singleton_mgr.h" />
