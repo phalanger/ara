@@ -46,4 +46,53 @@ TEST_CASE("promise", "[base]") {
 		int a = res2.get();
 		REQUIRE(a == 502);
 	}
+
+	SECTION("exception") {
+
+		ara::async_result<int>		result;
+		ara::make_thread([result]() {
+			result.throw_exception(std::bad_exception());
+		}).detach();
+
+		REQUIRE( result.wait_from_now(100_sec) );
+		REQUIRE(result.ready());
+		REQUIRE(result.has_exception());
+
+		REQUIRE_THROWS_AS(result.get<0>(), std::bad_exception);
+	}
+
+	SECTION("exception2") {
+
+		ara::async_result<int>		result;
+		ara::make_thread([result]() {
+			result.set(100);
+		}).detach();
+
+		auto res2 = result.then([](int a)->int {
+			throw std::bad_exception();
+		});
+
+		REQUIRE_THROWS_AS(res2.get<0>(), std::bad_exception);
+	}
+
+	SECTION("async_exec") {
+
+		auto res = ara::async_exec([]() -> int {
+			return 100;
+		});
+
+		res.wait();
+		REQUIRE(res.get() == 100);
+	}
+
+	SECTION("async_exec2") {
+
+		auto res = ara::async_exec([]() -> int {
+			int a = 10;
+			throw std::bad_exception();
+		});
+
+		res.wait();
+		REQUIRE_THROWS_AS(res.get<0>(), std::bad_exception);
+	}
 }

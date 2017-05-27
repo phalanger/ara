@@ -4,6 +4,7 @@
 
 #include "utils.h"
 #include "datetime.h"
+#include "threadext.h"
 
 #include <functional>
 #include <tuple>
@@ -11,6 +12,7 @@
 #include <condition_variable>
 #include <utility>
 #include <type_traits>
+#include <exception>
 
 namespace ara {
 
@@ -112,12 +114,28 @@ namespace ara {
 			protected:
 				exp e_;
 			};
+			class exception_ptr_holder : public exception_holder_base {
+			public:
+				exception_ptr_holder(std::exception_ptr p) : p_(p) {}
+				virtual void rethrow() {
+					std::rethrow_exception(p_);
+				}
+			protected:
+				std::exception_ptr p_;
+			};
 
 			template<class exp>
 			void	throw_exception(exp & e) {
 				std::unique_lock<std::mutex>		_guard(lock_);
-				exception_ptr_.reset(new exception_holder<exp>(e));
+				exception_ptr_.reset(new exception_holder<exp>(std::move(e)));
 				result_ok_ = true;
+				cond_.notify_all();
+			}
+			void throw_current_exception() {
+				std::unique_lock<std::mutex>		_guard(lock_);
+				exception_ptr_.reset(new exception_ptr_holder(std::current_exception()));
+				result_ok_ = true;
+				cond_.notify_all();
 			}
 
 			bool				result_ok_ = false;
@@ -158,6 +176,9 @@ namespace ara {
 		template<class exception>
 		inline void throw_exception(exception & e) const {
 			res_holder_ptr_->throw_exception(e);
+		}
+		inline void throw_current_exception() const {
+			res_holder_ptr_->throw_current_exception();
 		}
 
 		// functions called by the caller
@@ -202,7 +223,11 @@ namespace ara {
 			typeRet			res_;
 
 			virtual void	invoke(_Types&&... args) {
-				res_.move_result( func_( std::forward<_Types>(args)... ) );
+				try {
+					res_.move_result(func_(std::forward<_Types>(args)...));
+				} catch (...) {
+					res_.throw_current_exception();
+				}
 			}
 		};
 
@@ -216,7 +241,11 @@ namespace ara {
 			typeRet			res_;
 
 			virtual void	invoke(_Types&&... args) {
-				res_.set(func_(std::forward<_Types>(args)...));
+				try {
+					res_.set(func_(std::forward<_Types>(args)...));
+				} catch (...) {
+					res_.throw_current_exception();
+				}
 			}
 		};
 
@@ -255,6 +284,43 @@ namespace ara {
 
 		std::shared_ptr<typeHolder>		res_holder_ptr_;
 	};
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+	RetType	async_exec(FunCall && func) {
+		RetType res;
+		std::thread t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.move_result( func() );
+			} catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+		async_result<RetType>	async_exec(FunCall && func) {
+		async_result<RetType> res;
+		std::thread  t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.set( func() );
+			}
+			catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
 }
 
 #endif//ARA_PROMISE_H
