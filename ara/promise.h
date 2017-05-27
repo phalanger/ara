@@ -138,7 +138,15 @@ namespace ara {
 				cond_.notify_all();
 			}
 
+			inline bool	should_stop() const {
+				return should_stop_;
+			}
+			inline void	cancel() {
+				should_stop_ = true;
+			}
+
 			bool				result_ok_ = false;
+			bool				should_stop_ = false;
 			std::mutex			lock_;
 			std::condition_variable	cond_;
 			typeResult			result_;
@@ -179,6 +187,10 @@ namespace ara {
 		}
 		inline void throw_current_exception() const {
 			res_holder_ptr_->throw_current_exception();
+		}
+
+		inline bool	should_stop() const {
+			return res_holder_ptr_->should_stop();
 		}
 
 		// functions called by the caller
@@ -276,6 +288,9 @@ namespace ara {
 			return pHolder->res_;
 		}
 
+		inline void cancel() const {
+			res_holder_ptr_->cancel();
+		}
 
 		inline void	move_result(async_result p) const {
 			res_holder_ptr_->set_result(std::move(p.res_holder_ptr_->result_));
