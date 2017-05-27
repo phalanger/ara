@@ -29,12 +29,16 @@
     <ClCompile Include="..\..\..\test\test_flags.cpp" />
     <ClCompile Include="..\..\..\test\test_keystring.cpp" />
     <ClCompile Include="..\..\..\test\test_log.cpp" />
+    <ClCompile Include="..\..\..\test\test_promise.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />
     <ClCompile Include="..\..\..\test\test_utf8.cpp" />
     <ClCompile Include="..\..\..\test\test_utils.cpp" />
     <ClCompile Include="..\..\..\test\test_json.cpp" />
     <ClCompile Include="..\..\..\test\test_variant.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\test\test_async_helper.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48842B41-F404-4965-98CF-6B9B54B4EF76}</ProjectGuid>

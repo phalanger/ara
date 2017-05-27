@@ -11,26 +11,7 @@
 #include "ara/event.h"
 #include "ara/threadext.h"
 #include "ara/log.h"
-
-class async_error
-{
-public:
-	void	set_error(std::string && s) {
-		std::lock_guard<std::mutex>		_guard(lock_);
-		info_list_.emplace_back(std::move(s));
-	}
-	std::string get_error() const {
-		std::string		str;
-		for (auto & it : info_list_) {
-			str += it;
-			str += "\r\n";
-		}
-		return str;
-	}
-protected:
-	std::mutex	lock_;
-	std::list<std::string>	info_list_;
-};
+#include "test_async_helper.h"
 
 TEST_CASE("async queue", "[async]" ){
 
