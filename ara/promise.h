@@ -91,7 +91,7 @@ namespace ara {
 					result_ok_ = true;
 					result_ = std::move(r);
 					
-#if defined(ARA_GCC_VER) && __GNUC__ < 5
+#if !defined(ARA_GCC_VER) || __GNUC__ > 4
 					if (atThreadExit)
 						std::notify_all_at_thread_exit(cond_, std::move(_guard));
 					else
