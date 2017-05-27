@@ -90,6 +90,22 @@ namespace ara {
 				}
 			}
 
+			void	move_result(result_holder && p) {
+				std::unique_lock<std::mutex>		_guard(lock_);
+
+				if (!result_ok_) {
+					if (p.exception_ptr_)
+						exception_ptr_ = std::move(p.exception_ptr_);
+					else if (func_ptr_)
+						func_ptr_->invoke_tuple(std::move(p.result_));
+					else
+						result_ = std::move(p.result_);
+
+					result_ok_ = true;
+					cond_.notify_all();
+				}
+			}
+
 			void	set_func(std::shared_ptr<func_holder_base> pFunc) {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				if (!result_ok_)
@@ -125,9 +141,9 @@ namespace ara {
 			};
 
 			template<class exp>
-			void	throw_exception(exp & e) {
+			void	throw_exception(exp && e) {
 				std::unique_lock<std::mutex>		_guard(lock_);
-				exception_ptr_.reset(new exception_holder<exp>(std::move(e)));
+				exception_ptr_.reset(new exception_holder<exp>(std::forward<exp>(e)));
 				result_ok_ = true;
 				cond_.notify_all();
 			}
@@ -181,9 +197,9 @@ namespace ara {
 			return *this;
 		}
 
-		template<class exception>
-		inline void throw_exception(exception & e) const {
-			res_holder_ptr_->throw_exception(e);
+		template<class TException>
+		inline void throw_exception(TException && e) const {
+			res_holder_ptr_->throw_exception(std::forward<TException>(e));
 		}
 		inline void throw_current_exception() const {
 			res_holder_ptr_->throw_current_exception();
@@ -293,7 +309,7 @@ namespace ara {
 		}
 
 		inline void	move_result(async_result p) const {
-			res_holder_ptr_->set_result(std::move(p.res_holder_ptr_->result_));
+			res_holder_ptr_->move_result(std::move(*p.res_holder_ptr_));
 		}
 	protected:
 
