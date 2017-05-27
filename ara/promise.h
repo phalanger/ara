@@ -2,18 +2,21 @@
 #ifndef ARA_PROMISE_H
 #define ARA_PROMISE_H
 
-#include "ara_def.h"
+#include "utils.h"
 #include "datetime.h"
 
 #include <functional>
 #include <tuple>
 #include <mutex>
+#include <condition_variable>
 #include <utility>
 #include <type_traits>
 
 namespace ara {
 
 	namespace internal {
+
+		//////////////////////////////////////////////////////
 
 		template<class... _Types>
 		class result_holder {
@@ -25,12 +28,12 @@ namespace ara {
 				virtual void invoke(_Types&&... args) = 0;
 
 				template <class Tuple, std::size_t... I>
-				inline void invoke_tuple_impl(Tuple &&t, std::index_sequence<I...>) {
+				inline void invoke_tuple_impl(Tuple &&t, ara::index_sequence<I...>) {
 					invoke(std::get<I>(std::forward<Tuple>(t))...);
 				}
 				inline void invoke_tuple(typeResult && res) {
 					std::size_t constexpr tSize = std::tuple_size<typename std::remove_reference<typeResult>::type>::value;
-					invoke_tuple_impl(std::move(res), std::make_index_sequence<tSize>());
+					invoke_tuple_impl(std::move(res), ara::make_index_sequence<tSize>());
 				}
 			};
 
@@ -58,7 +61,7 @@ namespace ara {
 			bool	wait_until(const std::chrono::time_point<Clock, Duration>& timeout_time) {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				while (!result_ok_)
-					if (cond.wait_until(_guard, timeout_time) == std::cv_status::timeout)
+					if (cond_.wait_until(_guard, timeout_time) == std::cv_status::timeout)
 						break;
 				return result_ok_;
 			}
@@ -219,11 +222,11 @@ namespace ara {
 
 		template<typename FunCall
 				,typename RetType = typename function_traits<FunCall>::result_type
-				, typename = std::enable_if<std::is_base_of<internal::async_result_base,RetType>::value>::type
+				,typename = typename std::enable_if<std::is_base_of<internal::async_result_base,RetType>::value>::type
 			>
 		RetType	then(FunCall && f) {
 
-			typedef typename func_holder<RetType, FunCall>	holder_type;
+			typedef func_holder<RetType, FunCall>	holder_type;
 			std::shared_ptr<holder_type>	pHolder = std::make_shared<holder_type>(std::move(f));
 
 			res_holder_ptr_->set_func(pHolder);
@@ -232,11 +235,11 @@ namespace ara {
 		}
 		template<typename FunCall
 			, typename RetType = typename function_traits<FunCall>::result_type
-			, typename = std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+			, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
 			>
 		async_result<RetType>	then(FunCall && f) {
 
-			typedef typename func_holder_raw_ret<RetType, FunCall>	holder_type;
+			typedef func_holder_raw_ret<RetType, FunCall>	holder_type;
 			std::shared_ptr<holder_type>	pHolder = std::make_shared<holder_type>(std::move(f));
 
 			res_holder_ptr_->set_func(pHolder);
