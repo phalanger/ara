@@ -4,7 +4,6 @@
 
 #include "utils.h"
 #include "datetime.h"
-#include "threadext.h"
 
 #include <functional>
 #include <tuple>
@@ -49,8 +48,10 @@ namespace ara {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				while (!result_ok_)
 					cond_.wait(_guard);
-				if (exception_ptr_)
+				if (exception_ptr_) {
+					_guard.unlock();
 					exception_ptr_->rethrow();
+				}
 			}
 
 			inline bool	wait_from_now(const timer_val & t) {
@@ -76,42 +77,36 @@ namespace ara {
 				return result_ok_;
 			}
 
-			void	set_result(typeResult && r) { 
+			void	set_result(typeResult && r, bool atThreadExit) { 
 				std::unique_lock<std::mutex>		_guard(lock_);
 
 				if (!result_ok_) {
-					if (func_ptr_)
+					if (func_ptr_) {
+						result_ok_ = true;
+						_guard.unlock();
 						func_ptr_->invoke_tuple(std::move(r));
-					else
-						result_ = std::move(r);
-
+						return;
+					}
+					
 					result_ok_ = true;
-					cond_.notify_all();
+					result_ = std::move(r);
+					
+					if (atThreadExit)
+						std::notify_all_at_thread_exit(cond_, std::move(_guard));
+					else
+						cond_.notify_all();
 				}
 			}
 
-			void	move_result(result_holder && p) {
-				std::unique_lock<std::mutex>		_guard(lock_);
-
-				if (!result_ok_) {
-					if (p.exception_ptr_)
-						exception_ptr_ = std::move(p.exception_ptr_);
-					else if (func_ptr_)
-						func_ptr_->invoke_tuple(std::move(p.result_));
-					else
-						result_ = std::move(p.result_);
-
-					result_ok_ = true;
-					cond_.notify_all();
-				}
-			}
-
-			void	set_func(std::shared_ptr<func_holder_base> pFunc) {
+			void	set_func(std::unique_ptr<func_holder_base> && pFunc) {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				if (!result_ok_)
-					func_ptr_ = pFunc;
-				else
+					func_ptr_ = std::move( pFunc );
+				else {
+					_guard.unlock();
 					pFunc->invoke_tuple( std::move(result_) );
+				}
+					
 			}
 
 			class exception_holder_base {
@@ -161,13 +156,13 @@ namespace ara {
 				should_stop_ = true;
 			}
 
-			bool				result_ok_ = false;
-			bool				should_stop_ = false;
+			std::unique_ptr<func_holder_base>	func_ptr_;
+			std::unique_ptr<exception_holder_base>	exception_ptr_;
 			std::mutex			lock_;
 			std::condition_variable	cond_;
 			typeResult			result_;
-			std::shared_ptr<func_holder_base>	func_ptr_;
-			std::unique_ptr<exception_holder_base>	exception_ptr_;
+			bool				result_ok_ = false;
+			bool				should_stop_ = false;
 		};
 
 		struct async_result_base {};
@@ -187,13 +182,24 @@ namespace ara {
 
 		// functions called by the callee
 		inline const async_result &	set(typeResult && r) const {
-			res_holder_ptr_->set_result(std::move(r));
+			res_holder_ptr_->set_result(std::move(r), false);
 			return *this;
 		}
 
 		template<class... _Result>
 		inline const async_result & set(_Result... res) const {
-			res_holder_ptr_->set_result(std::make_tuple(std::forward<_Result>(res)...));
+			res_holder_ptr_->set_result(std::make_tuple(std::forward<_Result>(res)...), false);
+			return *this;
+		}
+
+		inline const async_result &	set_at_thread_exit(typeResult && r) const {
+			res_holder_ptr_->set_result(std::move(r), true);
+			return *this;
+		}
+
+		template<class... _Result>
+		inline const async_result & set_at_thread_exit(_Result... res) const {
+			res_holder_ptr_->set_result(std::make_tuple(std::forward<_Result>(res)...), true);
 			return *this;
 		}
 
@@ -252,7 +258,7 @@ namespace ara {
 
 			virtual void	invoke(_Types&&... args) {
 				try {
-					res_.move_result(func_(std::forward<_Types>(args)...));
+					func_(std::forward<_Types>(args)...).link( res_ );
 				} catch (...) {
 					res_.throw_current_exception();
 				}
@@ -277,6 +283,18 @@ namespace ara {
 			}
 		};
 
+		template<typename linkType>
+		struct link_holder : public typeHolder::func_holder_base
+		{
+			link_holder(linkType p) : p_(p) {}
+
+			virtual void	invoke(_Types&&... args) {
+				p_.set(std::forward<_Types>(args)...);
+			}
+
+			linkType	p_;
+		};
+
 		template<typename FunCall
 				,typename RetType = typename function_traits<FunCall>::result_type
 				,typename = typename std::enable_if<std::is_base_of<internal::async_result_base,RetType>::value>::type
@@ -284,11 +302,11 @@ namespace ara {
 		RetType	then(FunCall && f) {
 
 			typedef func_holder<RetType, FunCall>	holder_type;
-			std::shared_ptr<holder_type>	pHolder = std::make_shared<holder_type>(std::move(f));
+			std::unique_ptr<holder_type>	pHolder( new holder_type(std::move(f)) );
+			auto res = pHolder->res_;
+			res_holder_ptr_->set_func( std::move(pHolder) );
 
-			res_holder_ptr_->set_func(pHolder);
-
-			return pHolder->res_;
+			return res;
 		}
 		template<typename FunCall
 			, typename RetType = typename function_traits<FunCall>::result_type
@@ -297,61 +315,27 @@ namespace ara {
 		async_result<RetType>	then(FunCall && f) {
 
 			typedef func_holder_raw_ret<RetType, FunCall>	holder_type;
-			std::shared_ptr<holder_type>	pHolder = std::make_shared<holder_type>(std::move(f));
+			std::unique_ptr<holder_type>	pHolder(new holder_type(std::move(f)));
+			auto res = pHolder->res_;
+			res_holder_ptr_->set_func(std::move(pHolder));
 
-			res_holder_ptr_->set_func(pHolder);
-
-			return pHolder->res_;
+			return res;
 		}
 
 		inline void cancel() const {
 			res_holder_ptr_->cancel();
 		}
 
-		inline void	move_result(async_result p) const {
-			res_holder_ptr_->move_result(std::move(*p.res_holder_ptr_));
+		template<typename linkType>
+		void link(linkType res) const {
+			typedef link_holder<linkType>	holder_type;
+			std::unique_ptr<holder_type>	pHolder(new holder_type(res));
+			res_holder_ptr_->set_func(std::move(pHolder));
 		}
 	protected:
 
 		std::shared_ptr<typeHolder>		res_holder_ptr_;
 	};
-
-	template<typename FunCall
-		, typename RetType = typename function_traits<FunCall>::result_type
-		, typename = typename std::enable_if<std::is_base_of<internal::async_result_base, RetType>::value>::type
-	>
-	RetType	async_exec(FunCall && func) {
-		RetType res;
-		std::thread t([res, func = std::move(func)](){
-			defer		_au([]() {thread_context::destroy_context(); });
-			try {
-				res.move_result( func() );
-			} catch (...) {
-				res.throw_current_exception();
-			}
-		});
-		t.detach();
-		return res;
-	}
-
-	template<typename FunCall
-		, typename RetType = typename function_traits<FunCall>::result_type
-		, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
-	>
-		async_result<RetType>	async_exec(FunCall && func) {
-		async_result<RetType> res;
-		std::thread  t([res, func = std::move(func)](){
-			defer		_au([]() {thread_context::destroy_context(); });
-			try {
-				res.set( func() );
-			}
-			catch (...) {
-				res.throw_current_exception();
-			}
-		});
-		t.detach();
-		return res;
-	}
 }
 
 #endif//ARA_PROMISE_H

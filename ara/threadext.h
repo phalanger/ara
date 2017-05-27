@@ -48,6 +48,7 @@
 
 #include "stringext.h"
 #include "utils.h"
+#include "promise.h"
 #include "internal/tls_imp.h"
 #include "internal/thread_state.h"
 #include "internal/log_base.h"
@@ -265,6 +266,46 @@ namespace ara {
 		});
 		return res;
 	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+	RetType	async_exec(FunCall && func) {
+		RetType res;
+		std::thread t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.move_result( func() );
+			} catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
+
+	template<typename FunCall
+		, typename RetType = typename function_traits<FunCall>::result_type
+		, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+	>
+		async_result<RetType>	async_exec(FunCall && func) {
+		async_result<RetType> res;
+		std::thread  t([res, func = std::move(func)](){
+			defer		_au([]() {thread_context::destroy_context(); });
+			try {
+				res.set( func() );
+			}
+			catch (...) {
+				res.throw_current_exception();
+			}
+		});
+		t.detach();
+		return res;
+	}
+
 }
 
 #define BEGIN_CALL_AUTOINFO		ara::call_begin		ARA_TMP_VAR(_call)( ara::str_printf<std::string>("%v@%v#%v", ARA_FUNC_NAME, __FILE__, __LINE__) )

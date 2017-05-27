@@ -3,6 +3,7 @@
 
 #include "ara/promise.h"
 #include "ara/threadext.h"
+#include "ara/event.h"
 
 #include <iostream>
 
@@ -95,4 +96,5 @@ TEST_CASE("promise", "[base]") {
 		res.wait();
 		REQUIRE_THROWS_AS(res.get<0>(), std::bad_exception);
 	}
+
 }
