@@ -73,7 +73,9 @@
 
 #ifdef __GNUC__
 	#define ARA_GCC_VER
-	#if __GNUC__ > 3
+	#if __GNUC__ > 4
+		#define ARA_GCC_5_VER
+	#elif __GNUC__ > 3
 		#define ARA_GCC_4_VER
 	#elif __GNUC__ > 2
 		#define ARA_GCC_3_VER
