@@ -26,6 +26,9 @@ namespace ara {
 		public:
 			typedef std::tuple<_Types...>	typeResult;
 
+			result_holder() = default;
+			result_holder(typeResult && init) : result_(std::move(init)) {}
+
 			struct func_holder_base {
 				virtual ~func_holder_base() {}
 				virtual void invoke(_Types&&... args) = 0;
@@ -85,12 +88,13 @@ namespace ara {
 				if (!result_ok_) {
 					if (func_ptr_) {
 						_guard.unlock();
+						result_ok_ = true;
 						func_ptr_->invoke_tuple(std::move(r));
 					} else {
 						result_ = std::move(r);
+						result_ok_ = true;
 					}
 					
-					result_ok_ = true;
 #if !defined(ARA_GCC_VER) || __GNUC__ > 4
 					if (atThreadExit)
 						std::notify_all_at_thread_exit(cond_, std::move(_guard));
@@ -142,6 +146,7 @@ namespace ara {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				if (func_exp_) {
 					try {
+						result_ok_ = true;
 						throw e;
 					} catch (...) {
 						_guard.unlock();
@@ -149,20 +154,30 @@ namespace ara {
 					}
 				} else {
 					exception_ptr_.reset(new exception_holder<exp>(std::forward<exp>(e)));
+					result_ok_ = true;
+					if (func_ptr_) {
+						_guard.unlock();
+						func_ptr_->invoke_tuple(std::move(result_));
+					}
 				}
-				result_ok_ = true;
+				
 				cond_.notify_all();
 			}
 			void throw_exception_ptr(std::exception_ptr ptr) {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				if (func_exp_) {
+					result_ok_ = true;
 					_guard.unlock();
 					func_exp_(ptr);
 				}
 				else {
 					exception_ptr_.reset(new exception_ptr_holder(ptr));
+					result_ok_ = true;
+					if (func_ptr_) {
+						_guard.unlock();
+						func_ptr_->invoke_tuple(std::move(result_));
+					}
 				}
-				result_ok_ = true;
 				cond_.notify_all();
 			}
 			void throw_current_exception() {
@@ -215,6 +230,7 @@ namespace ara {
 		async_result(std::shared_ptr<typeHolder> p) : res_holder_ptr_(p) {}
 		async_result(const async_result & p) : res_holder_ptr_(p.res_holder_ptr_) {}
 		async_result() : res_holder_ptr_(std::make_shared<typeHolder>()) {}
+		explicit async_result(typeResult && initValue) : res_holder_ptr_(std::make_shared<typeHolder>(std::move(initValue))) {}
 
 		// functions called by the callee
 		inline const async_result &	set(typeResult && r) const {
@@ -236,6 +252,12 @@ namespace ara {
 		template<class... _Result>
 		inline const async_result & set_at_thread_exit(_Result... res) const {
 			res_holder_ptr_->set_result(std::make_tuple(std::forward<_Result>(res)...), true);
+			return *this;
+		}
+
+		template<class T>
+		inline const async_result & operator=(T && v) const {
+			res_holder_ptr_->set_result(std::make_tuple(std::forward<T>(v)), false);
 			return *this;
 		}
 
