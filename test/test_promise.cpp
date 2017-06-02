@@ -76,6 +76,58 @@ TEST_CASE("promise", "[base]") {
 		REQUIRE_THROWS_AS(res2.get<0>(), std::bad_exception);
 	}
 
+	SECTION("exception3") {
+
+		ara::async_result<int>		result;
+		ara::make_thread([result]() {
+			result.throw_exception(std::bad_exception());
+		}).detach();
+
+		bool boHasException = false;
+		auto res2 = result.then([](int a)->int {
+			throw std::bad_alloc();
+		}).on_exception([&boHasException](std::exception_ptr p) {
+			try {
+				if (p)
+					std::rethrow_exception(p);
+			} catch (std::bad_alloc &) {
+				boHasException = true;
+			} catch (std::bad_exception &) {
+				boHasException = false;
+			}
+		});
+
+		res2.wait();
+		REQUIRE(boHasException);
+	}
+
+	SECTION("exception4") {
+
+		ara::async_result<int>		result;
+		ara::make_thread([result]() {
+			result.throw_exception(std::bad_exception());
+		}).detach();
+
+		bool boHasException = false;
+		auto res2 = result.then([](int a)->ara::async_result<int> {
+			ara::async_result<int> res;
+			res.throw_exception( std::bad_alloc() );
+			return res;
+		}).on_exception([&boHasException](std::exception_ptr p) {
+			try {
+				if (p)
+					std::rethrow_exception(p);
+			} catch (std::bad_alloc &) {
+				boHasException = true;
+			} catch (std::bad_exception &) {
+				boHasException = false;
+			}
+		});
+
+		res2.wait();
+		REQUIRE(boHasException);
+	}
+
 	SECTION("async_exec") {
 
 		auto res = ara::async_exec([]() -> int {

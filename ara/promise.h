@@ -19,6 +19,8 @@ namespace ara {
 
 		//////////////////////////////////////////////////////
 
+		typedef std::function<void(std::exception_ptr ptr)>		typeFuncExceptionCallback;
+
 		template<class... _Types>
 		class result_holder {
 		public:
@@ -82,15 +84,13 @@ namespace ara {
 
 				if (!result_ok_) {
 					if (func_ptr_) {
-						result_ok_ = true;
 						_guard.unlock();
 						func_ptr_->invoke_tuple(std::move(r));
-						return;
+					} else {
+						result_ = std::move(r);
 					}
 					
 					result_ok_ = true;
-					result_ = std::move(r);
-					
 #if !defined(ARA_GCC_VER) || __GNUC__ > 4
 					if (atThreadExit)
 						std::notify_all_at_thread_exit(cond_, std::move(_guard));
@@ -140,15 +140,48 @@ namespace ara {
 			template<class exp>
 			void	throw_exception(exp && e) {
 				std::unique_lock<std::mutex>		_guard(lock_);
-				exception_ptr_.reset(new exception_holder<exp>(std::forward<exp>(e)));
+				if (func_exp_) {
+					try {
+						throw e;
+					} catch (...) {
+						_guard.unlock();
+						func_exp_(std::current_exception());
+					}
+				} else {
+					exception_ptr_.reset(new exception_holder<exp>(std::forward<exp>(e)));
+				}
+				result_ok_ = true;
+				cond_.notify_all();
+			}
+			void throw_exception_ptr(std::exception_ptr ptr) {
+				std::unique_lock<std::mutex>		_guard(lock_);
+				if (func_exp_) {
+					_guard.unlock();
+					func_exp_(ptr);
+				}
+				else {
+					exception_ptr_.reset(new exception_ptr_holder(ptr));
+				}
 				result_ok_ = true;
 				cond_.notify_all();
 			}
 			void throw_current_exception() {
+				throw_exception_ptr(std::current_exception());
+			}
+
+			void on_exception(typeFuncExceptionCallback && func) {
 				std::unique_lock<std::mutex>		_guard(lock_);
-				exception_ptr_.reset(new exception_ptr_holder(std::current_exception()));
-				result_ok_ = true;
-				cond_.notify_all();
+				if (result_ok_) {
+					if (exception_ptr_) {
+						try {
+							exception_ptr_->rethrow();
+						} catch (...) {
+							func(std::current_exception());
+						}
+					}
+				} else {
+					func_exp_ = std::move(func);
+				}
 			}
 
 			inline bool	should_stop() const {
@@ -162,6 +195,7 @@ namespace ara {
 			std::unique_ptr<exception_holder_base>	exception_ptr_;
 			std::mutex			lock_;
 			std::condition_variable	cond_;
+			typeFuncExceptionCallback	func_exp_;
 			typeResult			result_;
 			bool				result_ok_ = false;
 			bool				should_stop_ = false;
@@ -208,6 +242,9 @@ namespace ara {
 		template<class TException>
 		inline void throw_exception(TException && e) const {
 			res_holder_ptr_->throw_exception(std::forward<TException>(e));
+		}
+		inline void throw_exception_ptr(std::exception_ptr ptr) const {
+			res_holder_ptr_->throw_exception_ptr(ptr);
 		}
 		inline void throw_current_exception() const {
 			res_holder_ptr_->throw_current_exception();
@@ -324,6 +361,11 @@ namespace ara {
 			return res;
 		}
 
+		async_result	on_exception(internal::typeFuncExceptionCallback && func) {
+			res_holder_ptr_->on_exception(std::move(func));
+			return *this;
+		}
+
 		inline void cancel() const {
 			res_holder_ptr_->cancel();
 		}
@@ -333,6 +375,9 @@ namespace ara {
 			typedef link_holder<linkType>	holder_type;
 			std::unique_ptr<holder_type>	pHolder(new holder_type(res));
 			res_holder_ptr_->set_func(std::move(pHolder));
+			res_holder_ptr_->on_exception([res](std::exception_ptr ptr) {
+				res.throw_exception_ptr(ptr);
+			});
 		}
 	protected:
 
