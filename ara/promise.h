@@ -13,6 +13,97 @@
 #include <type_traits>
 #include <exception>
 
+/*
+	//Define the result data structure
+	ara::async_result<int, bool, std::string>	result;
+
+	//Do something asynchronously
+	ara::make_thread([result](){
+
+		//Do someting
+		foo();
+		//...
+
+		//then set the result:
+		result.set( 100, false, "some string result...");
+
+		//Or throw exception, like one of these:
+		result.throw_exception( std::bad_exception() );
+		result.throw_exception_ptr( std::current_exception() );
+		result.throw_current_exception();
+
+		//Or handle
+	});
+
+	//and then, caller can wait for the result synchronously
+	result.wait();
+
+	//or wait for result with timeout setting
+	result.wait_from_now( 10_s );
+	//or
+	result.wait_until( std::chrono::system_clock::now() + 10_s );
+
+	//Or check the result is whether ready
+	if (result.ready()) {
+		//Do something
+	}
+	//Or check whether has exception
+	if (result.has_exception()) {
+		try {
+			result.rethrow();		// throw the exceptioon again
+		}catch( MyException & e) {
+			//.,..
+		}catch( std::exception & e2) {
+			//...
+		}catch( ... ) {
+			//...
+		}
+
+	}
+
+	//Or get the result value(s) directly without wait/wait_xxxx() or after wait/wait_xxxx()
+	int a = result.get();	//default get the first element of result. and get() return value until the result is ready.
+	bool b = result.get<1>();
+	std::string c = std::move( result.get<2>() );
+
+	//Or the caller get the result asynchronously
+	result.on_exception([](std::exception_ptr ptr){
+		try {
+			std::rethrow_exception(ptr);
+		}catch( MyException & e) {
+			//.,..
+		}catch( std::exception & e2) {
+			//...
+		}catch( ... ) {
+			//...
+		}
+	}).then([](int a, bool b, const std::string & s){
+		//Do something with the result
+	});
+
+	//tehn() can chain all the async_result step by step
+	result.then([](int a, bool b, const std::string & c) -> ara::async_result<int, double> {
+		//Do something with the result
+		ara::async_result<int, double> r;
+		// do something asynchronously and set the result
+
+		return r;
+	}).then([](int d, double e) -> ara::async_result<int, int> {
+		ara::async_result<int, int> r;
+		// do something asynchronously and set the result
+		return r;
+	}).then([](int f, int g) -> double {
+		double d = 1.0;
+		return d;
+	}).then([](double h){
+	
+	});
+
+	//Important:
+	// should define the on_exception() callback before then() callback
+
+  */
+
 namespace ara {
 
 	namespace internal {
@@ -184,6 +275,14 @@ namespace ara {
 				throw_exception_ptr(std::current_exception());
 			}
 
+			void rethrow() {
+				std::unique_lock<std::mutex>		_guard(lock_);
+				if (exception_ptr_) {
+					_guard.unlock();
+					exception_ptr_->rethrow();
+				}
+			}
+
 			void on_exception(typeFuncExceptionCallback && func) {
 				std::unique_lock<std::mutex>		_guard(lock_);
 				if (result_ok_) {
@@ -191,6 +290,7 @@ namespace ara {
 						try {
 							exception_ptr_->rethrow();
 						} catch (...) {
+							_guard.unlock();
 							func(std::current_exception());
 						}
 					}
@@ -326,6 +426,18 @@ namespace ara {
 			}
 		};
 
+		template<class typeFunc>
+		struct func_holder_void : public typeHolder::func_holder_base
+		{
+			func_holder_void(typeFunc && func) : func_(std::move(func)) {}
+
+			typeFunc		func_;
+
+			virtual void	invoke(_Types&&... args) {
+				func_(std::forward<_Types>(args)...);
+			}
+		};
+
 		template<typename typeRawRet, class typeFunc>
 		struct func_holder_raw_ret : public typeHolder::func_holder_base
 		{
@@ -355,6 +467,15 @@ namespace ara {
 
 			linkType	p_;
 		};
+		template<typename FunCall
+				,typename RetType = typename function_traits<FunCall>::result_type
+				,typename = typename std::enable_if<std::is_void<RetType>::value>::type
+			>
+		void	then(FunCall && f) {
+			typedef func_holder_void<FunCall>	holder_type;
+			std::unique_ptr<holder_type>	pHolder( new holder_type(std::move(f)) );
+			res_holder_ptr_->set_func( std::move(pHolder) );
+		}
 
 		template<typename FunCall
 				,typename RetType = typename function_traits<FunCall>::result_type
@@ -371,7 +492,7 @@ namespace ara {
 		}
 		template<typename FunCall
 			, typename RetType = typename function_traits<FunCall>::result_type
-			, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+			, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value && !std::is_void<RetType>::value>::type
 			>
 		async_result<RetType>	then(FunCall && f) {
 
@@ -381,6 +502,10 @@ namespace ara {
 			res_holder_ptr_->set_func(std::move(pHolder));
 
 			return res;
+		}
+
+		void		rethrow() const {
+			res_holder_ptr_->rethrow();
 		}
 
 		async_result	on_exception(internal::typeFuncExceptionCallback && func) {

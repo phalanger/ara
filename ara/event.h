@@ -57,8 +57,7 @@ namespace ara {
 				return false;
 
 			if (w == timer_val::max_time) {
-				while (n_ != n)
-					cond_.wait(lk);
+				cond_.wait(lk, [this, n]() {return n_ == n; });
 			}
 			else {
 				auto exp = std::chrono::system_clock::now() + w.to_duration();
@@ -83,24 +82,32 @@ namespace ara {
 		}
 
 		void	signal_all(EVType n) {
-			std::unique_lock<std::mutex> lk(lock_);
-			n_ = n;
+			{
+				std::unique_lock<std::mutex> lk(lock_);
+				n_ = n;
+			}
 			cond_.notify_all();
 		}
 		void	signal_one(EVType n) {
-			std::unique_lock<std::mutex> lk(lock_);
-			n_ = n;
+			{
+				std::unique_lock<std::mutex> lk(lock_);
+				n_ = n;
+			}
 			cond_.notify_one();
 		}
 
 		void	inc_signal_all(EVType n = 1) {
-			std::unique_lock<std::mutex> lk(lock_);
-			n_ += n;
+			{
+				std::unique_lock<std::mutex> lk(lock_);
+				n_ += n;
+			}
 			cond_.notify_all();
 		}
 		void	inc_signal_one(EVType n = 1) {
-			std::unique_lock<std::mutex> lk(lock_);
-			n_ += n;
+			{
+				std::unique_lock<std::mutex> lk(lock_);
+				n_ += n;
+			}
 			cond_.notify_one();
 		}
 

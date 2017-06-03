@@ -57,8 +57,8 @@ TEST_CASE("async rwqueue", "[async]") {
 				else {
 					g(ara::log::info).printfln("T1: T2 get write key fail, I will release the read key");
 					token = nullptr;
-					num->signal_all(THREAD1_RELEASE_READ_KEY);
 				}
+				num->signal_all(THREAD1_RELEASE_READ_KEY);
 
 			}, "thread 1 apply 1");
 		});
@@ -71,7 +71,7 @@ TEST_CASE("async rwqueue", "[async]") {
 			REQUIRE(num->wait(THREAD1_GOT_READ_KEY));
 			g.printfln("T2: T1 got the read key, now to my turn to try get the read key.");
 
-			p->apply_read(io, "key1", ara::timer_val(0, 1), [num, &io, p, errinfo](const boost::system::error_code & ec, ara::async_token token) {
+			p->apply_read(io, "key1", ara::timer_val(1, 0), [num, &io, p, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 
 				ara::glog		g(ara::log::info);
 				g.printfln("T2: I should got the read key.");
@@ -100,16 +100,15 @@ TEST_CASE("async rwqueue", "[async]") {
 						g(ara::log::info).printfln("T2: T1 has release read key, I will try to get the write key again");
 
 						io.post([p, num, &io, errinfo]() {
-							p->apply_write(io, "key1", ara::timer_val(0, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
+							p->apply_write(io, "key1", ara::timer_val(1, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 								ara::glog		g(ara::log::info);
 								if (token == nullptr) {
-									errinfo->set_error("T2 should got write key after T1 release read key. But T2 can not got it now.");
+									errinfo->set_error( ara::printf<std::string>("T2 should got write key after T1 release read key. But T2 can not got it now: %v", ec.message()));
 								}
 								else {
 									g(ara::log::info).printfln("T2: I got the write key now");
-									num->signal_all(ALL_FINISHED);
 								}
-
+								num->signal_all(ALL_FINISHED);
 							}, "thread 2 apply write key 2");
 						});
 					}
@@ -209,11 +208,10 @@ TEST_CASE("async rwqueue", "[async]") {
 
 				p->apply_read(io, "key2", ara::timer_val(10, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 					ara::glog		g(ara::log::info);
-					if (token == nullptr) {
-						errinfo->set_error("T4 should got the read key, because T3 release it, but now T4 can not got it");
-						return;
-					}
-					g(ara::log::info).printfln("T4: I got the read key now");
+					if (token == nullptr)
+						errinfo->set_error(ara::printf<std::string>("T4 should got the read key, because T3 release it, but now T4 can not got it:%v",ec.message()));
+					else
+						g(ara::log::info).printfln("T4: I got the read key now");
 					num->signal_all(ALL_FINISHED_1);
 
 				}, "thread 2 apply 2");
@@ -251,11 +249,11 @@ TEST_CASE("async rwqueue", "[async]") {
 
 				p->apply_read(io, "key2", ara::timer_val(10, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 					ara::glog		g(ara::log::info);
-					if (token == nullptr) {
-						errinfo->set_error("T5 should got the read key, because T3 release it, but now T5 can not got it");
-						return;
-					}
-					g(ara::log::info).printfln("T5: I got the read key now");
+					if (token == nullptr)
+						errinfo->set_error(ara::printf<std::string>("T5 should got the read key, because T3 release it, but now T5 can not got it:%v",ec.message()));
+					else
+						g(ara::log::info).printfln("T5: I got the read key now");
+
 					num->wait(ALL_FINISHED_1);
 					num->signal_all(ALL_FINISHED_2);
 

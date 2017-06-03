@@ -87,15 +87,14 @@ TEST_CASE("async queue", "[async]" ){
 					g(ara::log::info).printfln("T2: T1 has release key, I will try to get the key again");
 
 					io.post([p, num, &io, errinfo]() {
-						p->apply(io, "key1", ara::timer_val(0, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
+						p->apply(io, "key1", ara::timer_val(0, 1), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 							ara::glog		g(ara::log::info);
 							if (token == nullptr) {
-								errinfo->set_error("T2 should got token after T1 release it. But T2 can not got it now.");
+								errinfo->set_error(ara::printf<std::string>("T2 should got token after T1 release it. But T2 can not got it now:%v", ec.message()));
 							} else {
 								g(ara::log::info).printfln("T2: I got the key now");
-								num->signal_all(ALL_FINISHED);
 							}
-
+							num->signal_all(ALL_FINISHED);
 						}, "thread 2 apply 2");
 					});
 
@@ -192,11 +191,11 @@ TEST_CASE("async queue", "[async]" ){
 
 				p->apply(io, "key2", ara::timer_val(10, 0), [num, errinfo](const boost::system::error_code & ec, ara::async_token token) {
 					ara::glog		g(ara::log::info);
-					if (token == nullptr) {
-						errinfo->set_error("T4 should got the token, because T3 release it, but now T4 can not got it");
-						return;
-					}
-					g(ara::log::info).printfln("T4: I got the key now");
+					if (token == nullptr)
+						errinfo->set_error(ara::printf<std::string>("T4 should got the token, because T3 release it, but now T4 can not got it:%v", ec.message()));
+					else 
+						g(ara::log::info).printfln("T4: I got the key now");
+
 					num->signal_all(ALL_FINISHED);
 
 				}, "thread 2 apply 2");

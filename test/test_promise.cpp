@@ -85,7 +85,7 @@ TEST_CASE("promise", "[base]") {
 			result.throw_exception(std::bad_exception());
 		}).detach();
 
-		auto res2 = result.then([](int a)->int {
+		result.then([](int a)->int {
 			throw std::bad_alloc();
 		}).on_exception([boHasException](std::exception_ptr p) {
 			try {
@@ -96,6 +96,8 @@ TEST_CASE("promise", "[base]") {
 			} catch (std::bad_exception &) {
 				boHasException.set( false );
 			}
+		}).then([](int a) {
+			//dummy function
 		});
 
 		boHasException.wait();
