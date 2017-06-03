@@ -8,6 +8,7 @@
 #include "dlist.h"
 #include "datetime.h"
 #include "log.h"
+#include "promise.h"
 
 #include <functional>
 #include <mutex>
@@ -53,6 +54,14 @@ namespace ara {
 		void	dump(const std::string & strPrefix, std::ostream & out);
 
 		void	apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo);
+
+		async_result<boost::system::error_code, async_token>	apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, std::string && strTodo) {
+			async_result<boost::system::error_code, async_token> res;
+			apply(io, key, tTimeout, [res](boost::system::error_code const& ec, async_token token) {
+				res.set(ec, token);
+			}, std::move(strTodo));
+			return res;
+		}
 
 	protected:
 		async_queue();

@@ -39,6 +39,21 @@ namespace ara {
 		void apply_read(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo);
 		void apply_write(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo);
 
+		async_result<boost::system::error_code, async_token> apply_read(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, std::string && strTodo) {
+			async_result<boost::system::error_code, async_token> res;
+			apply_read(io, key, tTimeout, [res](boost::system::error_code const& ec, async_token token) {
+				res.set(ec, token);
+			}, std::move(strTodo));
+			return res;
+		}
+		async_result<boost::system::error_code, async_token> apply_write(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, std::string && strTodo) {
+			async_result<boost::system::error_code, async_token> res;
+			apply_write(io, key, tTimeout, [res](boost::system::error_code const& ec, async_token token) {
+				res.set(ec, token);
+			}, std::move(strTodo));
+			return res;
+		}
+
 	protected:
 		async_rwqueue();
 		class HashNode;
