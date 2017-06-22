@@ -105,7 +105,8 @@ namespace ara {
 					if (ec != boost::asio::error::operation_aborted) {
 						if (mission_base::cando()) {
 							funcCallback func = std::move(func_);
-							func(boost::asio::error::timed_out, nullptr);
+							if (func)
+								func(boost::asio::error::timed_out, nullptr);
 						}
 					}
 				}
@@ -139,7 +140,10 @@ namespace ara {
 					boost::system::error_code temp;
 					if (timer_)
 						timer_->cancel(temp);
-					func_(ec, token);
+					if (func_) {
+						func_(ec, token);
+						func_ = nullptr;
+					}
 				}
 			}
 

@@ -123,5 +123,14 @@
     <ClInclude Include="..\..\..\ara\async_rwqueue.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_session.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\session.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_threadpool.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

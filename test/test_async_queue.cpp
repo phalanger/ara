@@ -8,8 +8,8 @@
 //#include <atomic>
 
 #include "ara/async_queue.h"
+#include "ara/async_threadpool.h"
 #include "ara/event.h"
-#include "ara/threadext.h"
 #include "ara/log.h"
 #include "test_async_helper.h"
 
@@ -28,7 +28,9 @@ TEST_CASE("async queue", "[async]" ){
 		auto p = name_queue::make_queue(10);
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::io_service		io;
+		ara::async_thread_pool	pool("test");
+		auto & io = pool.io();
+		pool.init(2).start();
 
 		enum {
 			THREAD1_GOT_KEY = 1,
@@ -37,7 +39,6 @@ TEST_CASE("async queue", "[async]" ){
 			ALL_FINISHED,
 		};
 
-		boost::asio::io_service::work	worker(io);
 		auto errinfo = std::make_shared<async_error>();
 
 		io.post([p, num, &io, errinfo]() {
@@ -103,18 +104,8 @@ TEST_CASE("async queue", "[async]" ){
 			}, "thread 2 apply 1");
 		});
 
-		auto t1 = ara::make_thread([&io]() {
-			io.run();
-		});
-		auto t2 = ara::make_thread([&io]() {
-			io.run();
-		});
-
 		num->wait(ALL_FINISHED);
-		io.stop();
-
-		t1.join();
-		t2.join();
+		pool.stop();
 
 		REQUIRE(errinfo->get_error() == "");
 	}
@@ -132,7 +123,9 @@ TEST_CASE("async queue", "[async]" ){
 		auto p = name_queue::make_queue(10);
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::io_service		io;
+		ara::async_thread_pool	pool("test");
+		auto & io = pool.io();
+		pool.init(2).start();
 
 		enum {
 			THREAD3_GOT_KEY = 1,
@@ -141,7 +134,6 @@ TEST_CASE("async queue", "[async]" ){
 			ALL_FINISHED,
 		};
 
-		boost::asio::io_service::work	worker(io);
 		auto errinfo = std::make_shared<async_error>();
 
 		io.post([p, num, &io, &errinfo]() {
@@ -206,18 +198,8 @@ TEST_CASE("async queue", "[async]" ){
 			}, "thread 2 apply 1");
 		});
 
-		auto t1 = ara::make_thread([&io]() {
-			io.run();
-		});
-		auto t2 = ara::make_thread([&io]() {
-			io.run();
-		});
-
 		num->wait(ALL_FINISHED);
-		io.stop();
-
-		t1.join();
-		t2.join();
+		pool.stop();
 
 		REQUIRE(errinfo->get_error() == "");
 	}
@@ -235,7 +217,9 @@ TEST_CASE("async queue", "[async]" ){
 		auto p = name_queue::make_queue(10);
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::io_service		io;
+		ara::async_thread_pool	pool("test");
+		auto & io = pool.io();
+		pool.init(2).start();
 
 		enum {
 			THREAD1_GOT_KEY = 1,
@@ -244,7 +228,6 @@ TEST_CASE("async queue", "[async]" ){
 			ALL_FINISHED,
 		};
 
-		boost::asio::io_service::work	worker(io);
 		auto errinfo = std::make_shared<async_error>();
 
 		io.post([p, num, &io, errinfo]() {
@@ -308,18 +291,8 @@ TEST_CASE("async queue", "[async]" ){
 			});
 		});
 
-		auto t1 = ara::make_thread([&io]() {
-			io.run();
-		});
-		auto t2 = ara::make_thread([&io]() {
-			io.run();
-		});
-
 		num->wait(ALL_FINISHED);
-		io.stop();
-
-		t1.join();
-		t2.join();
+		pool.stop();
 
 		REQUIRE(errinfo->get_error() == "");
 	}

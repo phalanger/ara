@@ -117,7 +117,8 @@ namespace ara {
 					if (ec != boost::asio::error::operation_aborted) {
 						if (mission_base::cando()) {
 							funcCallback func = std::move(func_);
-							func(boost::asio::error::timed_out, nullptr);
+							if (func)
+								func(boost::asio::error::timed_out, nullptr);
 						}
 					}
 				}
@@ -153,7 +154,12 @@ namespace ara {
 						timer_->cancel(temp);
 					if (!ec && trace_)
 						ara::glog(ara::log::debug).printfln("Token get for : %v", todo_);
-					func_(ec, token);
+					if (func_)
+					{
+						func_(ec, token);
+						func_ = nullptr;
+					}
+					
 				}
 			}
 

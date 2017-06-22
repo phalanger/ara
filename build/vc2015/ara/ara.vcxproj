@@ -22,6 +22,8 @@
     <ClInclude Include="..\..\..\ara\ara_def.h" />
     <ClInclude Include="..\..\..\ara\async_queue.h" />
     <ClInclude Include="..\..\..\ara\async_rwqueue.h" />
+    <ClInclude Include="..\..\..\ara\async_session.h" />
+    <ClInclude Include="..\..\..\ara\async_threadpool.h" />
     <ClInclude Include="..\..\..\ara\datetime.h" />
     <ClInclude Include="..\..\..\ara\dlist.h" />
     <ClInclude Include="..\..\..\ara\error.h" />
@@ -50,6 +52,7 @@
     <ClInclude Include="..\..\..\ara\internal\stdstring_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\default_string_traits.h" />
     <ClInclude Include="..\..\..\ara\json.h" />
+    <ClInclude Include="..\..\..\ara\session.h" />
     <ClInclude Include="..\..\..\ara\singleton.h" />
     <ClInclude Include="..\..\..\ara\stringext.h" />
     <ClInclude Include="..\..\..\ara\threadext.h" />
