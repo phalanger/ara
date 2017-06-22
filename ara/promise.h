@@ -178,9 +178,12 @@ namespace ara {
 
 				if (!result_ok_) {
 					if (func_ptr_) {
+						std::unique_ptr<func_holder_base> tmp;
+						tmp.swap(func_ptr_);
+
 						_guard.unlock();
 						result_ok_ = true;
-						func_ptr_->invoke_tuple(std::move(r));
+						tmp->invoke_tuple(std::move(r));
 					} else {
 						result_ = std::move(r);
 						result_ok_ = true;
@@ -242,13 +245,17 @@ namespace ara {
 					} catch (...) {
 						_guard.unlock();
 						func_exp_(std::current_exception());
+						func_exp_ = nullptr;
 					}
 				} else {
 					exception_ptr_.reset(new exception_holder<exp>(std::forward<exp>(e)));
 					result_ok_ = true;
 					if (func_ptr_) {
+						std::unique_ptr<func_holder_base> tmp;
+						tmp.swap(func_ptr_);
+
 						_guard.unlock();
-						func_ptr_->invoke_tuple(std::move(result_));
+						tmp->invoke_tuple(std::move(result_));
 					}
 				}
 				
@@ -260,13 +267,17 @@ namespace ara {
 					result_ok_ = true;
 					_guard.unlock();
 					func_exp_(ptr);
+					func_exp_ = nullptr;
 				}
 				else {
 					exception_ptr_.reset(new exception_ptr_holder(ptr));
 					result_ok_ = true;
 					if (func_ptr_) {
+						std::unique_ptr<func_holder_base> tmp;
+						tmp.swap(func_ptr_);
+
 						_guard.unlock();
-						func_ptr_->invoke_tuple(std::move(result_));
+						tmp->invoke_tuple(std::move(result_));
 					}
 				}
 				cond_.notify_all();
@@ -419,7 +430,7 @@ namespace ara {
 
 			virtual void	invoke(_Types&&... args) {
 				try {
-					func_(std::forward<_Types>(args)...).link( res_ );
+					func_(std::forward<_Types>(args)...).link(res_);
 				} catch (...) {
 					res_.throw_current_exception();
 				}

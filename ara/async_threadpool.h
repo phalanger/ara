@@ -9,6 +9,7 @@
 #include "stringext.h"
 
 #include <memory>
+#include <future>
 
 namespace ara {
 
@@ -99,19 +100,51 @@ namespace ara {
 			return *this;
 		}
 
-		/*
 		template< class Function, class... Args>
-		std::future<typename std::result_of<Function(Args...)>::type>
-			async(Function&& f, Args&&... args)
+		std::future<typename std::result_of<Function(Args...)>::type>	async_exec_future(Function&& f, Args&&... args)
 		{
 			typedef typename std::result_of<Function(Args...)>::type	retType;
 			std::packaged_task<retType()>	task(std::bind(std::move(f), std::forward<Args>(args)...));
 			auto res = task.get_future();
 
-			async::asio_post(io_, std::move(task));
+			io_.post( std::move(task) );
 			return res;
 		}
-		*/
+
+		template<typename FunCall
+			, typename RetType = typename function_traits<FunCall>::result_type
+			, typename = typename std::enable_if<std::is_base_of<internal::async_result_base, RetType>::value>::type
+		>
+		RetType	exec(FunCall && func) {
+			RetType res;
+			io_.post([res, func = std::move(func)](){
+				try {
+					res.move_result(func());
+				}
+				catch (...) {
+					res.throw_current_exception();
+				}
+			});
+			return res;
+		}
+
+		template<typename FunCall
+			, typename RetType = typename function_traits<FunCall>::result_type
+			, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
+		>
+		async_result<RetType>	exec(FunCall && func) {
+			async_result<RetType> res;
+			io_.post([res, func = std::move(func)](){
+				try {
+					res.set(func());
+				}
+				catch (...) {
+					res.throw_current_exception();
+				}
+			});
+			return res;
+		}
+
 	protected:
 		std::string					name_;
 		boost::thread_group			threads_;
