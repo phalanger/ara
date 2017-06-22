@@ -15,7 +15,7 @@ namespace ara {
 	class async_thread_pool;
 	typedef std::shared_ptr<async_thread_pool>		async_thread_pool_ptr;
 
-	class async_thread_pool : std::enable_shared_from_this<async_thread_pool>
+	class async_thread_pool : public std::enable_shared_from_this<async_thread_pool>
 	{
 	public:
 		static async_thread_pool_ptr	make_thread_pool(const std::string & strName) {
