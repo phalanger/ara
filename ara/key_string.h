@@ -186,7 +186,7 @@ namespace ara {
 				nOff = nMaxSize;
 			if (nC == npos || nOff + nC > nMaxSize)
 				nC = nMaxSize - nOff;
-			return key_string_base(data() + nOff, nC, true);
+			return key_string_base(data() + nOff, nC, type_ != TYPE_CONST);
 		}
 
 		key_string_base	substring(int nBegin, int nEnd = -1) const {
@@ -210,7 +210,7 @@ namespace ara {
 			if (nEnd < nBegin)
 				nEnd = nBegin;
 
-			return key_string_base(data() + nBegin, nEnd - nBegin, true);
+			return key_string_base(data() + nBegin, nEnd - nBegin, type_ != TYPE_CONST);
 		}
 
 		size_type		find(Ch ch, size_type nOff = 0) const {

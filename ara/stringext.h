@@ -93,10 +93,12 @@ namespace ara {
 		}
 
 		template<typename T, int base = 10>
-		T	to_int() const {
+		T	to_int(size_t off = 0) const {
 			T t = 0;
-			auto p = typeStrTraits::data(str_);
-			auto end = p + typeStrTraits::size(str_);
+			if (off >= typeStrTraits::size(str_))
+				return t;
+			auto p = typeStrTraits::data(str_) + off;
+			auto end = typeStrTraits::data(str_) + typeStrTraits::size(str_);
 			bool boNegative = false;
 			if (p != end && *p == '-') {
 				boNegative = true;
