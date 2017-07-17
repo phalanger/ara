@@ -28,10 +28,14 @@ namespace ara {
 
 			void		set_cache_size(size_t n) { cache_size_ = n; }
 			size_t		get_cache_size() const { return cache_size_; }
+
+			void		set_redirect_count(size_t n) { redirect_count_ = n; }
+			size_t		get_redirect_count() const { return redirect_count_; }
 		protected:
 			timer_val	time_out_ = timer_val(10);
 			bool		verify_peer_ = false;
 			size_t		cache_size_ = 1024 * 1024;
+			size_t		redirect_count_ = 5;
 		};
 
 		class header : public std::map<std::string, std::string, nocase_string_compare<std::string>>
@@ -116,6 +120,9 @@ namespace ara {
 		public:
 			typedef std::function<size_t(void * p, size_t nBuf)>	body_callback_func;
 
+			static request_ptr		make() {
+				return std::make_shared<request>(false, "127.0.0.1", 80, "/");
+			}
 			static request_ptr		make(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) {
 				return std::make_shared<request>(boHttps, strServer, nPort, strURL);
 			}
@@ -152,6 +159,23 @@ namespace ara {
 					port_ = boHttps ? 443 : 80;
 				else
 					port_ = nPort;
+			}
+
+			request &	set_full_url(const std::string & strFullURL) {
+				std::string		strHost, strSchema, strPath;
+				ara::internal::url::split_url(strFullURL, strSchema, strHost, strPath);
+				int nPort = 0;
+				std::string::size_type p = strHost.find(':');
+				if (p != std::string::npos) {
+					nPort = strext(strHost).to_int<int>(p + 1);
+					strHost = strHost.substr(0, p);
+				}
+				is_https_ = (strSchema == "https");
+				server_ = strHost;
+				url_ = strPath;
+				port_ = nPort;
+				return *this;
+				
 			}
 
 			request &	set_method(const std::string & strMethod) {

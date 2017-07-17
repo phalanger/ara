@@ -50,7 +50,7 @@ namespace ara {
 				virtual void on_finished(const boost::system::error_code & ec, async_client_ptr pClient) = 0;
 				virtual void on_header(int nCode, const std::string & strMsg, ara::http::header && h, size_t nBodySize, async_client_ptr client) = 0;
 				virtual void on_body(const void * pdata, size_t n, async_client_ptr client) = 0;
-
+				virtual void on_redirect() = 0;
 			public:
 				inline void					_init(request_ptr r) { 	req_ = r; }
 				inline request_ptr		_req() const { return req_; }
@@ -61,14 +61,31 @@ namespace ara {
 				inline void			_set_body_size(size_t n) { body_size_ = n; }
 				inline int			_get_code() const { return code_; }
 				inline void			_set_code(int n) { code_ = n; }
-				inline bool			_is_https() const {	return req_->is_https();	}
+				inline bool			_is_https() const {	return req_->is_https(); }
+				inline void			_set_redirect(size_t n) { redirect_count_ = n; }
+				inline bool			_should_redirect(int nCode, bool check_only) { 
+					if ((nCode / 100) != 3)
+						return false;
+					else if (!_req()->get_method().empty() && _req()->get_method() != "GET")
+						return false;
+					else if (redirect_count_ == 0)
+						return false;
+					if (!check_only)
+						--redirect_count_;
+					return true;
+				}
+				void			_clear() {
+					temp_data_.swap(std::string());
+					body_size_ = recv_size_ = 0;
+				}
 			private:
 				request_ptr		req_;
 				std::string		temp_data_;
 				boost::asio::streambuf		response_;
-				size_t			body_size_;
-				size_t			recv_size_;
-				int				code_;
+				size_t			body_size_ = 0;
+				size_t			recv_size_ = 0;
+				int				code_ = 0;
+				size_t			redirect_count_ = 5;
 			};
 		}
 
@@ -120,13 +137,26 @@ namespace ara {
 
 				auto self = shared_from_this();
 				res->_init(req);
+				res->_set_redirect(options_.get_redirect_count());
 
 				std::shared_ptr<async_client_control>	pControl = std::make_shared<async_client_control>(self);
+				_go(res);
 
-				if (is_connect_ && req->get_server() != last_server_) {
+
+				return pControl;
+			}
+
+			void stop() {
+				if (is_connect_)
+					close_all();
+			}
+		public:
+			void	_go(respond_ptr res) {
+				if (is_connect_ && res->_req()->get_server() != last_server_) {
 					close_all();
 				}
 
+				auto self = shared_from_this();
 				timer_.async_wait(strand_.wrap([self, this, res](const boost::system::error_code & ec) {
 					if (ec.value() == boost::asio::error::operation_aborted)
 						return;
@@ -136,7 +166,7 @@ namespace ara {
 
 				if (is_connect_) {
 					handle_handshake(boost::system::error_code(), res);
-					return pControl;
+					return;
 				}
 
 				std::string strServices;
@@ -150,20 +180,13 @@ namespace ara {
 				resolver_.async_resolve(query, strand_.wrap([self, this, res](const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator) {
 					handle_resolve(err, endpoint_iterator, res);
 				}));
-
-				return pControl;
 			}
 
-			void stop() {
-				if (is_connect_)
-					close_all();
-			}
-		public:
 			void	_get_data(respond_ptr res) {
 				res->_recv_size() = 0;
 				size_t n = res->_get_body_size();
 				if (n == 0)
-					on_net_finished(boost::system::error_code(), res);
+					on_respond_finished( res );
 				else if (n == std::string::npos)	//chunk
 					handle_read_chunk_size(res);
 				else
@@ -194,6 +217,18 @@ namespace ara {
 				res->on_finished(err, shared_from_this());
 				is_connect_ = false;
 			}
+
+			void on_respond_finished(respond_ptr res) {
+				if (res->_should_redirect(res->_get_code(), false)) {	//redirect
+					res->_req()->set_full_url(res->_temp_data());
+					res->_clear();
+					res->on_redirect();
+					_go(res);
+					return;
+				}
+				on_net_finished(boost::system::error_code(), res);
+			}
+
 
 			void handle_resolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator, respond_ptr res) {
 				if (err)
@@ -444,7 +479,12 @@ namespace ara {
 				else
 					res->_set_body_size(0);
 
-				res->on_header(res->_get_code(), res->_temp_data(), std::move(h), res->_get_body_size(), shared_from_this());
+				std::string status_msg;
+				status_msg.swap(res->_temp_data());
+				if ((res->_get_code() / 100) == 3) {
+					res->_temp_data() = h["Location"];
+				}
+				res->on_header(res->_get_code(), status_msg, std::move(h), res->_get_body_size(), shared_from_this());
 			}
 
 			void handle_read_content(const boost::system::error_code& err, respond_ptr res)	{
@@ -453,7 +493,7 @@ namespace ara {
 					if (err != boost::asio::error::eof)
 						on_net_finished(err, res);
 					else
-						on_net_finished(boost::system::error_code(), res);
+						on_respond_finished( res );
 					return;
 				}
 
@@ -464,7 +504,7 @@ namespace ara {
 				res->_streambuf().consume(nCopy);
 				nRestSize -= nCopy;
 				if (nRestSize == 0)
-					return on_net_finished(boost::system::error_code(), res);
+					return on_respond_finished(res);
 				
 				reset_timeout();
 				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
@@ -545,7 +585,7 @@ namespace ara {
 					res->_streambuf().consume(p + 1);
 
 					if (boLastPackage)
-						return on_net_finished(boost::system::error_code(), res);
+						return on_respond_finished( res );
 					else
 						return handle_read_chunk_size(res);
 				} else 	{
@@ -586,11 +626,12 @@ namespace ara {
 						decltype(func_)	temp;
 						temp.swap(func_);
 						int nCode = ec ? (-ec.value()) : _get_code();
-						temp(nCode, _temp_data(), std::move(respond_header_), std::move(respond_body_));
+						temp(nCode, status_msg_, std::move(respond_header_), std::move(respond_body_));
 					}
 				}
 				virtual void on_header(int nCode, const std::string & strMsg, ara::http::header && h, size_t nBodySize, async_client_ptr client) {
 					respond_header_ = std::move(h);
+					status_msg_ = strMsg;
 					if (nBodySize + 1 > 1)
 						respond_body_.reserve(nBodySize);
 					client->_get_data(shared_from_this());
@@ -598,9 +639,15 @@ namespace ara {
 				virtual void on_body(const void * pdata, size_t n, async_client_ptr client) {
 					respond_body_.append(static_cast<const char *>(pdata), n);
 				}
+				virtual void on_redirect() {
+					respond_header_.clear();
+					status_msg_.clear();
+					respond_body_.clear();
+				}
 			protected:
 				std::function<void(int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody)>	func_;
 				ara::http::header	respond_header_;
+				std::string			status_msg_;
 				std::string			respond_body_;
 			};
 
@@ -641,6 +688,8 @@ namespace ara {
 					}
 				}
 				virtual void on_header(int nCode, const std::string & strMsg, ara::http::header && h, size_t nBodySize, async_client_ptr client) {
+					if (_should_redirect(nCode, true))
+						return;
 					if (header_func_) {
 						decltype(header_func_) temp;
 						temp.swap(header_func_);
@@ -658,6 +707,10 @@ namespace ara {
 					if (body_stream_func_)
 						body_stream_func_(pdata, n);
 				}
+				virtual void on_redirect() {
+					body_.clear();
+				}
+
 			protected:
 				std::function<void(const boost::system::error_code & ec)>											err_func_;
 				std::function<bool(int code, const std::string & strMsg, ara::http::header & h, size_t nBodySize)>	header_func_;
