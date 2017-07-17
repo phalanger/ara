@@ -86,13 +86,14 @@ install:
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       which cmake || brew install cmake 
       which ccache || brew install ccache
-      brew install openssl
+      brew upgrade openssl
+      OPENSSL_FLAGS=¡®-DCMAKE_CXX_FLAGS="-I/usr/local/opt/openssl/include" -DCMAKE_MODULE_LINKER_FLAGS="-L/usr/local/opt/openssl/lib"¡¯
     fi
 
 before_script:
   - export CXX=${COMPILER}
   - cd ${TRAVIS_BUILD_DIR}
-  - cmake -H. -Bbin -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+  - cmake -H. -Bbin -DCMAKE_BUILD_TYPE=${BUILD_TYPE}  ${OPENSSL_FLAGS}
   - cd bin
 
 script:
