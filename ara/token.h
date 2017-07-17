@@ -10,14 +10,14 @@
 namespace ara {
 
 	namespace internal {
-		template<class ch>
+		template<class Char>
 		class token_splitor {
 		public:
-			typedef ref_string_base<ch>			ref_string_t;
+			typedef ref_string_base<Char>			ref_string_t;
 
-			token_splitor(const ch * splitor) : s_(splitor) {}
+			token_splitor(const Char * splitor) : s_(splitor) {}
 
-			inline bool	operator==(ch ch) const {
+			inline bool	operator==(Char ch) const {
 				return s_.find(ch) != ref_string_t::npos;
 			}
 		protected:
