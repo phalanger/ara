@@ -35,6 +35,14 @@ TEST_CASE("token", "[base]") {
 			REQUIRE(spec[i] == nullptr);
 		}
 
+		{
+			size_t i = 0;
+			for (auto it : ara::token_string("Hello,world;hi,;wel;", ";,")) {
+				REQUIRE(it == spec[i++]);
+			}
+			REQUIRE(spec[i] == nullptr);
+		}
+
 	}
 
 	SECTION("simple") {
@@ -59,4 +67,6 @@ TEST_CASE("token", "[base]") {
 		}
 
 	}
+
+
 }

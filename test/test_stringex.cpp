@@ -168,4 +168,19 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(n == 16);
 		REQUIRE(std::string(buf, n) == "Hello world 0012");
 	}
+
+	SECTION("nocase_compare") {
+		ara::nocase_string_compare<std::string>		cmp;
+		REQUIRE_FALSE(cmp("Hello", "heLLO"));
+		REQUIRE_FALSE(cmp("Hello1", "heLLO"));
+		REQUIRE(cmp("Hello", "heLLO1"));
+
+		REQUIRE(cmp("Hella", "heLLO"));
+		REQUIRE_FALSE(cmp("Hellp", "heLLO"));
+		REQUIRE(cmp("Hella", "heLLP"));
+
+		std::map<std::string, int, ara::nocase_string_compare<std::string>>	mapData;
+		mapData["AA"] = 1;
+		REQUIRE(mapData["aa"] == 1);
+	}
 }

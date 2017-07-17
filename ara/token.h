@@ -95,6 +95,13 @@ namespace ara {
 			return true;
 		}
 
+		iterator	begin() {
+			return iterator(*this);
+		}
+		iterator	end() const {
+			return iterator();
+		}
+
 	protected:
 		const value_type *					begin_ = nullptr;
 		const value_type *					end_ = nullptr;

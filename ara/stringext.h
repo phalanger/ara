@@ -123,6 +123,12 @@ namespace ara {
 			}
 			return boNegative ? negative_int(t) : t;
 		}
+
+		string_ext & clear() {
+			typeStrTraits::clear(str_);
+			return *this;
+		}
+
 		template<typename T, int base = 10, bool boLowCase = false>
 		string_ext &	append_int(T t) {
 			internal::format_appender<typeStr>	appender(str_);
@@ -247,6 +253,33 @@ namespace ara {
 			str.append(bufCh());
 		return n;
 	}
+
+	template<class typeStr>
+	class nocase_string_compare : public std::binary_function<typeStr, typeStr, bool>
+	{
+	public:
+		struct nocase_compare : public std::binary_function<int, int, bool> {
+			bool operator() (const unsigned char& c1, const unsigned char& c2) const	{
+				return std::tolower(c1) < std::tolower(c2);
+			}
+		};
+
+		bool operator()(const typeStr & s1, const typeStr & s2) const {
+			auto first1 = s1.begin();
+			auto last1 = s1.end();
+			auto first2 = s2.begin();
+			auto last2 = s2.end();
+
+			for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2) {
+				auto c1 = std::tolower(*first1);
+				auto c2 = std::tolower(*first2);
+				if (c1 < c2) return true;
+				else if (c2 < c1) return false;
+			}
+			return (first1 == last1) && (first2 != last2);
+		}
+	};
+
 }
 
 #endif // !ARA_STRINGEXT_H
