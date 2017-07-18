@@ -5,6 +5,8 @@
 #include "variant.h"
 #include <list>
 
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/stream.h"
 #include "rapidjson/reader.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
@@ -213,6 +215,11 @@ namespace ara {
 			typeStr		& str_;
 			size_t		old_size_ = 0;
 		};
+
+		template <typename Char>
+		inline void PutUnsafe(GenericStringBuffer<Char> & stream, Char c) {
+			stream.Put(c);
+		}
 
 		class VarWriter
 		{
