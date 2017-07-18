@@ -75,7 +75,7 @@ namespace ara {
 					return true;
 				}
 				void			_clear() {
-					temp_data_.swap(std::string());
+					temp_data_.clear();
 					body_size_ = recv_size_ = 0;
 				}
 			private:
@@ -299,7 +299,7 @@ namespace ara {
 
 			template<class typeSocket>
 			void	send_request_body(typeSocket & s, respond_ptr res) 	{
-				res->_temp_data().swap(std::string());	//clear the header cache data
+				res->_temp_data().clear();	//clear the header cache data
 				auto self = shared_from_this();
 
 				if (!res->_req()->get_body().empty()) {
@@ -394,7 +394,7 @@ namespace ara {
 				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
 					handle_read_status_line(err, res);
 				});
-				res->_temp_data().swap(std::string());	//clear cache data
+				res->_temp_data().clear();	//clear cache data
 				if (res->_is_https())
 					boost::asio::async_read_until(socket_, res->_streambuf(), "\r\n", std::move(func));
 				else
@@ -663,7 +663,7 @@ namespace ara {
 				async_respond() {}
 
 				async_respond &	on_error(std::function<void(const boost::system::error_code & ec)> && func) { err_func_ = std::move(func); return *this; }
-				async_respond &	on_header(std::function<bool(int code, const std::string & strMsg, ara::http::header & h, size_t nBodySize)> && func) { header_func_ = std::move(func); return *this; }
+				async_respond &	on_header(std::function<bool(int code, const std::string & strMsg, ara::http::header && h, size_t nBodySize)> && func) { header_func_ = std::move(func); return *this; }
 				async_respond &	on_body(std::function<void(std::string && strBody)> && func, size_t nMaxBodySize = std::string::npos) { body_string_func_ = std::move(func); max_body_size_ = nMaxBodySize; return *this; }
 				async_respond &	on_body(std::function<void(const void * p, size_t n)> && func) { body_stream_func_ = std::move(func); return *this; }
 
@@ -713,7 +713,7 @@ namespace ara {
 
 			protected:
 				std::function<void(const boost::system::error_code & ec)>											err_func_;
-				std::function<bool(int code, const std::string & strMsg, ara::http::header & h, size_t nBodySize)>	header_func_;
+				std::function<bool(int code, const std::string & strMsg, ara::http::header && h, size_t nBodySize)>	header_func_;
 				std::function<void(std::string && strBody)>															body_string_func_;
 				std::function<void(const void * p, size_t n)>														body_stream_func_;
 				size_t				max_body_size_ = 1024 * 1024;

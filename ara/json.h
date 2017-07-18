@@ -5,11 +5,7 @@
 #include "variant.h"
 #include <list>
 
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/stream.h"
-#include "rapidjson/reader.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
+#include "rapidjson/rapidjson.h"
 
 namespace ara {
 
@@ -23,11 +19,11 @@ namespace ara {
 				doc.set_null();
 			}
 
-			bool Null() { 
+			bool Null() {
 				auto last = get_last();
 				if (last == nullptr)
 					return false;
-				last->set_null(); 
+				last->set_null();
 				return true;
 			}
 			bool Bool(bool b) { return assign(b); }
@@ -44,9 +40,9 @@ namespace ara {
 			bool String(const char * str, size_t length, bool copy) {
 				if (boCanRef && !copy)
 					return assign(ref_string(str, length));
-				return assign( std::string(str, length) );
+				return assign(std::string(str, length));
 			}
-			bool StartObject() { 
+			bool StartObject() {
 				auto last = get_last();
 				if (last == nullptr)
 					return false;
@@ -108,10 +104,10 @@ namespace ara {
 		};
 
 		template <typename Encoding>
-		struct GenericStringStream {
+		struct ARAGenericStringStream {
 			typedef typename Encoding::Ch Ch;
 
-			GenericStringStream(const Ch *src, size_t nSize) : src_(src), head_(src), end_(src + nSize) {}
+			ARAGenericStringStream(const Ch *src, size_t nSize) : src_(src), head_(src), end_(src + nSize) {}
 
 			Ch Peek() const { return src_ == end_ ? 0 : *src_; }
 			Ch Take() { return src_ == end_ ? 0 : *src_++; }
@@ -128,10 +124,10 @@ namespace ara {
 		};
 
 		template <typename Encoding>
-		struct GenericInsituStringStream {
+		struct ARAGenericInsituStringStream {
 			typedef typename Encoding::Ch Ch;
 
-			GenericInsituStringStream(Ch *src, size_t nSize) : src_(src), dst_(0), head_(src), end_(src + nSize) {}
+			ARAGenericInsituStringStream(Ch *src, size_t nSize) : src_(src), dst_(0), head_(src), end_(src + nSize) {}
 
 			// Read
 			Ch Peek() const { return src_ == end_ ? 0 : *src_; }
@@ -154,36 +150,15 @@ namespace ara {
 			Ch* end_;
 		};
 
-		template<typename Ch>
-		struct json_mem_encoding	{
-			using encoding_type = RAPIDJSON_NAMESPACE::ASCII<Ch>;
-		};
-		template<>
-		struct json_mem_encoding<char>	{
-			using encoding_type = RAPIDJSON_NAMESPACE::UTF8<>;
-		};
-		template<>
-		struct json_mem_encoding<wchar_t>	{
-			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<wchar_t>;
-		};
-		template<>
-		struct json_mem_encoding<char16_t>	{
-			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<char16_t>;
-		};
-		template<>
-		struct json_mem_encoding<char32_t>	{
-			using encoding_type = RAPIDJSON_NAMESPACE::UTF32<char32_t>;
-		};
-
 		/////////////////////////////////////////////////////////////////////
 
-		template <typename Char>
-		class GenericStringBuffer {
+		template <typename Encoding>
+		class ARAGenericStringBuffer {
 		public:
-			typedef	Char			Ch;
+			typedef typename Encoding::Ch Ch;
 			typedef std::basic_string<Ch, std::char_traits<Ch>>		typeStr;
 
-			GenericStringBuffer(typeStr & str) : str_(str), old_size_(str_.size()) {}
+			ARAGenericStringBuffer(typeStr & str) : str_(str), old_size_(str_.size()) {}
 
 			inline void Put(Ch c) { str_ += c; }
 			inline void Flush() {}
@@ -191,12 +166,12 @@ namespace ara {
 			inline void Clear() { str_.resize(old_size_); }
 			inline void ShrinkToFit() {}
 
-			Ch* Push(size_t count) { 
+			Ch* Push(size_t count) {
 				size_t n = str_.size();
 				str_.resize(n + count);
 				return const_cast<Ch *>(str_.data() + n);
 			}
-			void Pop(size_t count) { 
+			void Pop(size_t count) {
 				size_t n = str_.size();
 				if (n > count && n - count >= old_size_)
 					str_.resize(n - count);
@@ -216,10 +191,46 @@ namespace ara {
 			size_t		old_size_ = 0;
 		};
 
-		template <typename Char>
-		inline void PutUnsafe(GenericStringBuffer<Char> & stream, Char c) {
-			stream.Put(c);
-		}
+	}//interanl
+}//ara
+
+#include "rapidjson/stream.h"
+#include "rapidjson/reader.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+
+RAPIDJSON_NAMESPACE_BEGIN
+
+	template <typename Encoding>
+	struct StreamTraits<ara::internal::ARAGenericStringStream<Encoding> > {
+		enum { copyOptimization = 1 };
+	};
+
+RAPIDJSON_NAMESPACE_END
+
+namespace ara {
+	namespace internal {
+
+		template<typename Ch>
+		struct json_mem_encoding {
+			using encoding_type = RAPIDJSON_NAMESPACE::ASCII<Ch>;
+		};
+		template<>
+		struct json_mem_encoding<char> {
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF8<>;
+		};
+		template<>
+		struct json_mem_encoding<wchar_t> {
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<wchar_t>;
+		};
+		template<>
+		struct json_mem_encoding<char16_t> {
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF16<char16_t>;
+		};
+		template<>
+		struct json_mem_encoding<char32_t> {
+			using encoding_type = RAPIDJSON_NAMESPACE::UTF32<char32_t>;
+		};
 
 		class VarWriter
 		{
@@ -237,7 +248,7 @@ namespace ara {
 					return w.Int64(v.get_int64());
 				case var::TYPE_DOUBLE:
 					return w.Double(v.get_double());
-				case var::TYPE_STRING: 
+				case var::TYPE_STRING:
 				case var::TYPE_CONST_STRING:
 				{
 					auto s = v.get_string();
@@ -278,7 +289,7 @@ namespace ara {
 				return false;
 			}
 		};
-	}
+	}//internal
 
 	class json{
 	public:
@@ -436,7 +447,7 @@ namespace ara {
 		template <unsigned parseFlags, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			static bool		generic_parse(var & v, const typename SourceEncoding::Ch * str, size_t nSize) {
 
-				ara::internal::GenericStringStream<SourceEncoding> s(str, nSize);
+				ara::internal::ARAGenericStringStream<SourceEncoding> s(str, nSize);
 				RAPIDJSON_NAMESPACE::GenericReader<SourceEncoding, TargetEncoding> reader;
 				ara::internal::ara_json_handler<(parseFlags & kParseRef) != 0>	handler(v);
 				auto parseResult_ = reader.template Parse<parseFlags>(s, handler);
@@ -448,7 +459,7 @@ namespace ara {
 		template <unsigned parseFlags, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			static bool		generic_parse(var & v, typename SourceEncoding::Ch * str, size_t nSize) {
 
-				ara::internal::GenericInsituStringStream<SourceEncoding> s(str, nSize);
+				ara::internal::ARAGenericInsituStringStream<SourceEncoding> s(str, nSize);
 				RAPIDJSON_NAMESPACE::GenericReader<SourceEncoding, TargetEncoding> reader;
 				ara::internal::ara_json_handler<(parseFlags & kParseRef) != 0>	handler(v);
 				auto parseResult_ = reader.template Parse<parseFlags | kParseInsituFlag>(s, handler);
@@ -462,10 +473,9 @@ namespace ara {
 		template<typename Char, typename CharTraits = std::char_traits<Char>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			inline static bool	generic_save(const var & v, std::basic_string<Char, CharTraits>	& strStore) {
 
-				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
-				StringBuffer	buf(strStore);
-				typedef typename ara::internal::json_mem_encoding<Char>::encoding_type	encoding_type;
-				RAPIDJSON_NAMESPACE::Writer<StringBuffer, SourceEncoding, TargetEncoding> writer(buf);
+				typedef ara::internal::ARAGenericStringBuffer<TargetEncoding>		araStringBuffer;
+				araStringBuffer	buf(strStore);
+				RAPIDJSON_NAMESPACE::Writer<araStringBuffer, SourceEncoding, TargetEncoding> writer(buf);
 
 				return internal::VarWriter::output(v, writer);
 			}
@@ -474,10 +484,9 @@ namespace ara {
 		template<typename Char, typename CharTraits = std::char_traits<Char>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
 			inline static bool	generic_pretty_save(const var & v, std::basic_string<Char, CharTraits> & strStore, typename SourceEncoding::Ch indentChar = ' ', unsigned indentCharCount = 4) {
 
-				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
-				StringBuffer	buf(strStore);
-				typedef typename ara::internal::json_mem_encoding<Char>::encoding_type	encoding_type;
-				RAPIDJSON_NAMESPACE::PrettyWriter<StringBuffer, SourceEncoding, TargetEncoding> writer(buf);
+				typedef ara::internal::ARAGenericStringBuffer<TargetEncoding>		araStringBuffer;
+				araStringBuffer		buf(strStore);
+				RAPIDJSON_NAMESPACE::PrettyWriter<araStringBuffer, SourceEncoding, TargetEncoding> writer(buf);
 				writer.SetIndent(indentChar, indentCharCount);
 
 				return internal::VarWriter::output(v, writer);

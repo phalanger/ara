@@ -196,7 +196,7 @@ namespace ara {
 
 			template<class typeString>
 			void split_url(const typeString & strURL, typeString & strSchema, typeString & strHost, typeString & strPath) {
-				typeString::size_type p = strURL.find("://");
+				typename typeString::size_type p = strURL.find("://");
 				if (p == typeString::npos) {
 					strext(strSchema).clear().append("http");
 					p = 0;
@@ -206,7 +206,7 @@ namespace ara {
 					p += 3;
 				}
 
-				typeString::size_type p2 = strURL.find('/', p);
+				typename typeString::size_type p2 = strURL.find('/', p);
 				if (p2 == typeString::npos) {
 					strext(strPath).clear().append( "/" );
 					strHost = strURL.substr(p);
