@@ -11,7 +11,7 @@
 	#ifdef _MSC_VER
 		#if (_MSC_VER >= 1910)
 			#define ARA_WIN32_VS2017_VER
-			#define ARA_WIN32_MSVC15_VER
+			#define ARA_WIN32_MSVC141_VER
 		#elif (_MSC_VER >= 1900)
 			#define ARA_WIN32_VS2015_VER
 			#define ARA_WIN32_MSVC14_VER

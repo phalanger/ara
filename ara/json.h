@@ -34,6 +34,11 @@ namespace ara {
 			bool Int64(int64_t i) { return assign(i); }
 			bool Uint64(uint64_t i) { return assign(i); }
 			bool Double(double d) { return assign(d); }
+			bool RawNumber(const char * str, size_t length, bool copy) {
+				if (boCanRef && !copy)
+					return assign(ref_string(str, length));
+				return assign(std::string(str, length));
+			}
 			bool String(const char * str, size_t length, bool copy) {
 				if (boCanRef && !copy)
 					return assign(ref_string(str, length));
@@ -286,8 +291,11 @@ namespace ara {
 			kParseStopWhenDoneFlag = 8,     //!< After parsing a complete JSON root from stream, stop further processing the rest of stream. When this flag is used, parser will not generate kParseErrorDocumentRootNotSingular error.
 			kParseFullPrecisionFlag = 16,   //!< Parse number in full precision (but slower).
 			kParseCommentsFlag = 32,        //!< Allow one-line (//) and multi-line (/**/) comments.
-			kParseRef = 64,
-			kParseDefaultFlags = kParseNoFlags  //!< Default parse flags. Can be customized by defining RAPIDJSON_PARSE_DEFAULT_FLAGS
+			kParseNumbersAsStringsFlag = 64,    //!< Parse all numbers (ints/doubles) as strings.
+			kParseTrailingCommasFlag = 128, //!< Allow trailing commas at the end of objects and arrays.
+			kParseNanAndInfFlag = 256,      //!< Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as doubles.
+			kParseDefaultFlags = kParseNoFlags,  //!< Default parse flags. Can be customized by defining RAPIDJSON_PARSE_DEFAULT_FLAGS
+			kParseRef = 1024,
 		};
 
 	
@@ -457,7 +465,7 @@ namespace ara {
 
 		/////////////////////////////////////////////////////////////
 		template<typename Char, typename CharTraits = std::char_traits<Char>, typename SourceEncoding = ara::json::utf8, typename TargetEncoding = ara::json::utf8>
-			inline static bool	generic_pretty_save(const var & v, std::basic_string<Char, CharTraits> & strStore, Char indentChar = ' ', unsigned indentCharCount = 4) {
+			inline static bool	generic_pretty_save(const var & v, std::basic_string<Char, CharTraits> & strStore, typename SourceEncoding::Ch indentChar = ' ', unsigned indentCharCount = 4) {
 
 				typedef ara::internal::GenericStringBuffer<Char>		StringBuffer;
 				StringBuffer	buf(strStore);
