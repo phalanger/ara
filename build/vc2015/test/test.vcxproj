@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\test\main.cpp" />
+    <ClCompile Include="..\..\..\test\test_async_httpclient.cpp" />
     <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
     <ClCompile Include="..\..\..\test\test_async_rwqueue.cpp" />
     <ClCompile Include="..\..\..\test\test_async_session.cpp" />
@@ -34,6 +35,7 @@
     <ClCompile Include="..\..\..\test\test_session.cpp" />
     <ClCompile Include="..\..\..\test\test_stringex.cpp" />
     <ClCompile Include="..\..\..\test\test_threadext.cpp" />
+    <ClCompile Include="..\..\..\test\test_token.cpp" />
     <ClCompile Include="..\..\..\test\test_utf8.cpp" />
     <ClCompile Include="..\..\..\test\test_utils.cpp" />
     <ClCompile Include="..\..\..\test\test_json.cpp" />
@@ -95,7 +97,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -106,7 +108,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -124,6 +126,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto32MTd.lib;libssl32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>"$(TargetDir)\$(TargetName).exe" --result_code=no --report_level=no</Command>
@@ -145,6 +148,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <Profile>true</Profile>
       <OptimizeReferences>false</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto64MTd.lib;libssl64MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -166,6 +170,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto32MT.lib;libssl32MT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -184,6 +189,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>crypt32.lib;legacy_stdio_definitions.lib;libcrypto64MT.lib;libssl64MT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

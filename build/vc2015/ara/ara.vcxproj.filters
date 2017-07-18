@@ -132,5 +132,20 @@
     <ClInclude Include="..\..\..\ara\async_threadpool.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\log_context.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\url.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_httpclient.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\httpbase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\token.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\ara_def.h" />
+    <ClInclude Include="..\..\..\ara\async_httpclient.h" />
     <ClInclude Include="..\..\..\ara\async_queue.h" />
     <ClInclude Include="..\..\..\ara\async_rwqueue.h" />
     <ClInclude Include="..\..\..\ara\async_session.h" />
@@ -31,9 +32,11 @@
     <ClInclude Include="..\..\..\ara\filesys.h" />
     <ClInclude Include="..\..\..\ara\fixed_string.h" />
     <ClInclude Include="..\..\..\ara\flags.h" />
+    <ClInclude Include="..\..\..\ara\httpbase.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
+    <ClInclude Include="..\..\..\ara\internal\log_context.h" />
     <ClInclude Include="..\..\..\ara\internal\log_imp.h" />
     <ClInclude Include="..\..\..\ara\internal\raw_file.h" />
     <ClInclude Include="..\..\..\ara\internal\singleton_mgr.h" />
@@ -43,6 +46,7 @@
     <ClInclude Include="..\..\..\ara\internal\string_traits.h" />
     <ClInclude Include="..\..\..\ara\internal\thread_state.h" />
     <ClInclude Include="..\..\..\ara\internal\tls_imp.h" />
+    <ClInclude Include="..\..\..\ara\internal\url.h" />
     <ClInclude Include="..\..\..\ara\internal\utf8_core.h" />
     <ClInclude Include="..\..\..\ara\internal\variant_convert.h" />
     <ClInclude Include="..\..\..\ara\key_string.h" />
@@ -56,6 +60,7 @@
     <ClInclude Include="..\..\..\ara\singleton.h" />
     <ClInclude Include="..\..\..\ara\stringext.h" />
     <ClInclude Include="..\..\..\ara\threadext.h" />
+    <ClInclude Include="..\..\..\ara\token.h" />
     <ClInclude Include="..\..\..\ara\utf8.h" />
     <ClInclude Include="..\..\..\ara\utils.h" />
     <ClInclude Include="..\..\..\ara\variant.h" />

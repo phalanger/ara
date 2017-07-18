@@ -30,3 +30,4 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 ## Reference section
 
 * [datetime](docs/datetime.md) : a simple class to handle the date/time
+* [timer_val](docs/timer_val.md) : a simple class look likes **timeval** to store **seconds** and **nanoseconds**
