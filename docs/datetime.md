@@ -1,10 +1,12 @@
 # datetime
 
-Header file:
+## [Header file](../ara/datetime.h)
 
 ~~~C++
 #include "ara/datetime.h"
 ~~~
+
+## Descriptions
 
 Usually C/C++ handle the date/time (such as year/month/day/hours/minute/second)  use **time_t** and the **struct tm**
 
@@ -52,3 +54,8 @@ public:
     }
 }
 ~~~
+
+## See also
+
+* test and exsample :
+  * [test/test_datetime.cpp](../test/test_datetime.cpp)

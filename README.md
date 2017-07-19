@@ -31,3 +31,19 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 
 * [datetime](docs/datetime.md) : a simple class to handle the date/time
 * [timer_val](docs/timer_val.md) : a simple class look likes **timeval** to store **seconds** and **nanoseconds**
+* [dlist](docs/dlist.md) : a simple template to help any class to implement doubly linked list, which is easy to unlink object self from list.
+* [event](docs/event.md) : similar to CEvent, providing synchronized methods to indicate something happend or to wait for something has happened. And also define the **sleep**/**sleep_until** functions using **event** class.
+* [filesys](docs/filesys.md) :
+* [fixed_string](docs/fixed_string.md) :
+* [json](docs/json.md) :
+* [key_string](docs/key_string.md) :
+* [log](docs/log.md) :
+* [promise](docs/promise.md) :
+* [ref_string](docs/ref_string.md) :
+* [session](docs/session.md) :
+* [singleton](docs/singleton.md) :
+* [stringex](docs/stringex.md) :
+* [threadex](docs/threadex.md) :
+* [token](docs/token.md) :
+* [utf8](docs/utf8.md) :
+* [variant](docs/variant.md) :
