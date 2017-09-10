@@ -34,7 +34,7 @@ namespace ara {
 		protected:
 			timer_val	time_out_ = timer_val(10);
 			bool		verify_peer_ = false;
-			size_t		cache_size_ = 1024 * 1024;
+			size_t		cache_size_ = 64 * 1024;
 			size_t		redirect_count_ = 5;
 		};
 

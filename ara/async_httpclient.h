@@ -510,10 +510,13 @@ namespace ara {
 				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
 					handle_read_content(err, res);
 				});
+
+				if (nRestSize > options_.get_cache_size())
+					nRestSize = options_.get_cache_size();
 				if (res->_is_https())
-					boost::asio::async_read(socket_, res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
+					boost::asio::async_read(socket_, res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
 				else
-					boost::asio::async_read(socket_.next_layer(), res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
+					boost::asio::async_read(socket_.next_layer(), res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
 			}
 
 			void handle_read_chunk_size(respond_ptr res)	{
