@@ -65,6 +65,16 @@
     <ClInclude Include="..\..\..\ara\utils.h" />
     <ClInclude Include="..\..\..\ara\variant.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\docs\datetime.md" />
+    <None Include="..\..\..\docs\dlist.md" />
+    <None Include="..\..\..\docs\event.md" />
+    <None Include="..\..\..\docs\filesys.md" />
+    <None Include="..\..\..\docs\install_linux.md" />
+    <None Include="..\..\..\docs\install_win.md" />
+    <None Include="..\..\..\docs\timer_val.md" />
+    <None Include="..\..\..\README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{504157E6-AF5A-42D8-9740-1B8EEA49C037}</ProjectGuid>
     <RootNamespace>ara</RootNamespace>

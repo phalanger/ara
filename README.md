@@ -1,6 +1,6 @@
 # ara
 
-|Platform Build status| Master | Develop | 
+|Platform Build status| Master | Develop |
 | :---------------------------------: | :---------------: | :-----------------: |
 |[Linux/Mac (on Travis CI)](https://travis-ci.org/phalanger/ara)| ![lin-master-badge] | ![lin-dev-badge]        |
 |[Windows (on AppVeyor)](https://ci.appveyor.com/project/phalanger/ara)| ![win-master-badge] | ![win-dev-badge]  |
@@ -33,7 +33,9 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 * [timer_val](docs/timer_val.md) : a simple class look likes **timeval** to store **seconds** and **nanoseconds**
 * [dlist](docs/dlist.md) : a simple template to help any class to implement doubly linked list, which is easy to unlink object self from list.
 * [event](docs/event.md) : similar to CEvent, providing synchronized methods to indicate something happend or to wait for something has happened. And also define the **sleep**/**sleep_until** functions using **event** class.
-* [filesys](docs/filesys.md) :
+* [file_sys](docs/filesys.md) : define some class to handle file system operations, such as handle path name, unlink file.
+* [scan_dir](docs/scan_dir.md) : a simple class to navigate directory.
+* [raw_file](docs/raw_file.md) : a simple class wrapping file **HANDLE** operations.
 * [fixed_string](docs/fixed_string.md) :
 * [json](docs/json.md) :
 * [key_string](docs/key_string.md) :
