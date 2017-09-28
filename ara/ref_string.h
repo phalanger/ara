@@ -40,7 +40,7 @@ namespace ara {
 			ptr_data_(string_traits<typeStr>::data(s)), ptr_end_(ptr_data_ + string_traits<typeStr>::size(s)) {}
 
 		template<typename typeStr>
-		ref_string_base(const typeStr & s, size_t off, size_t nCount) :
+		ref_string_base(const typeStr & s, size_t off, size_t nCount = static_cast<size_t>(-1)) :
 			ptr_data_(string_traits<typeStr>::data(s) + off), ptr_end_(ptr_data_ + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
 
 		int	compare(const ref_string_base & s) const {

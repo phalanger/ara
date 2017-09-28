@@ -87,7 +87,7 @@ namespace ara {
 				int				code_ = 0;
 				size_t			redirect_count_ = 5;
 			};
-		}
+		}//namespace respond
 
 		typedef std::shared_ptr<respond::respond_base>	respond_ptr;
 		typedef std::weak_ptr<respond::respond_base>	respond_weak_ptr;
@@ -140,6 +140,7 @@ namespace ara {
 				res->_set_redirect(options_.get_redirect_count());
 
 				std::shared_ptr<async_client_control>	pControl = std::make_shared<async_client_control>(self);
+				retry_count_ = 1;
 				_go(res);
 
 
@@ -150,10 +151,20 @@ namespace ara {
 				if (is_connect_)
 					close_all();
 			}
+
+			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> & ssl_stream_socket() {
+				return socket_;
+			}
 		public:
 			void	_go(respond_ptr res) {
-				if (is_connect_ && res->_req()->get_server() != last_server_) {
-					close_all();
+				if (is_connect_) {
+					if (res->_req()->get_server() != last_server_)
+						close_all();
+					else if (last_time_ != 0 && time(NULL) >= keep_alive_expire_time_)
+						if (keep_alive_used_count_)
+							--keep_alive_used_count_;
+						else
+							close_all();
 				}
 
 				auto self = shared_from_this();
@@ -161,7 +172,7 @@ namespace ara {
 					if (ec.value() == boost::asio::error::operation_aborted)
 						return;
 					close_all();
-					on_net_finished(boost::asio::error::timed_out, res);
+					on_net_fail(boost::asio::error::timed_out, res);
 				}));
 
 				if (is_connect_) {
@@ -210,7 +221,19 @@ namespace ara {
 				timer_.expires_from_now(boost::posix_time::seconds(static_cast<long>(tTimeout.sec())) + boost::posix_time::microseconds(tTimeout.micro_sec()), ec);
 			}
 
-			void on_net_finished(const boost::system::error_code& err, respond_ptr res)	{
+			void on_net_fail(const boost::system::error_code& err, respond_ptr res, bool can_retry = false) {
+				if (can_retry && retry_count_ > 0) {
+					--retry_count_;
+					close_all();
+					_go(res);
+				}
+				else {
+					retry_count_ = 0;
+					handle_http_respond(err, res);
+				}
+			}
+
+			void handle_http_respond(const boost::system::error_code& err, respond_ptr res)	{
 				boost::system::error_code ec;
 				timer_.cancel(ec);
 				socket_.lowest_layer().close(ec);
@@ -226,13 +249,13 @@ namespace ara {
 					_go(res);
 					return;
 				}
-				on_net_finished(boost::system::error_code(), res);
+				handle_http_respond(boost::system::error_code(), res);
 			}
 
 
 			void handle_resolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator, respond_ptr res) {
 				if (err)
-					return	on_net_finished(err, res);
+					return	on_net_fail(err, res);
 
 				auto self = shared_from_this();
 				boost::asio::async_connect(socket_.lowest_layer(), endpoint_iterator, strand_.wrap([self, this, res](const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator) {
@@ -242,7 +265,7 @@ namespace ara {
 
 			void handle_connect(const boost::system::error_code& err, respond_ptr res) 	{
 				if (err)
-					return	on_net_finished(err, res);
+					return	on_net_fail(err, res);
 
 				if (res->_is_https()) {
 					auto self = shared_from_this();
@@ -257,7 +280,7 @@ namespace ara {
 
 			void handle_handshake(const boost::system::error_code& err, respond_ptr res) {
 				if (err)
-					return	on_net_finished(err, res);
+					return	on_net_fail(err, res);
 
 				is_connect_ = true;
 				last_server_ = res->_req()->get_server();
@@ -291,7 +314,7 @@ namespace ara {
 				auto self = shared_from_this();
 				boost::asio::async_write(s, boost::asio::buffer(str), strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t) {
 					if (err)
-						on_net_finished(err, res);
+						on_net_fail(err, res, true);
 					else
 						send_request_body(s, res);
 				}));
@@ -305,9 +328,9 @@ namespace ara {
 				if (!res->_req()->get_body().empty()) {
 					boost::asio::async_write(s, boost::asio::buffer(res->_req()->get_body()), strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
-							on_net_finished(err, res);
+							on_net_fail(err, res, true);
 						else
-							to_read_status_line(err, res);
+							to_read_status_line(res);
 					}));
 				} else if (res->_req()->has_body_callback()) {
 					if (res->_req()->is_body_chunk_mode())
@@ -318,7 +341,7 @@ namespace ara {
 					}
 						
 				} else
-					to_read_status_line(boost::system::error_code(), res);
+					to_read_status_line(res);
 			}
 
 			template<class typeSocket>
@@ -338,9 +361,9 @@ namespace ara {
 				if (res_size == 0) {
 					boost::asio::async_write(s, boost::asio::buffer(pBegin, prefix_size), strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
-							on_net_finished(err, res);
+							on_net_fail(err, res, true);
 						else
-							to_read_status_line(err, res);
+							to_read_status_line(res);
 					}));
 				} else {
 					pData[res_size++] = '\r';
@@ -352,7 +375,7 @@ namespace ara {
 					};
 					boost::asio::async_write(s, bufs, strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
-							on_net_finished(err, res);
+							on_net_fail(err, res, true);
 						else
 							send_request_body_chunk(s, res);
 					}));
@@ -363,19 +386,19 @@ namespace ara {
 			void	send_request_body_callback(typeSocket & s, respond_ptr res) {
 				size_t nCacheSize = std::min<size_t>(options_.get_cache_size(), res->_get_body_size());
 				if (nCacheSize == 0) {
-					to_read_status_line(boost::system::error_code(), res);
+					to_read_status_line(res);
 				} else {
 					std::string & str = res->_temp_data();
 					str.resize(nCacheSize);
 					char * pBegin = const_cast<char *>(str.data());
 					size_t res_size = res->_req()->get_body(pBegin, nCacheSize);
 					if (res_size == 0) {
-						to_read_status_line(boost::system::error_code(), res);
+						to_read_status_line(res);
 					} else {
 						auto self = shared_from_this();
 						boost::asio::async_write(s, boost::asio::buffer(pBegin, res_size), strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t n) {
 							if (err)
-								on_net_finished(err, res);
+								on_net_fail(err, res, true);
 							else {
 								res->_set_body_size(res->_get_body_size() - n);
 								send_request_body_callback(s, res);
@@ -385,9 +408,7 @@ namespace ara {
 				}
 			}
 
-			void to_read_status_line(const boost::system::error_code& err, respond_ptr res) {
-				if (err)
-					return	on_net_finished(err, res);
+			void to_read_status_line(respond_ptr res) {
 
 				// Read the response status line.
 				auto self = shared_from_this();
@@ -403,7 +424,7 @@ namespace ara {
 
 			void handle_read_status_line(const boost::system::error_code& err, respond_ptr res) {
 				if (err)
-					return	on_net_finished(err, res);
+					return	on_net_fail(err, res, true);
 
 				// Check that response is OK.
 				std::string		http_version, status_msg;
@@ -419,7 +440,7 @@ namespace ara {
 				res->_temp_data().swap(status_msg);
 
 				if (!response_stream || http_version.substr(0, 5) != "HTTP/")
-					return on_net_finished(err, res);
+					return on_net_fail(err, res);
 
 				// Read the response headers, which are terminated by a blank line.
 				auto self = shared_from_this();
@@ -434,7 +455,7 @@ namespace ara {
 
 			void handle_read_headers(const boost::system::error_code& err, respond_ptr res) {
 				if (err)
-					return	on_net_finished(err, res);
+					return	on_net_fail(err, res);
 
 				// Process the response headers.
 				std::istream response_stream(&res->_streambuf());
@@ -479,6 +500,35 @@ namespace ara {
 				else
 					res->_set_body_size(0);
 
+				time_t	tTimeout = 600;
+				size_t	nCountSetting = size_t(-1);
+				it = h.find("connection");
+				if (it != h.end() && it->second == "close")
+					tTimeout = 0;
+				else {
+					it = h.find("keep-alive");
+					if (it != h.end()) {
+
+						const std::string & strSub = it->second;
+
+						std::string::size_type p2 = strSub.find("timeout=");
+						if ( p2 != std::string::npos )
+							tTimeout = strext(strSub).find_int<time_t>(p2 + 8);
+
+						p2 = strSub.find("max=");
+						if ( p2 != std::string::npos )
+							nCountSetting = strext(strSub).find_int<size_t>(p2 + 4);
+					}//if (it != h.end())
+				}//else
+
+				if (tTimeout == 0) {
+					keep_alive_expire_time_ = 0;
+					keep_alive_used_count_ = 0;
+				} else {
+					keep_alive_expire_time_ = time(NULL) + tTimeout;
+					keep_alive_used_count_ = nCountSetting;
+				}
+
 				std::string status_msg;
 				status_msg.swap(res->_temp_data());
 				if ((res->_get_code() / 100) == 3) {
@@ -491,7 +541,7 @@ namespace ara {
 
 				if (err)	{
 					if (err != boost::asio::error::eof)
-						on_net_finished(err, res);
+						on_net_fail(err, res);
 					else
 						on_respond_finished( res );
 					return;
@@ -529,7 +579,7 @@ namespace ara {
 					auto self = shared_from_this();
 					auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
-							return on_net_finished(err, res);
+							return on_net_fail(err, res);
 						else
 							handle_read_chunk_size(res);
 					});
@@ -568,7 +618,7 @@ namespace ara {
 					auto self = shared_from_this();
 					auto func = strand_.wrap([self, this, res, boLastPackage, nChunkSize](const boost::system::error_code& err, size_t) {
 						if (err)
-							on_net_finished(err, res);
+							on_net_fail(err, res);
 						else
 							handle_read_chunk_data(boLastPackage, nChunkSize, res);
 					});
@@ -595,7 +645,7 @@ namespace ara {
 					auto self = shared_from_this();
 					auto func = strand_.wrap([self, this, res, boLastPackage](const boost::system::error_code & e, size_t nSize) {
 						if (e)
-							on_net_finished(e, res);
+							on_net_fail(e, res);
 						else
 							handle_read_chunk_data_end(boLastPackage, res);
 					});
@@ -614,6 +664,10 @@ namespace ara {
 			boost::asio::strand				strand_;
 			bool							is_connect_ = false;
 			std::string						last_server_;
+			size_t							retry_count_ = 2;
+			time_t							last_time_ = 0;
+			time_t							keep_alive_expire_time_ = 0;
+			size_t							keep_alive_used_count_ = static_cast<size_t>(-1);
 
 		};
 

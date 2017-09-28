@@ -72,6 +72,17 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(n4 == int(112345));
 	}
 
+	SECTION("find int") {
+		const std::string str1 = " wer\r\n123fqw";
+		REQUIRE(ara::strext(str1).find_int<int>() == int(123));
+		int a = ara::strext(str1).find_int<int, 16>();
+		REQUIRE(a == int(0x0e));
+		a = ara::strext(str1).find_int<int, 16>(3);
+		REQUIRE(a == int(0x123f));
+		a = ara::strext(str1).find_int<int, 8>(3);
+		REQUIRE(a == int(0123));
+	}
+
 	SECTION("from int") {
 		std::string str1;
 		ara::strext(str1).append_int(100);

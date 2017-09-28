@@ -124,6 +124,40 @@ namespace ara {
 			return boNegative ? negative_int(t) : t;
 		}
 
+		template<typename T, int base = 10>
+		T	find_int(size_t off = 0) const {
+			T t = 0;
+			if (off >= typeStrTraits::size(str_))
+				return t;
+			auto p = typeStrTraits::data(str_) + off;
+			auto end = typeStrTraits::data(str_) + typeStrTraits::size(str_);
+			bool boNegative = false;
+			for (; p != end && !is_valid_number_char<value_type, base>::yes(*p); ++p) {}
+
+			if (p != end && *p == '-') {
+				boNegative = true;
+				++p;
+			}
+			for (; p != end; ++p) {
+				auto ch = *p;
+				if (ch >= '0' && ch <= '9') {
+					t *= base;
+					t += ch - '0';
+				}
+				else if (base == 16 && ch >= 'a' && ch <= 'f') {
+					t *= base;
+					t += ch - 'a' + 10;
+				}
+				else if (base == 16 && ch >= 'A' && ch <= 'F') {
+					t *= base;
+					t += ch - 'A' + 10;
+				}
+				else
+					break;
+			}
+			return boNegative ? negative_int(t) : t;
+		}
+
 		string_ext & clear() {
 			typeStrTraits::clear(str_);
 			return *this;
