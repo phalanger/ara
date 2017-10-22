@@ -5,7 +5,7 @@
 
 #include "3rd/Catch/single_include/catch.hpp"
 
-#include "ara/async_httpclient.h"
+#include "ara/async_httpserver.h"
 #include "ara/async_threadpool.h"
 #include "ara/event.h"
 #include "ara/log.h"
@@ -27,21 +27,19 @@ TEST_CASE("async http client", "[async]") {
 		auto num = std::make_shared<ara::event<int>>(0);
 
 		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
-		auto client = ara::http::async_client::make(io, ssl_context);
 
-		std::string strContent;
 
-		auto c = client->request(ara::http::request::make("https://163.com"),
-			ara::http::respond::make_simple([num, &strContent](int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody) {
-			if (nCode > 0)
-				strContent = std::move(strBody);
-			num->signal_all(1);
-		})
-		);
+		ara::http::async_server svr(io, ssl_context);
+		svr.add_dispatch_data("/*", [](ara::http::async_request_ptr req, ara::http::async_respond_ptr res) {
+		
+			if (req->get_url() == "/") {
+				res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data("<body>helloworld</body>");
+			}
+
+		});
+
 
 		num->wait(1);
 		pool.stop();
-
-		REQUIRE(strContent.find("NetEase Devilfish") != std::string::npos);
 	}
 }

@@ -43,17 +43,17 @@ namespace ara {
 
 		namespace respond {
 
-			class respond_base : public std::enable_shared_from_this<respond_base>
+			class client_respond_base : public std::enable_shared_from_this<client_respond_base>
 			{
 			public:
-				virtual ~respond_base() {}
+				virtual ~client_respond_base() {}
 				virtual void on_finished(const boost::system::error_code & ec, async_client_ptr pClient) = 0;
 				virtual void on_header(int nCode, const std::string & strMsg, ara::http::header && h, size_t nBodySize, async_client_ptr client) = 0;
 				virtual void on_body(const void * pdata, size_t n, async_client_ptr client) = 0;
 				virtual void on_redirect() = 0;
 			public:
-				inline void					_init(request_ptr r) { 	req_ = r; }
-				inline request_ptr		_req() const { return req_; }
+				inline void					_init(client_request_ptr r) { 	req_ = r; }
+				inline client_request_ptr		_req() const { return req_; }
 				inline std::string	&	_temp_data() { return temp_data_; }
 				inline boost::asio::streambuf &	_streambuf() { return response_; }
 				inline size_t		_get_body_size()	const { return body_size_; }
@@ -79,8 +79,8 @@ namespace ara {
 					body_size_ = recv_size_ = 0;
 				}
 			private:
-				request_ptr		req_;
-				std::string		temp_data_;
+				client_request_ptr	req_;
+				std::string			temp_data_;
 				boost::asio::streambuf		response_;
 				size_t			body_size_ = 0;
 				size_t			recv_size_ = 0;
@@ -89,8 +89,8 @@ namespace ara {
 			};
 		}//namespace respond
 
-		typedef std::shared_ptr<respond::respond_base>	respond_ptr;
-		typedef std::weak_ptr<respond::respond_base>	respond_weak_ptr;
+		typedef std::shared_ptr<respond::client_respond_base>	client_respond_ptr;
+		typedef std::weak_ptr<respond::client_respond_base>		client_respond_weak_ptr;
 
 		class http_control
 		{
@@ -129,11 +129,11 @@ namespace ara {
 				return *this;
 			}
 
-			http_control_ptr	request(request_ptr req, respond_ptr res, const options & opt) {
+			http_control_ptr	request(client_request_ptr req, client_respond_ptr res, const options & opt) {
 				return set_options(opt).request(req, res);
 			}
 
-			http_control_ptr	request(request_ptr req, respond_ptr res) {
+			http_control_ptr	request(client_request_ptr req, client_respond_ptr res) {
 
 				auto self = shared_from_this();
 				res->_init(req);
@@ -156,7 +156,7 @@ namespace ara {
 				return socket_;
 			}
 		public:
-			void	_go(respond_ptr res) {
+			void	_go(client_respond_ptr res) {
 				if (is_connect_) {
 					if (res->_req()->get_server() != last_server_)
 						close_all();
@@ -193,7 +193,7 @@ namespace ara {
 				}));
 			}
 
-			void	_get_data(respond_ptr res) {
+			void	_get_data(client_respond_ptr res) {
 				res->_recv_size() = 0;
 				size_t n = res->_get_body_size();
 				if (n == 0)
@@ -221,7 +221,7 @@ namespace ara {
 				timer_.expires_from_now(boost::posix_time::seconds(static_cast<long>(tTimeout.sec())) + boost::posix_time::microseconds(tTimeout.micro_sec()), ec);
 			}
 
-			void on_net_fail(const boost::system::error_code& err, respond_ptr res, bool can_retry = false) {
+			void on_net_fail(const boost::system::error_code& err, client_respond_ptr res, bool can_retry = false) {
 				if (can_retry && retry_count_ > 0) {
 					--retry_count_;
 					close_all();
@@ -233,7 +233,7 @@ namespace ara {
 				}
 			}
 
-			void handle_http_respond(const boost::system::error_code& err, respond_ptr res)	{
+			void handle_http_respond(const boost::system::error_code& err, client_respond_ptr res)	{
 				boost::system::error_code ec;
 				timer_.cancel(ec);
 				socket_.lowest_layer().close(ec);
@@ -241,7 +241,7 @@ namespace ara {
 				is_connect_ = false;
 			}
 
-			void on_respond_finished(respond_ptr res) {
+			void on_respond_finished(client_respond_ptr res) {
 				if (res->_should_redirect(res->_get_code(), false)) {	//redirect
 					res->_req()->set_full_url(res->_temp_data());
 					res->_clear();
@@ -253,7 +253,7 @@ namespace ara {
 			}
 
 
-			void handle_resolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator, respond_ptr res) {
+			void handle_resolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator, client_respond_ptr res) {
 				if (err)
 					return	on_net_fail(err, res);
 
@@ -263,7 +263,7 @@ namespace ara {
 				}));
 			}
 
-			void handle_connect(const boost::system::error_code& err, respond_ptr res) 	{
+			void handle_connect(const boost::system::error_code& err, client_respond_ptr res) 	{
 				if (err)
 					return	on_net_fail(err, res);
 
@@ -278,7 +278,7 @@ namespace ara {
 				}
 			}
 
-			void handle_handshake(const boost::system::error_code& err, respond_ptr res) {
+			void handle_handshake(const boost::system::error_code& err, client_respond_ptr res) {
 				if (err)
 					return	on_net_fail(err, res);
 
@@ -292,7 +292,7 @@ namespace ara {
 			}
 
 			template<class typeSocket>
-			void	send_request_header(typeSocket & s, respond_ptr res) {
+			void	send_request_header(typeSocket & s, client_respond_ptr res) {
 				std::string & str = res->_temp_data();
 				auto req = res->_req();
 				strext(str).printf("%v %v HTTP/%v\r\nHost: %v\r\n"
@@ -321,7 +321,7 @@ namespace ara {
 			}
 
 			template<class typeSocket>
-			void	send_request_body(typeSocket & s, respond_ptr res) 	{
+			void	send_request_body(typeSocket & s, client_respond_ptr res) 	{
 				res->_temp_data().clear();	//clear the header cache data
 				auto self = shared_from_this();
 
@@ -345,7 +345,7 @@ namespace ara {
 			}
 
 			template<class typeSocket>
-			void	send_request_body_chunk(typeSocket & s, respond_ptr res) {
+			void	send_request_body_chunk(typeSocket & s, client_respond_ptr res) {
 				std::string & str = res->_temp_data();
 				
 				const size_t nPrefixSize = 128;
@@ -383,7 +383,7 @@ namespace ara {
 			}
 
 			template<class typeSocket>
-			void	send_request_body_callback(typeSocket & s, respond_ptr res) {
+			void	send_request_body_callback(typeSocket & s, client_respond_ptr res) {
 				size_t nCacheSize = std::min<size_t>(options_.get_cache_size(), res->_get_body_size());
 				if (nCacheSize == 0) {
 					to_read_status_line(res);
@@ -408,7 +408,7 @@ namespace ara {
 				}
 			}
 
-			void to_read_status_line(respond_ptr res) {
+			void to_read_status_line(client_respond_ptr res) {
 
 				// Read the response status line.
 				auto self = shared_from_this();
@@ -422,7 +422,7 @@ namespace ara {
 					boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\r\n", std::move(func));
 			}
 
-			void handle_read_status_line(const boost::system::error_code& err, respond_ptr res) {
+			void handle_read_status_line(const boost::system::error_code& err, client_respond_ptr res) {
 				if (err)
 					return	on_net_fail(err, res, true);
 
@@ -453,7 +453,7 @@ namespace ara {
 					boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\r\n\r\n", std::move(func));
 			}
 
-			void handle_read_headers(const boost::system::error_code& err, respond_ptr res) {
+			void handle_read_headers(const boost::system::error_code& err, client_respond_ptr res) {
 				if (err)
 					return	on_net_fail(err, res);
 
@@ -537,7 +537,7 @@ namespace ara {
 				res->on_header(res->_get_code(), status_msg, std::move(h), res->_get_body_size(), shared_from_this());
 			}
 
-			void handle_read_content(const boost::system::error_code& err, respond_ptr res)	{
+			void handle_read_content(const boost::system::error_code& err, client_respond_ptr res)	{
 
 				if (err)	{
 					if (err != boost::asio::error::eof)
@@ -569,7 +569,7 @@ namespace ara {
 					boost::asio::async_read(socket_.next_layer(), res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
 			}
 
-			void handle_read_chunk_size(respond_ptr res)	{
+			void handle_read_chunk_size(client_respond_ptr res)	{
 
 				auto d = res->_streambuf().data();
 				ref_string	strData(boost::asio::buffer_cast<const char *>(d), boost::asio::buffer_size(d));
@@ -599,7 +599,7 @@ namespace ara {
 				}
 			}
 
-			void handle_read_chunk_data(bool boLastPackage, size_t nChunkSize, respond_ptr res) {
+			void handle_read_chunk_data(bool boLastPackage, size_t nChunkSize, client_respond_ptr res) {
 				auto d = res->_streambuf().data();
 				ref_string	strData(boost::asio::buffer_cast<const char *>(d), boost::asio::buffer_size(d));
 
@@ -629,7 +629,7 @@ namespace ara {
 				}
 			}
 
-			void handle_read_chunk_data_end(bool boLastPackage, respond_ptr res) {
+			void handle_read_chunk_data_end(bool boLastPackage, client_respond_ptr res) {
 				auto d = res->_streambuf().data();
 				ref_string	strData(boost::asio::buffer_cast<const char *>(d), boost::asio::buffer_size(d));
 				ref_string::size_type p = strData.find('\n');
@@ -673,10 +673,10 @@ namespace ara {
 
 		namespace respond {
 
-			class simple_respond : public respond_base
+			class simple_client_respond : public client_respond_base
 			{
 			public:
-				simple_respond(std::function<void(int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody)> && func) : func_(std::move(func)) {}
+				simple_client_respond(std::function<void(int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody)> && func) : func_(std::move(func)) {}
 
 				virtual void on_finished(const boost::system::error_code & ec, async_client_ptr client) {
 					if (func_) {
@@ -708,21 +708,21 @@ namespace ara {
 				std::string			respond_body_;
 			};
 
-			inline std::shared_ptr<simple_respond>		make_simple(std::function<void(int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody)> && func) {
-				return std::make_shared<simple_respond>(std::move(func));
+			inline std::shared_ptr<simple_client_respond>		make_simple(std::function<void(int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody)> && func) {
+				return std::make_shared<simple_client_respond>(std::move(func));
 			}
 
 			///////////////////////////////////////////////////////////
 
-			class async_respond : public respond_base
+			class async_client_respond : public client_respond_base
 			{
 			public:
-				async_respond() {}
+				async_client_respond() {}
 
-				async_respond &	on_error(std::function<void(const boost::system::error_code & ec)> && func) { err_func_ = std::move(func); return *this; }
-				async_respond &	on_header(std::function<bool(int code, const std::string & strMsg, ara::http::header && h, size_t nBodySize)> && func) { header_func_ = std::move(func); return *this; }
-				async_respond &	on_body(std::function<void(std::string && strBody)> && func, size_t nMaxBodySize = std::string::npos) { body_string_func_ = std::move(func); max_body_size_ = nMaxBodySize; return *this; }
-				async_respond &	on_body(std::function<void(const void * p, size_t n)> && func) { body_stream_func_ = std::move(func); return *this; }
+				async_client_respond &	on_error(std::function<void(const boost::system::error_code & ec)> && func) { err_func_ = std::move(func); return *this; }
+				async_client_respond &	on_header(std::function<bool(int code, const std::string & strMsg, ara::http::header && h, size_t nBodySize)> && func) { header_func_ = std::move(func); return *this; }
+				async_client_respond &	on_body(std::function<void(std::string && strBody)> && func, size_t nMaxBodySize = std::string::npos) { body_string_func_ = std::move(func); max_body_size_ = nMaxBodySize; return *this; }
+				async_client_respond &	on_body(std::function<void(const void * p, size_t n)> && func) { body_stream_func_ = std::move(func); return *this; }
 
 				virtual void on_finished(const boost::system::error_code & ec, async_client_ptr pClient) {
 					if (ec) {
@@ -777,8 +777,8 @@ namespace ara {
 				std::string			body_;
 			};
 
-			inline std::shared_ptr<async_respond>		make_async() {
-				return std::make_shared<async_respond>();
+			inline std::shared_ptr<async_client_respond>		make_async() {
+				return std::make_shared<async_client_respond>();
 			}
 		}//namespace respond
 	}//namespace http

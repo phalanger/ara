@@ -112,56 +112,22 @@ namespace ara {
 			}
 		};
 
-		class request;
-		typedef std::shared_ptr<request>		request_ptr;
-		typedef std::weak_ptr<request>			request_weak_ptr;
-		class request
+		class client_request;
+		typedef std::shared_ptr<client_request>		client_request_ptr;
+		typedef std::weak_ptr<client_request>		client_request_weak_ptr;
+		class client_request
 		{
 		public:
 			typedef std::function<size_t(void * p, size_t nBuf)>	body_callback_func;
 
-			static request_ptr		make() {
-				return std::make_shared<request>(false, "127.0.0.1", 80, "/");
-			}
-			static request_ptr		make(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) {
-				return std::make_shared<request>(boHttps, strServer, nPort, strURL);
-			}
-			static request_ptr		make(const std::string & strFullURL) {
-				std::string		strHost, strSchema, strPath;
-				ara::internal::url::split_url(strFullURL, strSchema, strHost, strPath);
-				int nPort = 0;
-				std::string::size_type p = strHost.find(':');
-				if (p != std::string::npos) {
-					nPort = strext(strHost).to_int<int>(p + 1);
-					strHost = strHost.substr(0, p);
-				}
-				return std::make_shared<request>(strSchema == "https", strHost, nPort, strPath);
-			}
-
-			static request_ptr		make(const std::string & strFullURL, header && h, const std::string & strBody) {
-				auto res = make(strFullURL);
-				res->set_header(std::move(h)).body(strBody);
-				return res;
-			}
-			static request_ptr		make(const std::string & strFullURL, header && h, std::string && strBody) {
-				auto res = make(strFullURL);
-				res->set_header(std::move(h)).body(std::move(strBody));
-				return res;
-			}
-			static request_ptr		make(const std::string & strFullURL, header && h, body_callback_func && func) {
-				auto res = make(strFullURL);
-				res->set_header(std::move(h)).body(std::move(func));
-				return res;
-			}
-
-			request(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) : is_https_(boHttps), server_(strServer), url_(strURL) {
+			client_request(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) : is_https_(boHttps), server_(strServer), url_(strURL) {
 				if (nPort == 0)
 					port_ = boHttps ? 443 : 80;
 				else
 					port_ = nPort;
 			}
 
-			request &	set_full_url(const std::string & strFullURL) {
+			client_request &	set_full_url(const std::string & strFullURL) {
 				std::string		strHost, strSchema, strPath;
 				ara::internal::url::split_url(strFullURL, strSchema, strHost, strPath);
 				int nPort = 0;
@@ -178,38 +144,38 @@ namespace ara {
 				
 			}
 
-			request &	set_method(const std::string & strMethod) {
+			inline client_request &	set_method(const std::string & strMethod) {
 				method_ = strMethod;
 				return *this;
 			}
 
-			request &		set_header(header && h) {
+			inline client_request &		set_header(header && h) {
 				header_ = std::move(h);
 				return *this;
 			}
 
-			request &		add_header(header && h) {
+			inline client_request &		add_header(header && h) {
 				for (auto & it : h) {
 					header_.insert(std::move(it));
 				}
 				return *this;
 			}
-			request &		add_header(const header & h) {
+			inline client_request &		add_header(const header & h) {
 				for (auto & it : h) {
 					header_.insert( it );
 				}
 				return *this;
 			}
 
-			request &		set_header(const std::string & strHeaderKey, const std::string & strHeaderItem) {
+			inline client_request &		set_header(const std::string & strHeaderKey, const std::string & strHeaderItem) {
 				header_[strHeaderKey] = strHeaderItem;
 				return *this;
 			}
-			request &		set_header(const std::string & strHeaderKey, std::string && strHeaderItem) {
+			inline client_request &		set_header(const std::string & strHeaderKey, std::string && strHeaderItem) {
 				header_[strHeaderKey] = std::move(strHeaderItem);
 				return *this;
 			}
-			request &		set_http_version(const std::string & strVer) {
+			inline client_request &		set_http_version(const std::string & strVer) {
 				version_ = strVer;
 				return *this;
 			}
@@ -221,11 +187,11 @@ namespace ara {
 			inline int				get_port() const { return port_; }
 			inline const std::string & get_http_version() const { return version_; }
 
-			void		nobody() {}
-			void		body(const std::string & strBody) {
+			inline void		nobody() {}
+			inline void		body(const std::string & strBody) {
 				string_body(std::string(strBody));
 			}
-			void		body(std::string && strBody) {
+			inline void		body(std::string && strBody) {
 				string_body(std::move(strBody));
 			}
 			void		body(body_callback_func && func, size_t nSize = std::string::npos) {
@@ -274,6 +240,98 @@ namespace ara {
 			body_callback_func		body_func_;
 			size_t					body_callback_size_ = 0;
 		};
+
+
+		class server_request;
+		typedef std::shared_ptr<server_request>		server_request_ptr;
+		typedef std::weak_ptr<server_request>		server_request_weak_ptr;
+		class server_request {
+		public:
+			server_request() {}
+
+			inline bool	is_https() const { return is_https_; }
+			inline void	set_https(bool b) { is_https_ = b; }
+
+			inline const std::string & get_remote_ip() const { return peer_ip_; }
+			inline void set_remote_ip(const std::string & ip) { peer_ip_ = ip; }
+
+			inline const std::string & get_local_ip() const { return local_ip_; }
+			inline void set_local_ip(const std::string & ip) { local_ip_ = ip; }
+
+			inline uint16_t get_local_port() const { return local_port_; }
+			inline void set_local_ip(uint16_t n) { local_port_ = n; }
+
+			inline uint16_t get_remote_port() const { return remote_port_; }
+			inline void set_remote_ip(uint16_t n) { remote_port_ = n; }
+
+			inline const std::string & get_url() const { return url_; }
+			inline void set_url(const std::string & u) { url_ = u; }
+
+			inline const std::string & get_method() const { return method_; }
+			inline void set_method(const std::string & s) { method_ = s; }
+
+			inline const std::string & get_version() const { return version_; }
+			inline void set_version(const std::string & s) { version_ = s; }
+
+			inline const header & get_header() const { return h_; }
+			inline header & get_header_for_modify() { return h_; }
+
+			inline const std::string & get_body() const { return body_; }
+			inline std::string & get_body_for_modify() { return body_; }
+
+		private:
+			bool					is_https_ = false;
+			std::string		peer_ip_, local_ip_;
+			uint16_t		local_port_ = 0, remote_port_ = 0;
+			std::string		url_, method_, version_, body_;
+			header			h_;
+			std::function<void(const boost::system::error_code & ec, size_t)>	func_body_;
+		};
+
+		namespace request {
+			inline client_request_ptr		make() {
+				return std::make_shared<client_request>(false, "127.0.0.1", 80, "/");
+			}
+			inline client_request_ptr		make(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) {
+				return std::make_shared<client_request>(boHttps, strServer, nPort, strURL);
+			}
+			client_request_ptr		make(const std::string & strFullURL) {
+				std::string		strHost, strSchema, strPath;
+				ara::internal::url::split_url(strFullURL, strSchema, strHost, strPath);
+				int nPort = 0;
+				std::string::size_type p = strHost.find(':');
+				if (p != std::string::npos) {
+					nPort = strext(strHost).to_int<int>(p + 1);
+					strHost = strHost.substr(0, p);
+				}
+				return std::make_shared<client_request>(strSchema == "https", strHost, nPort, strPath);
+			}
+
+			client_request_ptr		make(const std::string & strFullURL, header && h, const std::string & strBody) {
+				auto res = make(strFullURL);
+				res->set_header(std::move(h)).body(strBody);
+				return res;
+			}
+			client_request_ptr		make(const std::string & strFullURL, header && h, std::string && strBody) {
+				auto res = make(strFullURL);
+				res->set_header(std::move(h)).body(std::move(strBody));
+				return res;
+			}
+			client_request_ptr		make(const std::string & strFullURL, header && h, client_request::body_callback_func && func) {
+				auto res = make(strFullURL);
+				res->set_header(std::move(h)).body(std::move(func));
+				return res;
+			}
+		}//namespace request
+
+
+		class server_dispatch_pattern {
+		public:
+			virtual ~server_dispatch_pattern() {}
+			virtual bool check_before_data(const server_request & req) = 0;
+		};
+		using server_dispatch_pattern_ptr = std::shared_ptr<server_dispatch_pattern>;
+
 	}//http
 }//ara
 

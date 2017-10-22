@@ -150,6 +150,9 @@
     <ClInclude Include="..\..\..\ara\httpbase.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_httpserver.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\docs\datetime.md">
