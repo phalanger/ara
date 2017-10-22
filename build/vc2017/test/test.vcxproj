@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\test\main.cpp" />
     <ClCompile Include="..\..\..\test\test_async_httpclient.cpp" />
-    <ClCompile Include="..\..\..\test\test_async_httpserver.cpp" />
     <ClCompile Include="..\..\..\test\test_async_queue.cpp" />
     <ClCompile Include="..\..\..\test\test_async_rwqueue.cpp" />
     <ClCompile Include="..\..\..\test\test_async_session.cpp" />

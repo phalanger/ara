@@ -7,6 +7,7 @@
 namespace ara {
 	namespace http {
 
+
 		class server_path_dispatch_pattern : public server_dispatch_pattern {
 		public:
 			server_path_dispatch_pattern(const std::string & pattern) : pattern_(pattern) {}

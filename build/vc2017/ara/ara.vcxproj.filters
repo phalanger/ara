@@ -153,6 +153,9 @@
     <ClInclude Include="..\..\..\ara\async_httpserver.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\async_httpsvr_pattern.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\docs\datetime.md">

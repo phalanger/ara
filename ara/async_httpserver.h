@@ -32,6 +32,14 @@ namespace ara {
 		using async_server_ptr = std::shared_ptr<async_server>;
 		using async_server_weak_ptr = std::weak_ptr<async_server>;
 
+		class async_server_request : public server_request {
+		public:
+			async_server_request() {}
+			virtual ~async_server_request() {}
+			virtual void	need_body(void * data, size_t n, std::function<void(const boost::system::error_code & ec, size_t n)> && func) = 0;
+		};
+		using async_server_request_ptr = std::shared_ptr<async_server_request>;
+
 		class async_respond {
 		public:
 			async_respond(async_server_weak_ptr svr) : svr_(svr) {}
@@ -57,11 +65,14 @@ namespace ara {
 			void	close() {
 				//TODO
 			}
+
+		public:
+			async_server_weak_ptr	get_svr_ptr() { return svr_; }
 		private:
 			async_server_weak_ptr	svr_;
 			uint16_t		code_;
 			std::string		msg_;
-			header	h_;
+			header			h_;
 		};
 
 		using async_respond_ptr = std::shared_ptr<async_respond>;
@@ -78,6 +89,12 @@ namespace ara {
 		};
 		using server_filter_ptr = std::shared_ptr<server_filter>;
 
+		class server_handler {
+		public:
+			virtual ~server_handler() {}
+			virtual void handle(async_server_request_ptr, async_respond_ptr) = 0;
+		};
+		using server_handler_ptr = std::shared_ptr<server_handler>;
 
 		class async_server;
 		using async_server_ptr = std::shared_ptr<async_server>;
@@ -90,30 +107,22 @@ namespace ara {
 			}
 
 			async_server &	add_filter(server_filter_ptr p) {
-				strand_.wrap([p, self = shared_from_this(), this](){
-					list_filter_.emplace_back(p);
-				});
+				list_filter_.emplace_back(p);
 				return *this;
 			}
 
-			async_server &	set_default_dispatch(std::function<void (server_request_ptr,async_respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
-				strand_.wrap([node = dispatch(nullptr, std::move(func), max_body_size), self = shared_from_this(), this](){
-					default_dispatch_ = node;
-				});
+			async_server &	set_default_dispatch(server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+				default_dispatch_ = std::make_shared<dispatch>(nullptr, handler, max_body_size);
 				return *this;
 			}
 
-			async_server &	add_dispatch_data(server_dispatch_pattern_ptr pattern, std::function<void (server_request_ptr,async_respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
-				strand_.wrap([node = dispatch(pattern, std::move(func), max_body_size), self = shared_from_this(), this](){
-					list_dispatch_.push_back( node );
-				});
+			async_server &	add_dispatch_data(server_dispatch_pattern_ptr pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+				list_dispatch_.push_back( std::make_shared<dispatch>(nullptr, handler, max_body_size) );
 				return *this;
 			}
 
-			async_server &	add_dispatch_data(const std::string & pattern, std::function<void (server_request_ptr,async_respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
-				strand_.wrap([node = dispatch( shd::make_shared<server_path_dispatch_pattern>(pattern), std::move(func), max_body_size), self = shared_from_this(), this](){
-					list_dispatch_.push_back( node );
-				});
+			async_server &	add_dispatch_data(const std::string & pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+				list_dispatch_.push_back( std::make_shared<dispatch>(std::make_shared<server_path_dispatch_pattern>(pattern), handler, max_body_size) );
 				return *this;
 			}
 
@@ -136,7 +145,7 @@ namespace ara {
 
 		public:
 
-			async_server(boost::asio::io_service & io) : io_(io), strand_(io) {
+			async_server(boost::asio::io_service & io) : io_(io) {
 			}
 
 			class svr_base {
@@ -158,32 +167,45 @@ namespace ara {
 				boost::asio::ssl::context & ssl_context_;
 			};
 
-			class instance_base {
+			class async_server_request_imp : public async_server_request {
+			public:
+				virtual void	need_body(void * data, size_t n, std::function<void(const boost::system::error_code & ec, size_t n)> && func) {
+
+				}
+			};
+
+			class instance_base : public async_respond {
 			public:
 				instance_base(async_server_weak_ptr p, boost::asio::io_service & io) 
-					: svr_ptr_(p), timer_(io), strand_(io), io_(io) {}
+					: async_respond(p), timer_(io), strand_(io), io_(io) {
+					req_ptr_ = std::make_shared<async_server_request_imp>();
+				}
 				virtual ~instance_base() {}
 
-				uint16_t		port_;
-				size_t			backlog_;
+				virtual boost::asio::ip::tcp::socket::lowest_layer_type & socket() = 0;
 
-				async_server_weak_ptr			svr_ptr_;
+				async_server_request_ptr		req_ptr_;
+				
 				boost::asio::deadline_timer		timer_;
 				boost::asio::strand				strand_;
 				boost::asio::io_service &		io_;
 				boost::asio::streambuf			req_;
 			};
-			class instance : public instance_base {
+			class instance : public instance_base  {
 			public:
 				instance(async_server_weak_ptr p, boost::asio::io_service & io) :
-					instance_base(p, io), sock_(io) {}
+					instance_base(p, io), socket_(io) {}
 				
-				boost::asio::ip::tcp::socket	sock_;
+				boost::asio::ip::tcp::socket::lowest_layer_type & socket()	{ return socket_.lowest_layer(); }
+
+				boost::asio::ip::tcp::socket	socket_;
 			};
 			class ssl_instance : public instance_base {
 			public:
 				ssl_instance(async_server_weak_ptr p, boost::asio::io_service & io, boost::asio::ssl::context & ssl_context) :
-					instance_base(p, io), ssl_context_(ssl_context), socket_(io,ssl_context) {}
+					instance_base(p, io), ssl_context_(ssl_context), socket_(io, ssl_context) {}
+
+				boost::asio::ip::tcp::socket::lowest_layer_type & socket()	{ return socket_.lowest_layer(); }
 
 				boost::asio::ssl::context & ssl_context_;
 				boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
@@ -196,33 +218,34 @@ namespace ara {
 			}
 
 			struct dispatch {
-				dispatch(server_dispatch_pattern_ptr pattern, std::function<void(server_request_ptr, async_respond_ptr)> && f, size_t max_body_size) 
-					: pattern_(pattern), func_(std::move(f)), max_body_size_(max_body_size) {}
-				dispatch(dispatch && r) : pattern_(r.pattern_), func_(std::move(r.func_)),max_body_size_(r.max_body_size_)  {}
-				dispatch(const dispatch & r) : pattern_(r.pattern_), func_(r.func_),max_body_size_(r.max_body_size_)  {}
+				dispatch(server_dispatch_pattern_ptr pattern, server_handler_ptr handler, size_t max_body_size) 
+					: pattern_(pattern), handler_(handler), max_body_size_(max_body_size) {}
+				dispatch(dispatch && r) : pattern_(r.pattern_), handler_(r.handler_),max_body_size_(r.max_body_size_)  {}
+				dispatch(const dispatch & r) : pattern_(r.pattern_), handler_(r.handler_),max_body_size_(r.max_body_size_)  {}
 				dispatch() {}
 
 				dispatch & operator=(const dispatch & r) {
 					if (&r != this) {
 						pattern_ = r.pattern_;
-						func_ = r.func_;
+						handler_ = r.handler_;
 						max_body_size_ = r.max_body_size_;
 					}
 					return *this;
 				}
 
-				server_dispatch_pattern_ptr									pattern_;
-				std::function<void(server_request_ptr, async_respond_ptr)>	func_;
-				size_t														max_body_size_ = 1024 * 1024 * 4;
+				server_dispatch_pattern_ptr		pattern_;
+				server_handler_ptr				handler_;
+				size_t							max_body_size_ = 1024 * 1024 * 4;
 			};
+			using dispatch_ptr = std::shared_ptr<dispatch>;
+
 
 			boost::asio::io_service & io_;
-			boost::asio::strand		strand_;
 
-			std::list<server_filter_ptr>				list_filter_;
-			dispatch									default_dispatch_;
-			std::list<dispatch>							list_dispatch_;
-			std::list<std::unique_ptr<instance_base>>	list_instance_;
+			std::list<server_filter_ptr>			list_filter_;
+			std::list<std::unique_ptr<svr_base>>	list_svr_;
+			dispatch_ptr							default_dispatch_;
+			std::list<dispatch_ptr>					list_dispatch_;
 		};
 
 	}

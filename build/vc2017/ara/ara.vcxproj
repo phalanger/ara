@@ -34,6 +34,7 @@
     <ClInclude Include="..\..\..\ara\fixed_string.h" />
     <ClInclude Include="..\..\..\ara\flags.h" />
     <ClInclude Include="..\..\..\ara\httpbase.h" />
+    <ClInclude Include="..\..\..\ara\internal\async_httpsvr_pattern.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_rollingfile.h" />
     <ClInclude Include="..\..\..\ara\internal\log_appender_stdstream.h" />
     <ClInclude Include="..\..\..\ara\internal\log_base.h" />
