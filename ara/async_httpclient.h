@@ -41,6 +41,29 @@ namespace ara {
 		typedef std::shared_ptr<async_client>	async_client_ptr;
 		typedef std::weak_ptr<async_client>		async_client_weak_ptr;
 
+		class client_options
+		{
+		public:
+			client_options() {}
+
+			void				set_timeout(const timer_val & v) { time_out_ = v; }
+			const timer_val &	get_timeout() const { return time_out_; }
+
+			void		set_verify_peer(bool b) { verify_peer_ = b; }
+			bool		get_verify_peer() const { return verify_peer_; }
+
+			void		set_cache_size(size_t n) { cache_size_ = n; }
+			size_t		get_cache_size() const { return cache_size_; }
+
+			void		set_redirect_count(size_t n) { redirect_count_ = n; }
+			size_t		get_redirect_count() const { return redirect_count_; }
+		protected:
+			timer_val	time_out_ = timer_val(10);
+			bool		verify_peer_ = false;
+			size_t		cache_size_ = 64 * 1024;
+			size_t		redirect_count_ = 5;
+		};
+
 		namespace respond {
 
 			class client_respond_base : public std::enable_shared_from_this<client_respond_base>
@@ -119,7 +142,7 @@ namespace ara {
 				return std::make_shared<async_client>(io, ssl_context);
 			}
 
-			async_client &	set_options(const options & opt) {
+			async_client &	set_options(const client_options & opt) {
 				options_ = opt;
 				if (opt.get_verify_peer())
 					socket_.set_verify_mode(boost::asio::ssl::verify_peer);
@@ -129,7 +152,7 @@ namespace ara {
 				return *this;
 			}
 
-			http_control_ptr	request(client_request_ptr req, client_respond_ptr res, const options & opt) {
+			http_control_ptr	request(client_request_ptr req, client_respond_ptr res, const client_options & opt) {
 				return set_options(opt).request(req, res);
 			}
 
@@ -657,7 +680,7 @@ namespace ara {
 			}
 
 
-			options							options_;
+			client_options					options_;
 			boost::asio::ip::tcp::resolver	resolver_;
 			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
 			boost::asio::deadline_timer		timer_;

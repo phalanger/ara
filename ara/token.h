@@ -7,6 +7,19 @@
 
 #include <iterator>
 
+#if 0
+
+	std::string				src("Hello,world;hi,;wel;");
+	ara::token_string		token(src, ";,");
+	ara::token_string::result_string	res;
+	size_t i = 0;
+	while (token.next(res)) {
+		REQUIRE(res == spec[i++]);
+	}
+	REQUIRE(spec[i] == nullptr);
+
+#endif
+
 namespace ara {
 
 	namespace internal {

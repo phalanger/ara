@@ -15,29 +15,6 @@
 namespace ara {
 	namespace http {
 
-		class options
-		{
-		public:
-			options() {}
-
-			void				set_timeout(const timer_val & v) { time_out_ = v; }
-			const timer_val &	get_timeout() const { return time_out_; }
-
-			void		set_verify_peer(bool b) { verify_peer_ = b; }
-			bool		get_verify_peer() const { return verify_peer_; }
-
-			void		set_cache_size(size_t n) { cache_size_ = n; }
-			size_t		get_cache_size() const { return cache_size_; }
-
-			void		set_redirect_count(size_t n) { redirect_count_ = n; }
-			size_t		get_redirect_count() const { return redirect_count_; }
-		protected:
-			timer_val	time_out_ = timer_val(10);
-			bool		verify_peer_ = false;
-			size_t		cache_size_ = 64 * 1024;
-			size_t		redirect_count_ = 5;
-		};
-
 		class header : public std::map<std::string, std::string, nocase_string_compare<std::string>>
 		{
 		public:
@@ -259,10 +236,10 @@ namespace ara {
 			inline void set_local_ip(const std::string & ip) { local_ip_ = ip; }
 
 			inline uint16_t get_local_port() const { return local_port_; }
-			inline void set_local_ip(uint16_t n) { local_port_ = n; }
+			inline void set_local_port(uint16_t n) { local_port_ = n; }
 
 			inline uint16_t get_remote_port() const { return remote_port_; }
-			inline void set_remote_ip(uint16_t n) { remote_port_ = n; }
+			inline void set_remote_port(uint16_t n) { remote_port_ = n; }
 
 			inline const std::string & get_url() const { return url_; }
 			inline void set_url(const std::string & u) { url_ = u; }
@@ -279,23 +256,40 @@ namespace ara {
 			inline const std::string & get_body() const { return body_; }
 			inline std::string & get_body_for_modify() { return body_; }
 
+			inline size_t	get_body_size() const { return body_size_; }
+			inline void		set_body_size(size_t n) { body_size_ = n; }
+
+			void	clear() {
+				is_https_ = false;
+				peer_ip_.clear();
+				local_ip_.clear();
+				local_port_ = 0;
+				remote_port_ = 0;
+				url_.clear();
+				method_.clear();
+				version_.clear();
+				body_.clear();
+				h_.clear();
+				body_size_ = 0;
+			}
 		private:
 			bool					is_https_ = false;
 			std::string		peer_ip_, local_ip_;
 			uint16_t		local_port_ = 0, remote_port_ = 0;
 			std::string		url_, method_, version_, body_;
 			header			h_;
-			std::function<void(const boost::system::error_code & ec, size_t)>	func_body_;
+			size_t			body_size_ = 0;
 		};
 
-		namespace request {
-			inline client_request_ptr		make() {
+		class request {
+		public:
+			static inline client_request_ptr		make() {
 				return std::make_shared<client_request>(false, "127.0.0.1", 80, "/");
 			}
-			inline client_request_ptr		make(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) {
+			static inline client_request_ptr		make(bool boHttps, const std::string & strServer, int nPort, const std::string & strURL) {
 				return std::make_shared<client_request>(boHttps, strServer, nPort, strURL);
 			}
-			client_request_ptr		make(const std::string & strFullURL) {
+			static client_request_ptr		make(const std::string & strFullURL) {
 				std::string		strHost, strSchema, strPath;
 				ara::internal::url::split_url(strFullURL, strSchema, strHost, strPath);
 				int nPort = 0;
@@ -307,22 +301,22 @@ namespace ara {
 				return std::make_shared<client_request>(strSchema == "https", strHost, nPort, strPath);
 			}
 
-			client_request_ptr		make(const std::string & strFullURL, header && h, const std::string & strBody) {
+			static inline client_request_ptr		make(const std::string & strFullURL, header && h, const std::string & strBody) {
 				auto res = make(strFullURL);
 				res->set_header(std::move(h)).body(strBody);
 				return res;
 			}
-			client_request_ptr		make(const std::string & strFullURL, header && h, std::string && strBody) {
+			static inline client_request_ptr		make(const std::string & strFullURL, header && h, std::string && strBody) {
 				auto res = make(strFullURL);
 				res->set_header(std::move(h)).body(std::move(strBody));
 				return res;
 			}
-			client_request_ptr		make(const std::string & strFullURL, header && h, client_request::body_callback_func && func) {
+			static inline client_request_ptr		make(const std::string & strFullURL, header && h, client_request::body_callback_func && func) {
 				auto res = make(strFullURL);
 				res->set_header(std::move(h)).body(std::move(func));
 				return res;
 			}
-		}//namespace request
+		};
 
 
 		class server_dispatch_pattern {

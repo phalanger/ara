@@ -11,7 +11,24 @@
 #include "ara/log.h"
 #include "test_async_helper.h"
 
-TEST_CASE("async http client", "[async]") {
+
+class MyPattern : public ara::http::server_dispatch_pattern
+{
+public:
+	virtual bool check_before_data(const ara::http::server_request & req) override {
+		///
+		return true;
+	}
+};
+class MyHandle : public ara::http::server_handler
+{
+public:
+	virtual void handle(ara::http::request_ptr req, ara::http::respond_ptr res) override {
+		//Do something
+	}
+};
+
+TEST_CASE("async http server", "[async]") {
 	SECTION("base") {
 
 		ara::log::init_defaul_log();
@@ -24,22 +41,26 @@ TEST_CASE("async http client", "[async]") {
 		auto & io = pool.io();
 		pool.init(2).start();
 
-		auto num = std::make_shared<ara::event<int>>(0);
+		//auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
+		//boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
+		auto svr = ara::http::async_server::make(io, ara::http::server_options());
 
+		try {
+			svr->add_dispatch("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
+				if (req->get_url() == "/") {
+					res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data("<body>helloworld</body>");
+				}
 
-		ara::http::async_server svr(io, ssl_context);
-		svr.add_dispatch_data("/*", [](ara::http::async_request_ptr req, ara::http::async_respond_ptr res) {
-		
-			if (req->get_url() == "/") {
-				res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data("<body>helloworld</body>");
-			}
+			})
+				.add_dispatch(std::make_shared<MyPattern>(), std::make_shared<MyHandle>())
+				.add_port(8080);
+		}
+		catch (std::exception & e) {
+			e;
+		}
 
-		});
-
-
-		num->wait(1);
+		//num->wait(1);
 		pool.stop();
 	}
 }
