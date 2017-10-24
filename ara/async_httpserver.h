@@ -138,6 +138,7 @@ namespace ara {
 			};
 			virtual ~server_filter() {}
 			virtual FILTER_RESULT	before_data(server_request & req) = 0;
+			virtual FILTER_RESULT	before_respond(const server_request & req, async_respond & res) = 0;
 		};
 		using server_filter_ptr = std::shared_ptr<server_filter>;
 
@@ -232,9 +233,30 @@ namespace ara {
 			async_server(boost::asio::io_service & io, const server_options & opt) : io_(io), options_(opt) {
 			}
 
+
+			bool	before_respond(const server_request & req, async_respond & res) {
+				for (auto & filter : list_filter_) {
+					auto r = filter->before_respond(req, res);
+					if (r == server_filter::OK)
+						continue;
+					else if (r == server_filter::SKIP_NEXT)
+						break;
+					else if (r == server_filter::REJECT)
+						return false;
+				}
+				return true;
+			}
+
 			server_handler_ptr	find_handler(request_ptr req, size_t & nMaxSize) {
-				for (auto & filter : list_filter_)
-					filter->before_data(*req);
+				for (auto & filter : list_filter_) {
+					auto res = filter->before_data(*req);
+					if (res == server_filter::OK)
+						continue;
+					else if (res == server_filter::SKIP_NEXT)
+						break;
+					else if (res == server_filter::REJECT)
+						return nullptr;
+				}
 				for (auto & d : list_dispatch_) {
 					if (d->pattern_->check_before_data(*req)) {
 						nMaxSize = d->max_body_size_;
@@ -338,6 +360,12 @@ namespace ara {
 					if (h.find("Content-Type") == h.end())
 						binary();
 
+					auto _lock = svr_.lock();
+					if (!_lock)
+						return close();
+					if (!_lock->before_respond( *req_ptr_, *this))
+						return close();
+
 					const char * lpNewLine = "\r\n";
 					respond_header_ = req_ptr_->get_version();
 					respond_header_ += ' ';
@@ -412,7 +440,7 @@ namespace ara {
 					func_data_callback_ = nullptr;
 					body_size_ = 0;
 					max_body_size_ = 0;
-					hander_ = nullptr;
+					handler_ = nullptr;
 					respond_header_.clear();
 					func_chunk_output_callback_ = nullptr;
 
@@ -471,9 +499,11 @@ namespace ara {
 						return close();
 					req_ptr_->set_body_size(body_size_);
 
-					hander_ = _lock->find_handler(req_ptr_, max_body_size_);
-					if (max_body_size_ == static_cast<size_t>(-1))
-						hander_->handle(req_ptr_, shared_from_this());
+					handler_ = _lock->find_handler(req_ptr_, max_body_size_);
+					if (handler_ == nullptr)
+						return close();
+					else if (max_body_size_ == static_cast<size_t>(-1))
+						handler_->handle(req_ptr_, shared_from_this());
 					else if (body_size_ == std::string::npos)
 						on_chunk_size(ec);
 					else if (body_size_ <= max_body_size_)
@@ -593,7 +623,7 @@ namespace ara {
 						tmp(boost::system::error_code(), nullptr, 0);
 					}
 					else
-						hander_->handle(req_ptr_, shared_from_this());
+						handler_->handle(req_ptr_, shared_from_this());
 				}
 
 				async_server_weak_ptr			svr_;
@@ -605,7 +635,7 @@ namespace ara {
 				boost::asio::streambuf			req_;
 				size_t							body_size_ = 0;
 				size_t							max_body_size_ = 0;
-				server_handler_ptr				hander_;
+				server_handler_ptr				handler_;
 				body_callback_func				func_data_callback_;
 				std::string						respond_header_;
 				std::function<void(boost::system::error_code & ec)>	func_chunk_output_callback_;
