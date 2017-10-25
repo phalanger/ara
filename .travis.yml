@@ -64,16 +64,35 @@ matrix:
 
 
     # 3/ OSX Clang Builds
-    - os: osx
+	- os: osx
       osx_image: xcode8
       compiler: clang
-      env: COMPILER='ccache clang++' BUILD_TYPE='Debug'
+      env: COMPILER='clang++' BUILD_TYPE='Debug'
 
     - os: osx
       osx_image: xcode8
       compiler: clang
-      env: COMPILER='ccache clang++' BUILD_TYPE='Release'
+      env: COMPILER='clang++' BUILD_TYPE='Release'
 
+    - os: osx
+      osx_image: xcode9
+      compiler: clang
+      env: COMPILER='clang++' BUILD_TYPE='Debug'
+
+    - os: osx
+      osx_image: xcode9
+      compiler: clang
+      env: COMPILER='clang++' BUILD_TYPE='Release'
+
+    - os: osx
+      osx_image: xcode9.1
+      compiler: clang
+      env: COMPILER='clang++' BUILD_TYPE='Debug'
+
+    - os: osx
+      osx_image: xcode9.1
+      compiler: clang
+      env: COMPILER='clang++' BUILD_TYPE='Release'
 
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
@@ -85,7 +104,6 @@ install:
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       which cmake || brew install cmake 
-      which ccache || brew install ccache
       brew upgrade openssl
       export LDFLAGS="-L/usr/local/opt/openssl/lib ${LDFLAGS}"
       export CPPFLAGS="-I/usr/local/opt/openssl/include ${CPPFLAGS}"
