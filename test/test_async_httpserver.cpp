@@ -41,26 +41,28 @@ TEST_CASE("async http server", "[async]") {
 		auto & io = pool.io();
 		pool.init(2).start();
 
-		//auto num = std::make_shared<ara::event<int>>(0);
+		auto num = std::make_shared<ara::event<int>>(0);
 
 		//boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
 		auto svr = ara::http::async_server::make(io, ara::http::server_options());
 
 		try {
-			svr->add_dispatch("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
+			svr->add("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
 				if (req->get_url() == "/") {
 					res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data("<body>helloworld</body>");
 				}
 
 			})
-				.add_dispatch(std::make_shared<MyPattern>(), std::make_shared<MyHandle>())
-				.add_port(8080);
+				.add(std::make_shared<MyPattern>(), std::make_shared<MyHandle>())
+				.add_port(8090)
+				.start();
 		}
 		catch (std::exception & e) {
 			e;
 		}
 
-		//num->wait(1);
+		num->wait(1);
+		svr->stop();
 		pool.stop();
 	}
 }

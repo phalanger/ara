@@ -189,20 +189,38 @@ namespace ara {
 				return *this;
 			}
 
-			async_server &	add_dispatch(server_dispatch_pattern_ptr pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
-				list_dispatch_.push_back( std::make_shared<dispatch>(nullptr, handler, max_body_size) );
+			async_server &	add(server_dispatch_pattern_ptr pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+				list_dispatch_.push_back( std::make_shared<dispatch>(pattern, handler, max_body_size) );
 				return *this;
 			}
-			async_server &	add_dispatch(const std::string & pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
-				list_dispatch_.push_back( std::make_shared<dispatch>(std::make_shared<server_path_dispatch_pattern>(pattern), handler, max_body_size) );
+
+			template<class Pattern
+					, typename = std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
+			async_server &	add(Pattern p, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+				list_dispatch_.push_back( std::make_shared<dispatch>(server_dispatch_pattern_builder<Pattern>::build(p), handler, max_body_size) );
 				return *this;
 			}
-			async_server &	add_dispatch(server_dispatch_pattern_ptr pattern, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
-				return add_dispatch(pattern, std::make_shared<server_handler_func>(std::move(func)), max_body_size);
+
+			template<class Pattern
+					, typename = std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
+			async_server &	add(Pattern p, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4
+				) {
+				list_dispatch_.push_back( std::make_shared<dispatch>(server_dispatch_pattern_builder<Pattern>::build(p)
+						, std::make_shared<server_handler_func>(std::move(func))
+						, max_body_size) );
+				return *this;
 			}
-			async_server &	add_dispatch(const std::string & pattern, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
-				return add_dispatch(pattern, std::make_shared<server_handler_func>(std::move(func)), max_body_size);
-			}
+
+//			async_server &	add_dispatch(const std::string & pattern, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
+//				list_dispatch_.push_back( std::make_shared<dispatch>(std::make_shared<server_path_dispatch_pattern>(pattern), handler, max_body_size) );
+//				return *this;
+//			}
+//			async_server &	add_dispatch(server_dispatch_pattern_ptr pattern, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
+//				return add_dispatch(pattern, std::make_shared<server_handler_func>(std::move(func)), max_body_size);
+//			}
+//			async_server &	add_dispatch(const std::string & pattern, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4) {
+//				return add_dispatch(pattern, std::make_shared<server_handler_func>(std::move(func)), max_body_size);
+//			}
 
 			async_server & add_port(uint16_t port, const std::string & ip = "", size_t backlog = 64) {
 				std::unique_ptr<svr_base> p(new svr_base(io_, ip, port, backlog));
@@ -491,12 +509,15 @@ namespace ara {
 					}//while
 
 					auto it = h.find("Transfer-Encoding");
-					if (it != h.end() && it->second == "chunked")	{
+					if (it != h.end() && it->second == "chunked")
 						body_size_ = std::string::npos;
-					} else if ((it = h.find("Content-Length")) != h.end()) {
+					else if ((it = h.find("Content-Length")) != h.end())
 						body_size_ = strext(it->second).to_int<size_t>();
-					} else 
+					else if (req_ptr_->get_method() == "POST")
 						return close();
+					else
+						body_size_ = 0;
+
 					req_ptr_->set_body_size(body_size_);
 
 					handler_ = _lock->find_handler(req_ptr_, max_body_size_);
@@ -506,6 +527,8 @@ namespace ara {
 						handler_->handle(req_ptr_, shared_from_this());
 					else if (body_size_ == std::string::npos)
 						on_chunk_size(ec);
+					else if (body_size_ == 0)
+						finish_body();
 					else if (body_size_ <= max_body_size_)
 						on_body_content(ec);
 					else
@@ -719,7 +742,12 @@ namespace ara {
 				virtual ~svr_base() {}
 
 				void init() {
-					boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(ip_.c_str()), port_);
+					boost::asio::ip::tcp::endpoint endpoint;
+					if (ip_.empty())
+						endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::any(), port_);
+					else
+						endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(ip_.c_str()), port_);
+
 					boost::asio::ip::tcp::no_delay option(true);
 					boost::asio::socket_base::reuse_address option2(true);
 
@@ -730,6 +758,9 @@ namespace ara {
 				}
 
 				void	do_accept(async_server_ptr parent) {
+
+					acceptor_.listen(static_cast<int>(backlog_));
+
 					std::shared_ptr<context_base> pContext = make_context(parent, acceptor_.get_io_service());
 					acceptor_.async_accept(pContext->socket(), [pContext, this](boost::system::error_code ec) {
 						auto lock = pContext->svr_.lock();

@@ -19,8 +19,23 @@ namespace ara {
 			std::string		pattern_;
 		};
 
+		template<class Pattern>
+		struct server_dispatch_pattern_builder : public std::false_type {
+		};
 
 
+		template<>
+		struct server_dispatch_pattern_builder<const char *> : public std::true_type {
+			static server_dispatch_pattern_ptr	build(const char * p) {
+				return std::make_shared<server_path_dispatch_pattern>(p);
+			}
+		};
+		template<>
+		struct server_dispatch_pattern_builder<const std::string &> : public std::true_type {
+			static server_dispatch_pattern_ptr	build(const std::string & p) {
+				return std::make_shared<server_path_dispatch_pattern>(p);
+			}
+		};
 	}
 }
 
