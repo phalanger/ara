@@ -64,7 +64,7 @@ matrix:
 
 
     # 3/ OSX Clang Builds
-	- os: osx
+    - os: osx
       osx_image: xcode8
       compiler: clang
       env: COMPILER='clang++' BUILD_TYPE='Debug'
