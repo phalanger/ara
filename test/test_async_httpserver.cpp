@@ -6,6 +6,7 @@
 #include "3rd/Catch/single_include/catch.hpp"
 
 #include "ara/async_httpserver.h"
+#include "ara/async_httpclient.h"
 #include "ara/async_threadpool.h"
 #include "ara/event.h"
 #include "ara/log.h"
@@ -43,8 +44,9 @@ TEST_CASE("async http server", "[async]") {
 
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		//boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
+		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
 		auto svr = ara::http::async_server::make(io, ara::http::server_options());
+		std::string strContent;
 
 		try {
 			svr->add("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
@@ -56,12 +58,28 @@ TEST_CASE("async http server", "[async]") {
 				.add(std::make_shared<MyPattern>(), std::make_shared<MyHandle>())
 				.add_port(8090)
 				.start();
+
+			
+			auto client = ara::http::async_client::make(io, ssl_context);
+		
+
+			auto c = client->request(ara::http::request::make("http://127.0.0.1:8090/"),
+				ara::http::respond::make_simple([num, &strContent](int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody) {
+					if (nCode > 0)
+						strContent = std::move(strBody);
+					num->signal_all(1);
+				})
+			);
+
 		}
 		catch (std::exception & e) {
-			e;
+			REQUIRE( e.what() == "" );
 		}
 
 		num->wait(1);
+
+		REQUIRE(strContent == "<body>helloworld</body>");
+
 		svr->stop();
 		pool.stop();
 	}
