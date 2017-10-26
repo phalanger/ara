@@ -36,7 +36,7 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 * [file_sys](docs/filesys.md) : define some class to handle file system operations, such as handle path name, unlink file.
 * [scan_dir](docs/scan_dir.md) : a simple class to navigate directory.
 * [raw_file](docs/raw_file.md) : a simple class wrapping file **HANDLE** operations.
-* [fixed_string](docs/fixed_string.md) :
+* [fixed_string](docs/fixed_string.md) : wrap a vector of CHARs look like a string class
 * [json](docs/json.md) :
 * [key_string](docs/key_string.md) :
 * [log](docs/log.md) :
@@ -49,3 +49,12 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 * [token](docs/token.md) :
 * [utf8](docs/utf8.md) :
 * [variant](docs/variant.md) :
+
+**async** class :
+
+* [async_httpclient](docs/async_httpclient.md) :
+* [async_httpserver](docs/async_httpserver.md) :
+* [async_queue](docs/async_queue.md) :
+* [async_rwqueue](docs/async_rwqueue.md) :
+* [async_session](docs/async_session.md) :
+* [async_threadpool](docs/async_threadpool.md) :

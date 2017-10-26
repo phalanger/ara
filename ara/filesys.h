@@ -674,35 +674,41 @@ namespace ara {
 			internal::raw_file_imp::close_imp();
 		}
 
-		internal::open_flag<std::string>		open(const std::string & strName) {
+		inline internal::open_flag<std::string>		open(const std::string & strName) {
 			return internal::open_flag<std::string>(*this, strName);
 		}
-		internal::open_flag<std::wstring>		open(const std::wstring & strName) {
+		inline internal::open_flag<std::wstring>		open(const std::wstring & strName) {
 			return internal::open_flag<std::wstring>(*this, strName);
 		}
-		bool	open(const std::string & strName, int nFlags, int mod = -1) {
+		inline bool	open(const std::string & strName, int nFlags, int mod = -1) {
 			return open_imp(strName, nFlags, mod);
 		}
-		bool	open(const std::wstring & strName, int nFlags, int mod = -1) {
+		inline bool	open(const std::wstring & strName, int nFlags, int mod = -1) {
 			return open_imp(strName, nFlags, mod);
 		}
-		bool	is_opened() const {
+		inline bool	is_opened() const {
 			return is_opened_imp();
 		}
-		int		read(void * buf, size_t n) {
+		inline int		read(void * buf, size_t n) {
 			return read_imp(buf, n);
 		}
-		int		write(const void * buf, size_t n) {
+		inline int		write(const void * buf, size_t n) {
 			return write_imp(buf, n);
 		}
-		bool	truncat(uint64_t n) {
+		inline bool	truncat(uint64_t n) {
 			return truncat_imp(n);
 		}
-		off_t	seek(off_t n, std::ios::seek_dir from) {
+		inline off_t	seek(off_t n, std::ios::seek_dir from) {
 			return seek_imp(n, from);
 		}
-		off_t	tell() {
+		inline off_t	tell() {
 			return seek_imp(0, std::ios::cur);
+		}
+		inline bool	sync() {
+			return sync_imp();
+		}
+		inline bool	data_sync() {
+			return data_sync_imp();
 		}
 	};
 }

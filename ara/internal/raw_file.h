@@ -26,6 +26,8 @@ namespace ara {
 			bool	done();
 
 			open_flag &	mod(int nMod) { mod_ = nMod; return *this; }
+			open_flag &	flags(int flag) { flags_ |= flag; return *this; }
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -189,6 +191,25 @@ namespace ara {
 				return true;
 #else
 				return ::ftruncate(fd_, static_cast<off_t>(nNewSize)) == 0;
+#endif
+			}
+
+			bool		sync_imp() {
+				if (!is_opened_imp())
+					return false;
+#if defined(ARA_WIN32_VER)
+				return ::FlushFileBuffers(fd_) == TRUE;
+#else
+				return ::fsync(fd_) == 0;
+#endif
+			}
+			bool		data_sync_imp() {
+				if (!is_opened_imp())
+					return false;
+#if defined(ARA_WIN32_VER)
+				return ::FlushFileBuffers(fd_) == TRUE;
+#else
+				return ::fdatasync(fd_) == 0;
 #endif
 			}
 
