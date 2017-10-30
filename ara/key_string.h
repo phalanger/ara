@@ -83,6 +83,8 @@ namespace ara {
 		}
 
 		int	compare(const Ch * s, size_type nS2 = 0) const {
+			if (s == data())
+				return 0;
 			size_type nS1 = size();
 			nS2 = (nS2 == 0 ? chTraits::length(s) : nS2);
 			size_type nCmpSize = nS1 > nS2 ? nS2 : nS1;

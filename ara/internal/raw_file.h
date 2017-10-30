@@ -208,8 +208,10 @@ namespace ara {
 					return false;
 #if defined(ARA_WIN32_VER)
 				return ::FlushFileBuffers(fd_) == TRUE;
-#else
+#elif defined(ARA_LINUX_VER)
 				return ::fdatasync(fd_) == 0;
+#else
+				return ::fsync(fd_) == 0;
 #endif
 			}
 

@@ -37,18 +37,18 @@ If need the **async** class, which depend on BOOST **asio** and **openssl**, nee
 * [scan_dir](docs/scan_dir.md) : a simple class to navigate directory.
 * [raw_file](docs/raw_file.md) : a simple class wrapping file **HANDLE** operations.
 * [fixed_string](docs/fixed_string.md) : wrap a vector of CHARs look like a string class
-* [json](docs/json.md) :
-* [key_string](docs/key_string.md) :
-* [log](docs/log.md) :
-* [promise](docs/promise.md) :
-* [ref_string](docs/ref_string.md) :
-* [session](docs/session.md) :
-* [singleton](docs/singleton.md) :
-* [stringex](docs/stringex.md) :
-* [threadex](docs/threadex.md) :
-* [token](docs/token.md) :
-* [utf8](docs/utf8.md) :
-* [variant](docs/variant.md) :
+* [json](docs/json.md) : store a variant object to a json string. parse a varaint from a json string.
+* [key_string](docs/key_string.md) : a simple string type used in **key** field such like in std::map
+* [log](docs/log.md) : some class to handle log
+* [promise](docs/promise.md) : a simple promise solution like C++14
+* [ref_string](docs/ref_string.md) : like string_ref in C++17
+* [session](docs/session.md) : a class to store object by string key, but the object will be destroyed while expire.
+* [singleton](docs/singleton.md) : a simple singleton template.
+* [stringex](docs/stringex.md) : extend some functions for string object, such like **printf**, **trim**, **to_int**, utf-8 convert ...
+* [threadex](docs/threadex.md) : extend the function for std::thread, such like **call stack tracer**, **thread local data**, **serial number per thread** ...
+* [token](docs/token.md) : simple token class
+* [utf8](docs/utf8.md) : convert unicode string <-> utf-8 string
+* [variant](docs/variant.md) : a class for variant object like json object in JS.
 
 **async** class :
 
