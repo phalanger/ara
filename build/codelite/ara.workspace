@@ -3,12 +3,12 @@
   <Project Name="ara" Path="ara/ara.project" Active="No"/>
   <Project Name="test" Path="test/test.project" Active="Yes"/>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="no">
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="ara" ConfigName="Debug"/>
       <Project Name="test" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="yes">
+    <WorkspaceConfiguration Name="Release" Selected="no">
       <Environment/>
       <Project Name="ara" ConfigName="Release"/>
       <Project Name="test" ConfigName="Release"/>

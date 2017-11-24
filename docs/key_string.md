@@ -37,7 +37,7 @@ But sometimes need to copy the string data.
 ~~~C++
     const char * tmp = "age";
     ara::key_string str = ara::key_string::copy(tmp);
-    ara::key_string str2(tmp, 2); //copy 2 char from string. It's difference from the simple construtor with a static const char pointer.
+    ara::key_string str2(tmp, 2); //copy 2 char from string. It's different from the simple construtor with a static const char pointer.
 ~~~
 
 * store data in key_string object directly while string size less than size of a pointer. (4 byte or 8 byte depond on OS and application type)

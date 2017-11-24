@@ -31,9 +31,12 @@
     <File Name="../../../test/test_filesys.cpp"/>
     <File Name="../../../test/test_log.cpp"/>
     <File Name="../../../test/test_threadext.cpp"/>
-    <File Name="../../../test/benchmark_printf.cpp"/>
     <File Name="../../../test/test_fixedstring.cpp"/>
     <File Name="../../../test/test_keystring.cpp"/>
+    <File Name="../../../test/test_promise.cpp"/>
+    <File Name="../../../test/test_session.cpp"/>
+    <File Name="../../../test/test_token.cpp"/>
+    <File Name="../../../test/test_variant.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -49,6 +52,7 @@
     <Configuration Name="Debug" CompilerType="MinGW ( TDM-GCC-32 )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-std=c++14" C_Options="-g;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
+        <IncludePath Value="../../../3rd/rapidjson/include/"/>
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
@@ -88,6 +92,7 @@
     <Configuration Name="Release" CompilerType="MinGW ( MinGW-4.8.1 )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-O2;-Wall;-Wparentheses" C_Options="-O2;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
+        <IncludePath Value="../../../3rd/rapidjson/include/"/>
         <Preprocessor Value="NDEBUG"/>
       </Compiler>
       <Linker Options="" Required="yes"/>
