@@ -386,14 +386,27 @@ namespace ara {
 			std::vector<typeStr>	vecItems;
 			typeStr		res;
 			bool needPrefix = false;
+#ifdef ARA_WIN32_VER
+			bool withDriver = false;
+#endif
 
-			if (!string_traits<typeStr>::empty(path) && *string_traits<typeStr>::data(path) == '/')
-				needPrefix = true;
+			if (!string_traits<typeStr>::empty(path)) {
+				if(*string_traits<typeStr>::data(path) == '/')
+					needPrefix = true;
+#ifdef ARA_WIN32_VER
+				else if (string_traits<typeStr>::size(path) > 1 && *(string_traits<typeStr>::data(path) + 1) == ':')
+					withDriver = true;
+#endif
+			}
 
 			for (auto it : split_path(path)) {
 				if (is_parent_path(it)) {
-					if (!vecItems.empty())
+					if (!vecItems.empty()) {
+#ifdef ARA_WIN32_VER
+						if (!withDriver || vecItems.size() > 1)
+#endif
 						vecItems.pop_back();
+					}
 					if (vecItems.empty())
 						needPrefix = true;
 				}
@@ -403,14 +416,12 @@ namespace ara {
 					vecItems.push_back(it);
 			}
 			char ch = detect_path_slash(path);
-			if (needPrefix)
-				string_traits<typeStr>::append(res, ch);
 			for (auto & it2 : vecItems) {
 				if (!string_traits<typeStr>::empty(res)) {
-					if (needPrefix)
-						needPrefix = false;
-					else
-						string_traits<typeStr>::append(res, ch);
+					string_traits<typeStr>::append(res, ch);
+				} else if (needPrefix) {
+					needPrefix = false;
+					string_traits<typeStr>::append(res, ch);
 				}
 				string_traits<typeStr>::append(res, it2);
 			}

@@ -5,6 +5,7 @@
 #include "datetime.h"
 #include "stringext.h"
 #include "token.h"
+#include "filesys.h"
 #include "internal/url.h"
 
 #include <map>
@@ -242,7 +243,11 @@ namespace ara {
 			inline void set_remote_port(uint16_t n) { remote_port_ = n; }
 
 			inline const std::string & get_url() const { return url_; }
-			inline void set_url(const std::string & u) { url_ = u; }
+			const std::string & get_abs_url() const { return abs_url_; }
+			inline void set_url(const std::string & u) { 
+				url_ = u;
+				abs_url_ = file_sys::fix_path(url_.substr(0, url_.find('?')));
+			}
 
 			inline const std::string & get_method() const { return method_; }
 			inline void set_method(const std::string & s) { method_ = s; }
@@ -276,7 +281,7 @@ namespace ara {
 			bool					is_https_ = false;
 			std::string		peer_ip_, local_ip_;
 			uint16_t		local_port_ = 0, remote_port_ = 0;
-			std::string		url_, method_, version_, body_;
+			std::string		url_, method_, version_, body_, abs_url_;
 			header			h_;
 			size_t			body_size_ = 0;
 		};

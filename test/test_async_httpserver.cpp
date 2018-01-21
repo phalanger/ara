@@ -50,7 +50,7 @@ TEST_CASE("async http server", "[async]") {
 
 		try {
 			svr->add("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
-				if (req->get_url() == "/") {
+				if (req->get_abs_url() == "/") {
 					res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data("<body>helloworld</body>");
 				}
 

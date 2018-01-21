@@ -40,8 +40,8 @@ TEST_CASE("filesys", "[base]") {
 
 		REQUIRE(ara::file_sys::fix_path(std::string("C:\\\\abcd\\..\\.\\def\\..\\hij\\")) == "C:\\hij\\");
 		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\khg\\..\\.\\def\\..\\hij\\")) == "C:\\abcd\\hij\\");
-		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\..\\..\\def\\..\\hij\\")) == "\\hij\\");
-		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\\\..\\..\\def\\..\\..\\hij\\")) == "\\hij\\");
+		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\..\\..\\def\\..\\hij\\")) == "C:\\hij\\");
+		REQUIRE(ara::file_sys::fix_path(std::string("C:\\abcd\\\\..\\..\\def\\..\\..\\hij\\")) == "C:\\hij\\");
 
 		REQUIRE(ara::file_sys::is_path<std::string>("C:\\abcde\\"));
 		REQUIRE_FALSE(ara::file_sys::is_path<std::string>("C:\\abcde"));
