@@ -17,7 +17,7 @@
 
 	auto svr = ara::http::async_server::make( io );
 
-	svr->add_dispatch("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
+	svr->add("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
 		res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data( 
 
 			"<body>helloworld</body>"
@@ -58,7 +58,7 @@
 				res->close();
 		}
 	};
-	svr->add_dispatch(std::make_shared<MyPattern>(), std::make_shared<MyHandle>(), std::string::npos);//handle body by myself
+	svr->add(std::make_shared<MyPattern>(), std::make_shared<MyHandle>(), std::string::npos);//handle body by myself
 
 #endif
 
