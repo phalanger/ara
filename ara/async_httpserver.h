@@ -17,7 +17,7 @@
 
 	auto svr = ara::http::async_server::make( io );
 
-	svr->add_dispatch("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
+	svr->add("/", [](ara::http::request_ptr req, ara::http::respond_ptr res) {
 		res->set_code(200, "OK").add_header("Content-type","text/html").write_full_data( 
 
 			"<body>helloworld</body>"
@@ -30,7 +30,7 @@
 	class MyPattern : public ara::http::server_dispatch_pattern
 	{
 	public:
-		virtual bool check_before_data(const ara::http::server_request & req) override {
+		virtual bool check_before_data(const ara::http::server_request & req, async_respond & res) override {
 			///
 			return true;
 		}
@@ -58,7 +58,7 @@
 				res->close();
 		}
 	};
-	svr->add_dispatch(std::make_shared<MyPattern>(), std::make_shared<MyHandle>(), std::string::npos);//handle body by myself
+	svr->add(std::make_shared<MyPattern>(), std::make_shared<MyHandle>(), std::string::npos);//handle body by myself
 
 #endif
 
@@ -137,7 +137,7 @@ namespace ara {
 				REJECT,
 			};
 			virtual ~server_filter() {}
-			virtual FILTER_RESULT	before_data(server_request & req) = 0;
+			virtual FILTER_RESULT	before_data(server_request & req, async_respond & res) = 0;
 			virtual FILTER_RESULT	before_respond(const server_request & req, async_respond & res) = 0;
 		};
 		using server_filter_ptr = std::shared_ptr<server_filter>;
@@ -265,14 +265,14 @@ namespace ara {
 				return true;
 			}
 
-			server_handler_ptr	find_handler(request_ptr req, size_t & nMaxSize) {
+			server_handler_ptr	find_handler(request_ptr req, async_respond & res, size_t & nMaxSize) {
 				for (auto & filter : list_filter_) {
-					auto res = filter->before_data(*req);
-					if (res == server_filter::OK)
+					auto r = filter->before_data(*req, res);
+					if (r == server_filter::OK)
 						continue;
-					else if (res == server_filter::SKIP_NEXT)
+					else if (r == server_filter::SKIP_NEXT)
 						break;
-					else if (res == server_filter::REJECT)
+					else if (r == server_filter::REJECT)
 						return nullptr;
 				}
 				for (auto & d : list_dispatch_) {
@@ -520,9 +520,9 @@ namespace ara {
 
 					req_ptr_->set_body_size(body_size_);
 
-					handler_ = _lock->find_handler(req_ptr_, max_body_size_);
+					handler_ = _lock->find_handler(req_ptr_, *this, max_body_size_);
 					if (handler_ == nullptr)
-						return close();
+						return;
 					else if (max_body_size_ == static_cast<size_t>(-1))
 						handler_->handle(req_ptr_, shared_from_this());
 					else if (body_size_ == std::string::npos)

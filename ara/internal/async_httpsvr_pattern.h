@@ -13,7 +13,7 @@ namespace ara {
 			server_path_dispatch_pattern(const std::string & pattern) : pattern_(pattern) {}
 
 			bool check_before_data(const server_request & req) {
-				return req.get_url().find(pattern_) == 0;
+				return req.get_abs_url().find(pattern_) == 0;
 			}
 		private:
 			std::string		pattern_;
