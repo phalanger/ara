@@ -81,6 +81,7 @@ namespace ara {
 				inline boost::asio::streambuf &	_streambuf() { return response_; }
 				inline size_t		_get_body_size()	const { return body_size_; }
 				inline size_t &		_recv_size() { return recv_size_; }
+				inline void			_add_recv_size(size_t n) { recv_size_ += n; }
 				inline void			_set_body_size(size_t n) { body_size_ = n; }
 				inline int			_get_code() const { return code_; }
 				inline void			_set_code(int n) { code_ = n; }
@@ -684,7 +685,7 @@ namespace ara {
 			boost::asio::ip::tcp::resolver	resolver_;
 			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
 			boost::asio::deadline_timer		timer_;
-			boost::asio::strand				strand_;
+			boost::asio::io_context::strand				strand_;
 			bool							is_connect_ = false;
 			std::string						last_server_;
 			size_t							retry_count_ = 2;
@@ -718,6 +719,7 @@ namespace ara {
 				}
 				virtual void on_body(const void * pdata, size_t n, async_client_ptr client) {
 					respond_body_.append(static_cast<const char *>(pdata), n);
+					_add_recv_size( n );
 				}
 				virtual void on_redirect() {
 					respond_header_.clear();

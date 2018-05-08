@@ -26,12 +26,12 @@ TEST_CASE("async http client", "[async]") {
 
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
+		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::tlsv11_client);
 		auto client = ara::http::async_client::make(io, ssl_context);
 
 		std::string strContent;
 
-		auto c = client->request(ara::http::request::make("https://163.com"),
+		auto c = client->request(ara::http::request::make("https://163.com/"),
 			ara::http::respond::make_simple([num, &strContent](int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody) {
 			if (nCode > 0)
 				strContent = std::move(strBody);

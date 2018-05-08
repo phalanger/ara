@@ -653,7 +653,7 @@ namespace ara {
 				request_ptr						req_ptr_;
 				
 				boost::asio::deadline_timer		timer_;
-				boost::asio::strand				strand_;
+				boost::asio::io_context::strand				strand_;
 				boost::asio::io_service &		io_;
 				boost::asio::streambuf			req_;
 				size_t							body_size_ = 0;
