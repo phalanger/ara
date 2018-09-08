@@ -3,11 +3,7 @@
 ## Install BOOST such like this
 
 * Download the BOOST source code package from <http://www.boost.org>
-<<<<<<< HEAD
-* Suggest to use version **1.67.0** or above
-=======
 * Suggest to use version **1.68.0** or above
->>>>>>> add support boost 1.68.0
 * Unzip the BOOST source code package and change to the directory
 * Run these commands in Shell
 
