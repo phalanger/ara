@@ -188,6 +188,8 @@ namespace ara {
 				off.QuadPart = static_cast<decltype(off.QuadPart)>(nNewSize);
 				if (!::SetFilePointerEx(fd_, off, 0, FILE_BEGIN))
 					return false;
+				else if (!::SetEndOfFile(fd_))
+					return false;
 				return true;
 #else
 				return ::ftruncate(fd_, static_cast<off_t>(nNewSize)) == 0;
