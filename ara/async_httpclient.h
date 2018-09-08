@@ -685,7 +685,7 @@ namespace ara {
 			boost::asio::ip::tcp::resolver	resolver_;
 			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
 			boost::asio::deadline_timer		timer_;
-			boost::asio::io_context::strand				strand_;
+			boost::asio::io_context::strand	strand_;
 			bool							is_connect_ = false;
 			std::string						last_server_;
 			size_t							retry_count_ = 2;
