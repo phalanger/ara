@@ -497,13 +497,13 @@ namespace ara {
 	class dir_iterator
 	{
 	public:
-		dir_iterator() {}
+		dir_iterator() noexcept : FindFileDataA_() {}
 		dir_iterator(const std::string & strPath, const std::string & strFilter = "") {
 			std::string str = file_sys::join_to_file(strPath, strFilter.empty() ? std::string("*.*") : strFilter);
 			hFind_ = ::FindFirstFileA(str.c_str(), &FindFileDataA_);
 		}
 
-		dir_iterator(dir_iterator && r) {
+		dir_iterator(dir_iterator && r) noexcept {
 			hFind_ = r.hFind_;
 			r.hFind_ = INVALID_HANDLE_VALUE;
 			memcpy(&FindFileDataA_, &FindFileDataA_, sizeof(FindFileDataA_));
@@ -680,7 +680,7 @@ namespace ara {
 			return fd_;
 		}
 
-		raw_file() {}
+		raw_file() noexcept {}
 		~raw_file() {
 			internal::raw_file_imp::close_imp();
 		}

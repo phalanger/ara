@@ -109,7 +109,7 @@ namespace ara {
 
 		public:
 			//! Default constructor
-			date_time_imp() : time_(0) {}
+			date_time_imp() noexcept : time_(0) {}
 			//! Copy constructor
 			date_time_imp(const date_time_imp & d) : time_(d.time_) {}
 			//! Constructor with a 64bits integer

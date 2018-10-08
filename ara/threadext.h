@@ -78,7 +78,7 @@ namespace ara {
 			return *internal::tls_holder<thread_context>::get();
 		}
 
-		thread_context() {
+		thread_context() noexcept {
 			thread_state_.append_after(internal::thread_state::get_root());
 		}
 		thread_context(const thread_context &) = delete;

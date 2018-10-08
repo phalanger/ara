@@ -73,7 +73,7 @@ namespace ara {
 			typedef std::mutex	LockType;
 			typedef thread_state_lock<std::mutex, thread_state>	lock_parent;
 
-			thread_state() : ptr_callstack_(nullptr) {
+			thread_state() noexcept : ptr_callstack_(nullptr) {
 				id_ = std::this_thread::get_id();
 			}
 			~thread_state() {

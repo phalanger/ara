@@ -12,7 +12,7 @@ namespace ara {
 		class singleton_mgr
 		{
 		public:
-			singleton_mgr() {}
+			singleton_mgr() noexcept {}
 			~singleton_mgr() {
 				for (auto & it2 : list_del_) {
 					delete it2;

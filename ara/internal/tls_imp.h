@@ -149,7 +149,7 @@ namespace ara {
 		class thread_local_storage
 		{
 		public:
-			thread_local_storage() {}
+			thread_local_storage() noexcept {}
 			thread_local_storage(const thread_local_storage &) = delete;
 			thread_local_storage(thread_local_storage &&) = delete;
 
