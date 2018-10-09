@@ -88,12 +88,13 @@ namespace ara {
 
 
 #ifndef ARA_WIN32_VER
+				std::string file = strext(file_name_).to<std::string>();
 				struct stat statbuf;
 				memset(&statbuf, 0, sizeof(statbuf));
-				if (::lstat(file_name_.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
+				if (::lstat(file.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
 				{
-					::unlink(file_name_.c_str());
-					(void)::symlink(strFileName.c_str(), file_name_.c_str());
+					::unlink(file.c_str());
+					(void)::symlink( strext(strFileName).to<std::string>().c_str(), file.c_str());
 				}
 #endif
 			}
