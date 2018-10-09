@@ -146,34 +146,49 @@ namespace ara {
 			return res;
 		}
 
-		template<class typeStr>
-		static	typeStr		join_to_path(const typeStr & sPath, const typeStr & sSub) {
+		template<class typeStr, class typeStr2>
+		static	typeStr		join_to_path(const typeStr & sPath, const typeStr2 & sSub) {
 			return to_path(join_to_file(sPath, sSub));
 		}
-		template<typename typeStrResult, typename ...typeStr>
-		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&... sPath) {
+		template<typename typeStrResult, typename typeStr2, typename ...typeStr>
+		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStr2 & sSub2, typeStr&&... sPath) {
 			return join_to_path(join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
-
 		template<class typeStr>
-		static	typeStr		join_to_file(const typeStr & sPath, const typeStr & sSub) {
+		static	typeStr		join_to_path(const typeStr & sPath, const char * p) {
+			return join_to_path(sPath, std::string(p));
+		}
+		template<class typeStr>
+		static	typeStr		join_to_path(const typeStr & sPath, const wchar_t * p) {
+			return join_to_path(sPath, std::wstring(p));
+		}
 
-			auto nSize = string_traits<typeStr>::size(sSub);
+		template<class typeStr, class typeStr2>
+		static	typeStr		join_to_file(const typeStr & sPath, const typeStr2 & sSub) {
+
+			auto nSize = string_traits<typeStr2>::size(sSub);
 			if (nSize == 0)
 				return	sPath;
 			typename string_traits<typeStr>::size_type off = 0;
-			auto p = string_traits<typeStr>::data(sSub);
+			auto p = string_traits<typeStr2>::data(sSub);
 			for (; off < nSize; ++off, ++p)
 				if (!isPathSlashChar(*p))
 					break;
 
 			typeStr res = to_path(sPath);
-			for (; off < nSize; ++off, ++p)
-				string_traits<typeStr>::append(res, *p);
+			strext(res) += sSub.substr(off);
 			return  res;
 		}
-		template<typename typeStrResult, class...typeStr>
-		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&...sPath) {
+		template<class typeStr>
+		static	typeStr		join_to_file(const typeStr & sPath, const char * p) {
+			return join_to_file(sPath, std::string(p));
+		}
+		template<class typeStr>
+		static	typeStr		join_to_file(const typeStr & sPath, const wchar_t * p) {
+			return join_to_file(sPath, std::wstring(p));
+		}
+		template<typename typeStrResult, typename typeStr2, class...typeStr>
+		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStr2 & sSub2, typeStr&&...sPath) {
 			return join_to_file( join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
 
@@ -572,6 +587,84 @@ namespace ara {
 		HANDLE hFind_ = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAA FindFileDataA_;
 	};
+	class wdir_iterator
+	{
+	public:
+		wdir_iterator() noexcept : FindFileDataW_() {}
+		wdir_iterator(const std::wstring & strPath, const std::wstring & strFilter = L"") {
+			std::wstring str = file_sys::join_to_file(strPath, strFilter.empty() ? std::wstring(L"*.*") : strFilter);
+			hFind_ = ::FindFirstFileW(str.c_str(), &FindFileDataW_);
+		}
+
+		wdir_iterator(wdir_iterator && r) noexcept {
+			hFind_ = r.hFind_;
+			r.hFind_ = INVALID_HANDLE_VALUE;
+			memcpy(&FindFileDataW_, &FindFileDataW_, sizeof(FindFileDataW_));
+		}
+
+		~wdir_iterator() {
+			if (hFind_ != INVALID_HANDLE_VALUE) {
+				::FindClose(hFind_);
+				hFind_ = INVALID_HANDLE_VALUE;
+			}
+		}
+
+		bool operator==(const wdir_iterator &) const {
+			return hFind_ == INVALID_HANDLE_VALUE;
+		}
+		bool operator!=(const wdir_iterator &) const {
+			return hFind_ != INVALID_HANDLE_VALUE;
+		}
+
+		std::wstring operator*() const {
+			return FindFileDataW_.cFileName;
+		}
+
+		file_attr get_attr() const {
+			file_attr attr;
+			get_attr(attr);
+			return attr;
+		}
+
+		wdir_iterator & operator++() {
+			if (hFind_ != INVALID_HANDLE_VALUE) {
+				if (!::FindNextFileW(hFind_, &FindFileDataW_)) {
+					::FindClose(hFind_);
+					hFind_ = INVALID_HANDLE_VALUE;
+				}
+			}
+			return *this;
+		}
+	protected:
+		void get_attr(file_attr & attr) const {
+			attr.access_time = file_sys::filetime_to_timet(FindFileDataW_.ftLastAccessTime);
+			attr.create_time = file_sys::filetime_to_timet(FindFileDataW_.ftCreationTime);
+			attr.modify_time = file_sys::filetime_to_timet(FindFileDataW_.ftLastWriteTime);
+
+			ULARGE_INTEGER ull;
+			ull.LowPart = FindFileDataW_.nFileSizeLow;
+			ull.HighPart = FindFileDataW_.nFileSizeHigh;
+			attr.size = static_cast<uint64_t>(ull.QuadPart);
+
+			DWORD n = FindFileDataW_.dwFileAttributes;
+			if (n & FILE_ATTRIBUTE_COMPRESSED)
+				attr.flags |= file_attr::IS_COMPRESS;
+			if (n & FILE_ATTRIBUTE_DIRECTORY)
+				attr.flags |= file_attr::IS_DIR;
+			if (n & FILE_ATTRIBUTE_ENCRYPTED)
+				attr.flags |= file_attr::IS_ENC;
+			if (n & FILE_ATTRIBUTE_HIDDEN)
+				attr.flags |= file_attr::IS_HIDDEN;
+			if (n & FILE_ATTRIBUTE_READONLY)
+				attr.flags |= file_attr::IS_READONLY;
+			if (n & FILE_ATTRIBUTE_SYSTEM)
+				attr.flags |= file_attr::IS_SYS;
+		}
+		wdir_iterator(const wdir_iterator &) = delete;
+
+		HANDLE hFind_ = INVALID_HANDLE_VALUE;
+		WIN32_FIND_DATAW FindFileDataW_;
+	};
 #else// !ARA_WIN32_VC_VER && !ARA_WIN32_MINGW_VER
 	class dir_iterator
 	{
@@ -652,6 +745,19 @@ namespace ara {
 		std::string			parent_;
 		std::string			filter_;
 	};
+	class wdir_iterator : public dir_iterator
+	{
+	public:
+		wdir_iterator() {}
+		wdir_iterator(const std::wstring & strPath, const std::wstring & strFilter = L"") :
+			dir_iterator( strext(strPath).to<std::string>(), strext(strFilter).to<std::string>()) {}
+
+		wdir_iterator(wdir_iterator && r) : dir_iterator(std::move(r)) {}
+
+		std::wstring operator*() const {
+			return strext(std::string(entry_->d_name)).to<std::wstring>();
+		}
+	};
 #endif//ARA_WIN32_VC_VER
 
 	class scan_dir {
@@ -667,6 +773,20 @@ namespace ara {
 	protected:
 		std::string path_;
 		std::string filter_;
+	};
+	class scan_wdir {
+	public:
+		scan_wdir(const std::wstring & strPath, const std::wstring & strFilter = L"") : path_(strPath), filter_(strFilter) {}
+
+		wdir_iterator	begin() const {
+			return wdir_iterator(path_, filter_);
+		}
+		wdir_iterator	end() const {
+			return wdir_iterator();
+		}
+	protected:
+		std::wstring path_;
+		std::wstring filter_;
 	};
 
 	class raw_file;
