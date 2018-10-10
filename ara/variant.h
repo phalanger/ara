@@ -240,6 +240,15 @@ namespace ara {
 			}
 			return T();
 		}
+		template<typename T, typename keyType, typename Convertor = internal::default_variant_convert>
+		T	find_and_convert_to(const keyType & key, const T & nDefault) const {
+			check_type(TYPE_DICT);
+			auto it = get_dict().find(key);
+			if (it == get_dict().end())
+				return  nDefault;
+			else
+				return it->second.to<T>();
+		}
 
 		var_dict	&	to_dict() { 
 			if (get_type() != TYPE_DICT)

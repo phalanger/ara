@@ -841,6 +841,47 @@ namespace ara {
 		inline bool	data_sync() {
 			return data_sync_imp();
 		}
+
+		template<class typeFileNameString>
+		static bool		load_data_from_file(const typeFileNameString & strFileName, std::string & data) {
+			raw_file	f;
+			if (!f.open(strFileName).read_only().binary().done())
+				return false;
+			off_t s = f.seek(0, std::ios::end);
+			size_t nOldSize = data.size();
+			data.resize(nOldSize + static_cast<size_t>(s));
+			f.seek(0, std::ios::beg);
+			char * p = const_cast<char *>(data.data() + nOldSize);
+			while (s > 0) {
+				int n = f.read(p, s);
+				if (n <= 0)
+					break;
+				p += n;
+				s -= n;
+			}
+			if (s)
+				data.resize( static_cast<size_t>(data.size() - s) );
+			return true;
+		}
+		template<class typeFileNameString>
+		static bool		save_data_to_file(const typeFileNameString & strFileName, const std::string & data) {
+			return save_data_to_file(strFileName, data.data(), data.size());
+		}
+		template<class typeFileNameString>
+		static bool		save_data_to_file(const typeFileNameString & strFileName, const void * pData, size_t s) {
+			raw_file	f;
+			if (!f.open(strFileName).write_only().create().truncat().binary().done())
+				return false;
+			const char * p = static_cast<const char *>(pData);
+			while (s > 0) {
+				int n = f.write(p, s);
+				if (n <= 0)
+					return false;
+				p += n;
+				s -= n;
+			}
+			return true;
+		}
 	};
 }
 
