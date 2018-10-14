@@ -73,9 +73,9 @@ namespace ara {
 				for (const auto & it : *this) {
 					if (!res.empty())
 						res.append(1, '&');
-					res.append(internal::url::encoded(it.first));
+					res.append(internal::url::encode(it.first));
 					res.append(1, '=');
-					res.append(internal::url::encoded(it.second));
+					res.append(internal::url::encode(it.second));
 				}
 				return res;
 			}

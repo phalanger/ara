@@ -396,6 +396,40 @@ namespace ara {
 			return path_splitor<typeStr>(std::forward<typeStr>(s));
 		}
 
+		static bool	create_path(const std::string & s, int mod = 0755) {
+			if ( path_exist(s) )
+				return true;
+
+			std::string	parent, subpath;
+			split_path(s, parent, subpath);
+			if (!path_exist(parent) && !create_path(parent, mod))
+				return false;
+
+#ifdef ARA_WIN32_VER
+			return ::CreateDirectoryA(s.c_str(), NULL) == TRUE;
+#else
+			return ::mkdir(s.c_str(), mod);
+#endif
+		}
+
+		static bool	create_path(const std::wstring & s, int mod = 0755) {
+
+#ifdef ARA_WIN32_VER
+			if ( path_exist(s) )
+				return true;
+
+			std::wstring	parent, subpath;
+			split_path(s, parent, subpath);
+			if (!path_exist(parent) && !create_path(parent, mod))
+				return false;
+
+			return ::CreateDirectoryW(s.c_str(), NULL) == TRUE;
+#else
+			return create_path( strext(s).to<std::string>(), mod);
+#endif
+		}
+
+
 		template<class typeStr>
 		static typeStr		fix_path(const typeStr & path) {
 			std::vector<typeStr>	vecItems;
@@ -457,6 +491,21 @@ namespace ara {
 			return ::DeleteFileW(strFile.c_str()) == TRUE;
 #else
 			return ::unlink(strext(strFile).to<std::string>().c_str()) == 0;
+#endif
+		}
+
+		static bool	remove_path(const std::string & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::RemoveDirectoryA(strFile.c_str()) == TRUE;
+#else
+			return ::rmdir(strFile.c_str()) == 0;
+#endif
+		}
+		static bool	remove_path(const std::wstring & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::RemoveDirectoryW(strFile.c_str()) == TRUE;
+#else
+			return ::rmdir(strext(strFile).to<std::string>().c_str()) == 0;
 #endif
 		}
 

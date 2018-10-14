@@ -156,7 +156,7 @@ namespace ara {
 			}
 
 			template<class typeString>
-			inline typeString encoded(const typeString &input) {
+			inline typeString encode(const typeString &input) {
 				typeString encoded;
 				encode(input.begin(), input.end(), std::back_inserter(encoded));
 				return encoded;
