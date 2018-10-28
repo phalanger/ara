@@ -298,7 +298,7 @@ namespace ara {
 		}
 		template<typename T>
 		var & operator=(T && v) {
-			var tmp( std::move(v) );
+			var tmp( std::forward<T>(v) );
 			swap(tmp);
 			return *this;
 		}
