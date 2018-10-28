@@ -932,6 +932,41 @@ namespace ara {
 			return true;
 		}
 	};
+
+	class remove_dir_recursive
+	{
+	public:
+		static void	del(const std::string & str) {
+			scan_dir	s(str);
+			auto it = s.begin();
+			auto itend = s.end();
+			for (; it != itend; ++it) {
+				std::string s = *it;
+				if (s == "." || s == "..")
+					continue;
+				else if (it.get_attr().is_dir())
+					remove_dir_recursive::del(file_sys::join_to_path(str, s));
+				else
+					file_sys::unlink( file_sys::join_to_file(str, s) );
+			}
+			file_sys::remove_path(str);
+		}
+		static void del(const std::wstring & str) {
+			scan_wdir	s(str);
+			auto it = s.begin();
+			auto itend = s.end();
+			for (; it != itend; ++it) {
+				std::wstring s = *it;
+				if (s == L"." || s == L"..")
+					continue;
+				else if (it.get_attr().is_dir())
+					remove_dir_recursive::del(file_sys::join_to_path(str, s));
+				else
+					file_sys::unlink( file_sys::join_to_file(str, s) );
+			}
+			file_sys::remove_path(str);
+		}
+	};
 }
 
 #endif//ARA_FILESYS_H
