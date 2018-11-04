@@ -141,7 +141,7 @@ namespace ara {
 #endif
 			}
 
-			off_t		seek_imp(off_t n, std::ios::seek_dir from) {
+			off_t		seek_imp(off_t n, std::ios::seekdir from) {
 				if (!is_opened_imp())
 					return off_t(-1);
 #if defined(ARA_WIN32_VER)

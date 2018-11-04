@@ -878,7 +878,7 @@ namespace ara {
 		inline bool	truncat(uint64_t n) {
 			return truncat_imp(n);
 		}
-		inline off_t	seek(off_t n, std::ios::seek_dir from) {
+		inline off_t	seek(off_t n, std::ios::seekdir from) {
 			return seek_imp(n, from);
 		}
 		inline off_t	tell() {

@@ -172,8 +172,8 @@ namespace ara {
 		int	&	get_int_modify() { check_type(TYPE_INT); return i_; }
 		int64_t		get_int64() const { check_type(TYPE_INT64); return i64_.get(); }
 		int64_t	&	get_int64_modify() { check_type(TYPE_INT64); return i64_.get(); }
-		double_t		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
-		double_t	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
+		double		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
+		double	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
 		ref_string	get_string() const {
 			check_type(TYPE_STRING);
 			if (type_ & TYPE_CONST)
@@ -247,7 +247,7 @@ namespace ara {
 			if (it == get_dict().end())
 				return  nDefault;
 			else
-				return it->second.to<T>();
+				return it->second.template to<T>();
 		}
 
 		var_dict	&	to_dict() { 
