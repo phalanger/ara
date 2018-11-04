@@ -92,6 +92,19 @@ namespace ara {
 			return trim_right_inplace(chSet);
 		}
 
+		string_ext &		to_lower(size_t off = 0, size_t len = typeStrTraits::npos) {
+			auto p = typeStrTraits::data(str_) + off;
+			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
+			*p = std::tolower(*p);
+			return *this;
+		}
+		string_ext &		to_upper(size_t off = 0, size_t len = typeStrTraits::npos) {
+			auto p = typeStrTraits::data(str_) + off;
+			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
+			*p = std::toupper(*p);
+			return *this;
+		}
+
 		template<typename T, int base = 10>
 		T	to_int(size_t off = 0) const {
 			T t = 0;
