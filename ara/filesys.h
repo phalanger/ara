@@ -40,6 +40,7 @@
 #include "internal/raw_file.h"
 
 #include <string>
+#include <vector>
 
 #if defined(ARA_WIN32_VER)
 	#include <windows.h>
@@ -851,6 +852,10 @@ namespace ara {
 
 		raw_file() noexcept {}
 		~raw_file() {
+			internal::raw_file_imp::close_imp();
+		}
+
+		void	close() {
 			internal::raw_file_imp::close_imp();
 		}
 
