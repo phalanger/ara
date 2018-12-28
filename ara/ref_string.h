@@ -323,6 +323,20 @@ namespace ara {
 		return o;
 	}
 
+	template<typename Ch, typename chTraits, typename chTraits2>
+	std::basic_string<Ch, chTraits> operator+(const std::basic_string<Ch, chTraits> & s, const ref_string_base<Ch, chTraits2> & s2)
+	{
+		std::basic_string<Ch, chTraits>  s3 = s;
+		s3.append(s2.data(), s2.size());
+		return s3;
+	}
+
+	template<typename Ch, typename chTraits, typename chTraits2>
+	std::basic_string<Ch, chTraits> & operator+=(std::basic_string<Ch, chTraits> & s, const ref_string_base<Ch, chTraits2> & s2)
+	{
+		return s.append(s2.data(), s2.size());
+	}
+
 	typedef ref_string_base<char, std::char_traits<char> >			ref_string;
 	typedef ref_string_base<char16_t, std::char_traits<char16_t> >	ref_u16string;
 	typedef ref_string_base<char32_t, std::char_traits<char32_t> >	ref_u32string;

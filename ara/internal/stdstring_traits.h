@@ -33,6 +33,9 @@ namespace ara {
 		static inline const value_type * data(const base_type & s) {
 			return s.data();
 		}
+		static inline value_type * data_force_to_modify(const base_type & s) {
+			return const_cast<value_type *>(s.data());
+		}
 		static inline size_type size(const base_type & s) {
 			return s.size();
 		}

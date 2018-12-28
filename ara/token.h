@@ -122,6 +122,7 @@ namespace ara {
 	};
 
 	typedef token_base<std::string>		token_string;
+	typedef token_base<ref_string>		token_ref_string;
 }
 
 

@@ -303,6 +303,12 @@ namespace ara {
 			return *this;
 		}
 
+		var & operator=(const var & v) {
+			var tmp(v);
+			swap(tmp);
+			return *this;
+		}
+
 		template<typename T>
 		var & operator()(const key_string & key, const T & v) {
 			var tmp(v);

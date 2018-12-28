@@ -91,6 +91,9 @@ namespace ara {
 			return ((flags_num_ & nFlag) == nFlag) || check_one(std::forward<args>(nOthers)...);
 		}
 
+		valueType & get(void) {
+			return flags_num_;
+		}
 
 		const valueType & get(void) const {
 			return flags_num_;

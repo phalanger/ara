@@ -92,16 +92,34 @@ namespace ara {
 			return trim_right_inplace(chSet);
 		}
 
+		typeStr		remove_all_chars(const typeRefStr & chSet) const {
+			typeOrgStr res;
+			typeStrTraits::reserve(res, typeStrTraits::size(str_));
+			auto begin = typeStrTraits::begin(str_);
+			auto end = typeStrTraits::end(str_);
+			for (; begin != end; ++begin)
+				if (chSet.find(*begin) == typeRefStr::npos)
+					res += *begin;
+			return res;
+		}
+
+		string_ext &	remove_all_chars_inplace(const typeRefStr & chSet) {
+			auto end = std::remove_if(typeStrTraits::begin(str_), typeStrTraits::end(str_), [&chSet](value_type ch) -> bool const { return chSet.find(ch) != typeRefStr::npos; });
+			typeStrTraits::resize(str_, end - typeStrTraits::begin(str_));
+		}
+
 		string_ext &		to_lower(size_t off = 0, size_t len = typeStrTraits::npos) {
-			auto p = typeStrTraits::data(str_) + off;
+			auto p = typeStrTraits::data_force_to_modify(str_) + off;
 			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
-			*p = std::tolower(*p);
+			for (; p!= end; ++p)
+				*p = std::tolower(*p);
 			return *this;
 		}
 		string_ext &		to_upper(size_t off = 0, size_t len = typeStrTraits::npos) {
-			auto p = typeStrTraits::data(str_) + off;
+			auto p = typeStrTraits::data_force_to_modify(str_) + off;
 			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
-			*p = std::toupper(*p);
+			for (; p != end; ++p)
+				*p = std::toupper(*p);
 			return *this;
 		}
 
@@ -174,6 +192,28 @@ namespace ara {
 		string_ext & clear() {
 			typeStrTraits::clear(str_);
 			return *this;
+		}
+
+		template<class T>
+		bool	check_prefix(const T * p, typename std::enable_if<is_char<T>::value>::type * p2 = 0) {
+			ref_string_base<T>	tmp(p);
+			return typeStrTraits::find(str_, tmp.data(), tmp.size(), 0) == 0;
+		}
+		template<class T>
+		bool	check_prefix(const T & t, typename std::enable_if<is_string<T>::value>::type * p = 0) {
+			using typeStrTraits2 = string_traits<T>;
+			return typeStrTraits::find(str_, typeStrTraits2::data(t), typeStrTraits2::size(t), 0) == 0;
+		}
+
+		template<class T>
+		bool	check_postfix(const T * p, typename std::enable_if<is_char<T>::value>::type * p2 = 0) {
+			ref_string_base<T>	tmp(p);
+			return typeStrTraits::rfind(str_, tmp.data(), tmp.size(), 0) == static_cast<size_t>(typeStrTraits::size(str_) - tmp.size());
+		}
+		template<class T>
+		bool	check_postfix(const T & t, typename std::enable_if<is_string<T>::value>::type * p = 0) {
+			using typeStrTraits2 = string_traits<T>;
+			return typeStrTraits::rfind(str_, typeStrTraits2::data(t), typeStrTraits2::size(t), 0) == static_cast<size_t>(typeStrTraits::size(str_) - typeStrTraits2::size(t));
 		}
 
 		template<typename T, int base = 10, bool boLowCase = false>
@@ -301,7 +341,7 @@ namespace ara {
 		return n;
 	}
 
-	template<class typeStr>
+	template<class typeStr = std::string>
 	class nocase_string_compare : public std::binary_function<typeStr, typeStr, bool>
 	{
 	public:
@@ -312,6 +352,11 @@ namespace ara {
 		};
 
 		bool operator()(const typeStr & s1, const typeStr & s2) const {
+			return compare(s1, s2) < 0;
+		}
+
+		static int	compare(const typeStr & s1, const typeStr & s2)
+		{
 			auto first1 = s1.begin();
 			auto last1 = s1.end();
 			auto first2 = s2.begin();
@@ -320,10 +365,17 @@ namespace ara {
 			for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2) {
 				auto c1 = std::tolower(*first1);
 				auto c2 = std::tolower(*first2);
-				if (c1 < c2) return true;
-				else if (c2 < c1) return false;
+				if (c1 < c2) return -1;
+				else if (c2 < c1) return 1;
 			}
-			return (first1 == last1) && (first2 != last2);
+			if (first1 == last1)
+			{
+				if (first2 != last2)
+					return -1;
+				else
+					return 0;
+			}
+			return 1;
 		}
 	};
 

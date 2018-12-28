@@ -193,5 +193,13 @@ TEST_CASE("stringext", "[base]") {
 		std::map<std::string, int, ara::nocase_string_compare<std::string>>	mapData;
 		mapData["AA"] = 1;
 		REQUIRE(mapData["aa"] == 1);
+
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello", "heLLO") == 0);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello1", "heLLO") == 1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello", "heLLO1") == -1);
+
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hella", "heLLO") == -1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hellp", "heLLO") == 1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hella", "heLLP") == -1);
 	}
 }
