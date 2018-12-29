@@ -106,6 +106,7 @@ namespace ara {
 		string_ext &	remove_all_chars_inplace(const typeRefStr & chSet) {
 			auto end = std::remove_if(typeStrTraits::begin(str_), typeStrTraits::end(str_), [&chSet](value_type ch) -> bool const { return chSet.find(ch) != typeRefStr::npos; });
 			typeStrTraits::resize(str_, end - typeStrTraits::begin(str_));
+			return *this;
 		}
 
 		string_ext &		to_lower(size_t off = 0, size_t len = typeStrTraits::npos) {

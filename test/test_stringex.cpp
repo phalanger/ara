@@ -49,6 +49,18 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(re1 == "hello world");
 	}
 
+	SECTION("remove_chars") {
+
+		const std::string str1 = "\rhello world\n\t ";
+
+		std::string re1 = str1;
+		ara::strext(re1).remove_all_chars_inplace(" \t\r\n");
+		REQUIRE(re1 == "helloworld");
+
+		re1 = ara::strext(str1).remove_all_chars(" \t\r\n");
+		REQUIRE(re1 == "helloworld");
+	}
+
 	SECTION("to int") {
 		const std::string str1 = "";
 		REQUIRE(ara::strext(str1).to_int<int>() == int(0));
