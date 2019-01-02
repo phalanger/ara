@@ -56,6 +56,10 @@ namespace ara {
 			return s.capacity();
 		}
 
+		static inline int compare(const base_type & s, size_type pos1, size_type count1, const value_type * s2, size_type count2) {
+			return s.compare(pos1, count1, s2, count2);
+		}
+
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {
 			return s.find(ch, off);
 		}

@@ -43,6 +43,29 @@ namespace ara {
 		ref_string_base(const typeStr & s, size_t off, size_t nCount = static_cast<size_t>(-1)) :
 			ptr_data_(string_traits<typeStr>::data(s) + off), ptr_end_(ptr_data_ + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
 
+		int	compare(size_type pos1, size_type count1, const value_type * s2, size_type count2) const {
+
+			size_t nMaxSize = size();
+			if (pos1 > nMaxSize)
+				pos1 = nMaxSize;
+			if (count1 == npos || pos1 + count1 >= nMaxSize)
+				count1 = nMaxSize - pos1;
+			if (count2 == static_cast<size_t>(-1))
+				count2 = chTraits::length(s2);
+
+			size_t nS1 = count1;
+			size_t nS2 = count2;
+			size_t nCmpSize = nS1 > nS2 ? nS2 : nS1;
+			int n = chTraits::compare(ptr_data_ + pos1, s2, nCmpSize);
+			if (n != 0)
+				return n;
+			if (nS1 > nS2)
+				return 1;
+			else if (nS1 < nS2)
+				return -1;
+			return 0;
+		}
+
 		int	compare(const ref_string_base & s) const {
 			size_t nS1 = size();
 			size_t nS2 = s.size();

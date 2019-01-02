@@ -198,23 +198,23 @@ namespace ara {
 		template<class T>
 		bool	check_prefix(const T * p, typename std::enable_if<is_char<T>::value>::type * p2 = 0) {
 			ref_string_base<T>	tmp(p);
-			return typeStrTraits::find(str_, tmp.data(), tmp.size(), 0) == 0;
+			return typeStrTraits::size(str_) >= tmp.size() && typeStrTraits::compare(str_, 0, tmp.size(), tmp.data(), tmp.size()) == 0;
 		}
 		template<class T>
 		bool	check_prefix(const T & t, typename std::enable_if<is_string<T>::value>::type * p = 0) {
 			using typeStrTraits2 = string_traits<T>;
-			return typeStrTraits::find(str_, typeStrTraits2::data(t), typeStrTraits2::size(t), 0) == 0;
+			return typeStrTraits::size(str_) >= typeStrTraits2::size(t) && typeStrTraits::compare(str_, 0, typeStrTraits2::size(t), typeStrTraits2::data(t), typeStrTraits2::size(t)) == 0;
 		}
 
 		template<class T>
 		bool	check_postfix(const T * p, typename std::enable_if<is_char<T>::value>::type * p2 = 0) {
 			ref_string_base<T>	tmp(p);
-			return typeStrTraits::rfind(str_, tmp.data(), tmp.size(), 0) == static_cast<size_t>(typeStrTraits::size(str_) - tmp.size());
+			return typeStrTraits::size(str_) >= tmp.length() && typeStrTraits::compare(str_, typeStrTraits::size(str_) - tmp.length(), tmp.length(), tmp.data(), tmp.size()) == 0;
 		}
 		template<class T>
 		bool	check_postfix(const T & t, typename std::enable_if<is_string<T>::value>::type * p = 0) {
 			using typeStrTraits2 = string_traits<T>;
-			return typeStrTraits::rfind(str_, typeStrTraits2::data(t), typeStrTraits2::size(t), 0) == static_cast<size_t>(typeStrTraits::size(str_) - typeStrTraits2::size(t));
+			return typeStrTraits::size(str_) >= typeStrTraits2::size(t) && typeStrTraits::compare(str_, typeStrTraits::size(str_) - typeStrTraits2::size(t), typeStrTraits2::size(t), typeStrTraits2::data(t), typeStrTraits2::size(t)) == 0;
 		}
 
 		template<typename T, int base = 10, bool boLowCase = false>

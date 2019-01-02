@@ -214,4 +214,39 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hellp", "heLLO") == 1);
 		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hella", "heLLP") == -1);
 	}
+
+	SECTION("check_prefix") {
+
+		std::string str1 = "hello.eml";
+		REQUIRE(ara::strext(str1).check_prefix("hel"));
+		REQUIRE_FALSE(ara::strext(str1).check_prefix("he1"));
+		str1 = "he";
+		REQUIRE_FALSE(ara::strext(str1).check_prefix("hel"));
+
+		str1 = "hello.eml";
+		ara::ref_string str2(str1);
+		REQUIRE(ara::strext(str2).check_prefix("hel"));
+		REQUIRE_FALSE(ara::strext(str2).check_prefix("he1"));
+		str1 = "he";
+		str2 = ara::ref_string(str1);
+		REQUIRE_FALSE(ara::strext(str2).check_prefix("hel"));
+
+	}
+
+	SECTION("check_postfix") {
+
+		std::string str1 = "hello.eml";
+		REQUIRE(ara::strext(str1).check_postfix(".eml"));
+		REQUIRE_FALSE(ara::strext(str1).check_postfix(".em1"));
+		str1 = "eml";
+		REQUIRE_FALSE(ara::strext(str1).check_postfix(".eml"));
+
+		str1 = "hello.eml";
+		ara::ref_string str2(str1);
+		REQUIRE(ara::strext(str2).check_postfix(".eml"));
+		REQUIRE_FALSE(ara::strext(str2).check_postfix(".em1"));
+		str1 = "eml";
+		str2 = ara::ref_string(str1);
+		REQUIRE_FALSE(ara::strext(str2).check_postfix(".eml"));
+	}
 }
