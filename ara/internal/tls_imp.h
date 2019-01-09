@@ -58,7 +58,8 @@ namespace ara {
 		class tls_holder {
 		public:
 			static void at_main_exit() {
-				delete get();
+				//delete get();
+				destroy();
 			}
 
 			static void		make_key() {

@@ -146,7 +146,21 @@ namespace ara {
 			string_traits<typeStr>::append(res, 1, detect_path_slash(sPath));
 			return res;
 		}
+		
+		template<class typeStr>
+		static	typeStr		to_file(const typeStr & sPath) {
 
+			size_t nSize = string_traits<typeStr>::size(sPath);
+			if (nSize == 0)
+				return	sPath;
+
+			int ch = static_cast<int>(*(string_traits<typeStr>::data(sPath) + nSize - 1));
+			if (!isPathSlashChar(ch))
+				return sPath;
+
+			return string_traits<typeStr>::substr(sPath, 0, nSize - 1);
+		}
+		
 		template<class typeStr, class typeStr2>
 		static	typeStr		join_to_path(const typeStr & sPath, const typeStr2 & sSub) {
 			return to_path(join_to_file(sPath, sSub));
@@ -398,18 +412,21 @@ namespace ara {
 		}
 
 		static bool	create_path(const std::string & s, int mod = 0755) {
-			if ( path_exist(s) )
+			std::string realPath = to_file(s);
+			if ( realPath.empty() )
+				return false;
+			else if ( path_exist(realPath) )
 				return true;
 
 			std::string	parent, subpath;
-			split_path(s, parent, subpath);
+			split_path(realPath, parent, subpath);
 			if (!path_exist(parent) && !create_path(parent, mod))
 				return false;
 
 #ifdef ARA_WIN32_VER
-			return ::CreateDirectoryA(s.c_str(), NULL) == TRUE;
+			return ::CreateDirectoryA(realPath.c_str(), NULL) == TRUE;
 #else
-			return ::mkdir(s.c_str(), mod);
+			return ::mkdir(realPath.c_str(), mod) == 0;
 #endif
 		}
 
@@ -514,7 +531,7 @@ namespace ara {
 #ifdef ARA_WIN32_VER
 			return (::GetFileAttributesA(strFile.c_str()) != INVALID_FILE_ATTRIBUTES);
 #else
-			return (access(strFile.c_str(), F_OK) == 0);
+			return (access(to_file(strFile).c_str(), F_OK) == 0);
 #endif
 		}
 		static bool path_exist(const std::wstring & strFile) {
@@ -780,12 +797,26 @@ namespace ara {
 			return false;
 		}
 		bool	fetch() {
+#ifdef ARA_LINUX_VER
+			struct dirent * dp = ::readdir(dir_);
+			if (dp == nullptr) {
+				::closedir(dir_);
+				dir_ = nullptr;
+				return false;
+			}
+			else
+			{
+				memcpy(entry_, dp, sizeof(struct dirent));
+				strcpy(entry_->d_name, dp->d_name);
+			}
+#else
 			struct dirent * dp;
 			if (::readdir_r(dir_, entry_, &dp) != 0 || dp == nullptr) {
 				::closedir(dir_);
 				dir_ = nullptr;
 				return false;
 			}
+#endif
 			return true;
 		}
 		dir_iterator(const dir_iterator &) = delete;
