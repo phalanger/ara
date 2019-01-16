@@ -258,14 +258,14 @@ namespace ara {
 			}
 
 			template<class ch, typename...TypeList>
-			inline log_stream &	printf(const ch * s, const TypeList&... t2) {
-				formator_.printf(s, t2...);
+			inline log_stream &	printf(const ch * s, TypeList&&... t2) {
+				formator_.printf(s, std::forward<TypeList>(t2)...);
 				return *this;
 			}
 
 			template<class ch, typename...TypeList>
-			inline log_stream &	printfln(const ch * s, const TypeList&... t2) {
-				formator_.printf(s, t2...);
+			inline log_stream &	printfln(const ch * s, TypeList&&... t2) {
+				formator_.printf(s, std::forward<TypeList>(t2)...);
 				*this << std::endl;
 				return *this;
 			}
@@ -330,4 +330,3 @@ namespace ara {
 }
 
 #endif//ARA_LOG_IMP_H_201603
-

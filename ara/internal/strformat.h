@@ -147,7 +147,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T2>(t);
+				stream_ << t;
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -182,7 +182,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T2>(t);
+				stream_ << t;
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -203,7 +203,7 @@ namespace ara {
 				else if (base == 16) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE16), std::ios::basefield);
 				}
-				stream_ << static_cast<T2>(t);
+				stream_ << t;
 				stream_.flags(nFlags);
 			}
 
@@ -390,7 +390,7 @@ namespace ara {
 					out.width(nWidth);
 				out.fill(chFill);
 
-				out << static_cast<T2>(t);
+				out << t;
 			}
 
 			template<typename typeDouble>

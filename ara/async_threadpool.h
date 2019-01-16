@@ -7,6 +7,7 @@
 
 #include "threadext.h"
 #include "stringext.h"
+#include "log.h"
 
 #include <memory>
 #include <future>
@@ -38,6 +39,8 @@ namespace ara {
 			return name_;
 		}
 
+		void	do_log(bool bo) { do_log_ = bo; }
+
 		void	start() {
 			if (workder_)
 				stop();
@@ -52,13 +55,18 @@ namespace ara {
 				std::unique_ptr<boost::thread>	task(new boost::thread(attrs, [this, i]() {
 
 					defer		_au([]() {thread_context::destroy_context(); });
+
+					thread_logger			logger( (std::string("ThreadPool.") + name_).c_str() );
+
+					std::string		strInfo = ara::printf<std::string>("Pool[%v] ID:%d Index:%d", name_, boost::this_thread::get_id(), i);
+					BEGIN_CALL(strInfo.c_str());
+					if (do_log_)
+						LOG_INFO(THREAD_LOGGER).printfln("Pool[%v] ID:%d Index:%d begin to work", name_, boost::this_thread::get_id(), i);
+
 					while (!io_.stopped())
 					{
 						try
 						{
-							std::string		strInfo = ara::printf<std::string>("Pool[%v] ID:%d Index:%d", name_, boost::this_thread::get_id(), i);
-							BEGIN_CALL(strInfo.c_str());
-
 							io_.run();
 						}
 						catch (...)
@@ -68,6 +76,8 @@ namespace ara {
 						}
 					}
 
+					if (do_log_)
+						LOG_INFO(THREAD_LOGGER).printfln("Pool[%v] ID:%d Index:%d work end", name_, boost::this_thread::get_id(), i);
 				}));
 				threads_.add_thread(task.get());
 				task.release();
@@ -153,6 +163,7 @@ namespace ara {
 		std::shared_ptr<boost::asio::io_service::work>		workder_;
 		boost::asio::io_service		io_;
 		std::function<void(std::exception_ptr)>	func_exception_;
+		bool						do_log_ = false;
 	};
 
 }
