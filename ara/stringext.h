@@ -380,6 +380,14 @@ namespace ara {
 		}
 	};
 
+	template<typename Ch>
+	inline bool isspace(Ch ch) {
+#ifdef ARA_WIN32_VER
+		return (ch >= 0 && ch <= 128) && std::isspace(ch);
+#else
+		return std::isspace(ch);
+#endif
+	}
 }
 
 #endif // !ARA_STRINGEXT_H

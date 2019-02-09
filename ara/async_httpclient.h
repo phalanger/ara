@@ -491,7 +491,7 @@ namespace ara {
 					std::string sVal;
 					if (sheader.empty())
 						continue;
-					else if (std::isspace(sheader[0])) {
+					else if (ara::isspace(sheader[0])) {
 						std::string & val = h[sKey];
 						val += "\r\n";
 						val += sheader;

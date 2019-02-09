@@ -564,7 +564,7 @@ namespace ara {
 			if (fmt < pEnd)
 			{
 				const char_type ch = *fmt;
-				if (ch && !std::isspace(ch))
+				if (ch && !ara::isspace(ch))
 					++fmt;
 
 				if (ch == 'f') {
@@ -629,7 +629,7 @@ namespace ara {
 			if (fmt < pEnd)
 			{
 				const char_type ch = *fmt;
-				if (ch && !std::isspace(ch))
+				if (ch && !ara::isspace(ch))
 					++fmt;
 				out_.append(t1, nWidth, chFill, nAdjust);
 			}
