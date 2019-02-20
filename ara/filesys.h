@@ -512,6 +512,21 @@ namespace ara {
 #endif
 		}
 
+		static bool	rename(const std::string & strSrc, const std::string & strTar) {
+#ifdef ARA_WIN32_VER
+			return ::MoveFileA(strSrc.c_str(), strTar.c_str()) == TRUE;
+#else
+			return ::rename(strSrc.c_str(), strTar.c_str()) == 0;
+#endif
+		}
+		static bool	rename(const std::wstring & strSrc, const std::wstring & strTar) {
+#ifdef ARA_WIN32_VER
+			return ::MoveFileW(strSrc.c_str(), strTar.c_str()) == TRUE;
+#else
+			return ::rename(strext(strSrc).to<std::string>().c_str(), strext(strTar).to<std::string>().c_str()) == 0;
+#endif
+		}
+
 		static bool	remove_path(const std::string & strFile) {
 #ifdef ARA_WIN32_VER
 			return ::RemoveDirectoryA(strFile.c_str()) == TRUE;
