@@ -132,7 +132,9 @@ namespace ara {
 			auto p = typeStrTraits::data(str_) + off;
 			auto end = typeStrTraits::data(str_) + typeStrTraits::size(str_);
 			bool boNegative = false;
-			if (p != end && *p == '-') {
+			if (p != end && *p == '+')
+				++p;
+			else if (p != end && *p == '-') {
 				boNegative = true;
 				++p;
 			}
