@@ -28,7 +28,7 @@ TEST_CASE("test variant", "[base]") {
 		ara::var a = 123;
 		REQUIRE(a.is_int());
 		REQUIRE(a.get_int() == 123);
-		REQUIRE_THROWS_WITH(a.get_int64(), "type is INT not INT64");
+		REQUIRE(a.get_int64() == 123);
 		a.get_int_modify() = -456;
 		REQUIRE(a.get_int() == -456);
 		REQUIRE(a.get<int>() == -456);
@@ -46,7 +46,7 @@ TEST_CASE("test variant", "[base]") {
 	{
 		ara::var a = int64_t(100000);
 		REQUIRE(a.is_int64());
-		REQUIRE_THROWS_WITH(a.get_int(), "type is INT64 not INT");
+		REQUIRE(a.get_int() == 100000);
 		a.get_int64_modify() = -4560000;
 		REQUIRE(a.get_int64() == -4560000);
 		REQUIRE(a.get<int64_t>() == -4560000);
