@@ -449,7 +449,7 @@ namespace ara {
 
 
 		template<class typeStr>
-		static typeStr		fix_path(const typeStr & path) {
+		static typeStr		fix_path(const typeStr & path, char chSplitor = 0) {
 			std::vector<typeStr>	vecItems;
 			typeStr		res;
 			bool needPrefix = false;
@@ -482,7 +482,7 @@ namespace ara {
 				else
 					vecItems.push_back(it);
 			}
-			char ch = detect_path_slash(path);
+			char ch = (chSplitor == 0) ? detect_path_slash(path) : chSplitor;
 			for (auto & it2 : vecItems) {
 				if (!string_traits<typeStr>::empty(res)) {
 					string_traits<typeStr>::append(res, ch);
@@ -925,6 +925,9 @@ namespace ara {
 		}
 		inline int		write(const void * buf, size_t n) {
 			return write_imp(buf, n);
+		}
+		inline int		write(const std::string & str) {
+			return write_imp(str.data(), str.size());
 		}
 		inline bool	truncat(uint64_t n) {
 			return truncat_imp(n);

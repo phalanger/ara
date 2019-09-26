@@ -94,7 +94,8 @@ namespace ara {
 				if (::lstat(file.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
 				{
 					::unlink(file.c_str());
-					(void)::symlink( strext(strFileName).to<std::string>().c_str(), file.c_str());
+					int r = ::symlink( strext(strFileName).to<std::string>().c_str(), file.c_str());
+					ARA_UNUSED(r);
 				}
 #endif
 			}

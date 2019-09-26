@@ -103,4 +103,6 @@
 	#define ARA_FUNC_NAME		__func__
 #endif
 
+#define ARA_UNUSED(x)  (void)x
+
 #endif // ARA_DEF_H

@@ -15,6 +15,7 @@
 #include "internal/singleton_mgr.h"
 
 #include <mutex>
+#include <functional>
 #include <atomic>
 
 namespace ara {
@@ -56,6 +57,14 @@ namespace ara {
 	T * singleton<T, tag>::instance_ = nullptr;
 	template<class T, class tag>
 	std::once_flag singleton<T, tag>::init_flag;
+
+	class run_at_exit
+	{
+	public:
+		static	void	add(std::function<void()> && func) {
+			internal::singleton_mgr<void>::get().add_to_delete_list(new internal::auto_destroy_func(std::move(func)));
+		}
+	};
 }
 
 #endif//ARA_SINGLETON_H

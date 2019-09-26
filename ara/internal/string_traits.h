@@ -6,6 +6,16 @@
 #include "stdstring_traits.h"
 
 namespace ara {
+
+	template<typename Ch>
+	inline bool isspace(Ch ch) {
+#ifdef ARA_WIN32_VER
+		return (ch >= 0 && ch <= 128) && std::isspace(ch);
+#else
+		return std::isspace(ch);
+#endif
+	}
+
 	template<class Ch, int base>
 	struct is_valid_number_char {
 		static bool yes(Ch ch) {

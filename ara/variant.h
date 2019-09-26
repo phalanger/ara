@@ -168,9 +168,9 @@ namespace ara {
 
 		bool	get_bool() const { check_type(TYPE_BOOL); return b_; }
 		bool &	get_bool_modify() { check_type(TYPE_BOOL); return b_; }
-		int		get_int() const { check_type(TYPE_INT); return i_; }
+		int		get_int() const { if (get_type() == TYPE_INT64) return static_cast<int>(i64_.get());  check_type(TYPE_INT); return i_; }
 		int	&	get_int_modify() { check_type(TYPE_INT); return i_; }
-		int64_t		get_int64() const { check_type(TYPE_INT64); return i64_.get(); }
+		int64_t		get_int64() const { if (get_type() == TYPE_INT) return i_; check_type(TYPE_INT64); return i64_.get(); }
 		int64_t	&	get_int64_modify() { check_type(TYPE_INT64); return i64_.get(); }
 		double		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
 		double	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
@@ -278,7 +278,7 @@ namespace ara {
 			return (*array_)[index];
 		}
 		const var &	operator[](const key_string & key) const {
-			check_type(TYPE_ARRAY);
+			check_type(TYPE_DICT);
 			auto it = dict_->find(key);
 			if (it == dict_->end())
 				return static_empty<var>::val;

@@ -58,26 +58,30 @@ namespace ara {
 
 		typeStr		trim_left(const typeRefStr & chSet) const {
 			typename typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
-			if (p != typeStrTraits::npos)
-				return typeStrTraits::substr(str_, p, typeStrTraits::npos);
-			return str_;
+			if (p == typeStrTraits::npos)
+				return typeStr();
+			return typeStrTraits::substr(str_, p, typeStrTraits::npos);
 		}
 		string_ext &		trim_left_inplace(const typeRefStr & chSet) {
 			typename typeStrTraits::size_type p = typeStrTraits::find_first_not_of(str_, chSet.data(), chSet.size(), 0);
 			if (p != typeStrTraits::npos)
 				str_ = typeStrTraits::substr(str_, p, typeStrTraits::npos);
+			else
+				typeStrTraits::clear(str_);			
 			return *this;
 		}
 		typeStr		trim_right(const typeRefStr & chSet) const {
 			typename typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
-			if (p != typeStrTraits::npos)
-				return typeStrTraits::substr(str_, 0, p + 1);
-			return str_;
+			if (p == typeStrTraits::npos)
+				return typeStr();
+			return typeStrTraits::substr(str_, 0, p + 1);
 		}
 		string_ext &		trim_right_inplace(const typeRefStr & chSet) {
 			typename typeStrTraits::size_type p = typeStrTraits::find_last_not_of(str_, chSet.data(), chSet.size(), typeStrTraits::npos);
 			if (p != typeStrTraits::npos)
 				str_ = typeStrTraits::substr(str_, 0, p + 1);
+			else
+				typeStrTraits::clear(str_);			
 			return *this;
 		}
 
@@ -381,15 +385,6 @@ namespace ara {
 			return 1;
 		}
 	};
-
-	template<typename Ch>
-	inline bool isspace(Ch ch) {
-#ifdef ARA_WIN32_VER
-		return (ch >= 0 && ch <= 128) && std::isspace(ch);
-#else
-		return std::isspace(ch);
-#endif
-	}
 }
 
 #endif // !ARA_STRINGEXT_H

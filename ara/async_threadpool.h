@@ -41,9 +41,15 @@ namespace ara {
 
 		void	do_log(bool bo) { do_log_ = bo; }
 
+		bool running() const {
+			if (workder_)
+				return true;
+			return false;
+		}
+
 		void	start() {
 			if (workder_)
-				stop();
+				return;
 
 			workder_.reset(new boost::asio::io_service::work(io_));
 			boost::thread::attributes attrs;

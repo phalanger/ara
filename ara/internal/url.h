@@ -169,9 +169,11 @@ namespace ara {
 				OutputIterator out = out_begin;
 				while (it != in_end) {
 					if (*it == '%') {
-						++it;
+						if (++it == in_end)
+							break;
 						auto v0 = ara::internal::url::letter_to_hex(*it);
-						++it;
+						if (++it == in_end)
+							break;
 						auto v1 = ara::internal::url::letter_to_hex(*it);
 						++it;
 						*out++ = 0x10 * v0 + v1;

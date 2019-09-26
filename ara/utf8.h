@@ -120,7 +120,8 @@ namespace ara {
 						}
 						break;
 					}
-					++it;
+					if (it != end)
+						++it;
 					return cp;
 				}
 				template <typename octet_iterator>
