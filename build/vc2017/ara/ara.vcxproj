@@ -23,6 +23,7 @@
     <ClInclude Include="..\..\..\ara\async_httpclient.h" />
     <ClInclude Include="..\..\..\ara\async_httpserver.h" />
     <ClInclude Include="..\..\..\ara\async_queue.h" />
+    <ClInclude Include="..\..\..\ara\async_respool.h" />
     <ClInclude Include="..\..\..\ara\async_rwqueue.h" />
     <ClInclude Include="..\..\..\ara\async_session.h" />
     <ClInclude Include="..\..\..\ara\async_threadpool.h" />
