@@ -101,6 +101,8 @@ namespace ara {
 				void			_clear() {
 					temp_data_.clear();
 					body_size_ = recv_size_ = 0;
+					code_ = 0;
+					response_.consume(response_.size());
 				}
 			private:
 				client_request_ptr	req_;
@@ -146,9 +148,9 @@ namespace ara {
 			async_client &	set_options(const client_options & opt) {
 				options_ = opt;
 				if (opt.get_verify_peer())
-					socket_.set_verify_mode(boost::asio::ssl::verify_peer);
+					socket_ptr()->set_verify_mode(boost::asio::ssl::verify_peer);
 				else
-					socket_.set_verify_mode(boost::asio::ssl::verify_none);
+					socket_ptr()->set_verify_mode(boost::asio::ssl::verify_none);
 
 				return *this;
 			}
@@ -177,7 +179,7 @@ namespace ara {
 			}
 
 			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> & ssl_stream_socket() {
-				return socket_;
+				return *socket_ptr();
 			}
 		public:
 			void	_go(client_respond_ptr res) {
@@ -192,6 +194,7 @@ namespace ara {
 				}
 
 				auto self = shared_from_this();
+				reset_timeout();
 				timer_.async_wait(strand_.wrap([self, this, res](const boost::system::error_code & ec) {
 					if (ec.value() == boost::asio::error::operation_aborted)
 						return;
@@ -229,14 +232,18 @@ namespace ara {
 			}
 
 			async_client(boost::asio::io_service & io, boost::asio::ssl::context & ssl_context)
-				: resolver_(io), socket_(io, ssl_context), timer_(io), strand_(io) {
+				: resolver_(io), ssl_context_(ssl_context), timer_(io), strand_(io) {
 			}
 		protected:
 			void close_all() {
 				is_connect_ = false;
 				last_server_.clear();
 				boost::system::error_code ec;
-				socket_.lowest_layer().close(ec);
+				timer_.cancel(ec);
+				if (socket_) {
+					socket_->lowest_layer().close(ec);
+					socket_ = nullptr;
+				}
 			}
 
 			void reset_timeout()	{
@@ -252,17 +259,21 @@ namespace ara {
 					_go(res);
 				}
 				else {
+					close_all();
 					retry_count_ = 0;
 					handle_http_respond(err, res);
 				}
 			}
 
 			void handle_http_respond(const boost::system::error_code& err, client_respond_ptr res)	{
-				boost::system::error_code ec;
-				timer_.cancel(ec);
-				socket_.lowest_layer().close(ec);
+				if (keep_alive_used_count_ == 0)
+					close_all();
+				else
+				{
+					boost::system::error_code ec;
+					timer_.cancel(ec);
+				}
 				res->on_finished(err, shared_from_this());
-				is_connect_ = false;
 			}
 
 			void on_respond_finished(client_respond_ptr res) {
@@ -282,7 +293,8 @@ namespace ara {
 					return	on_net_fail(err, res);
 
 				auto self = shared_from_this();
-				boost::asio::async_connect(socket_.lowest_layer(), endpoint_iterator, strand_.wrap([self, this, res](const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator) {
+				auto pSocket = socket_ptr();
+				boost::asio::async_connect(pSocket->lowest_layer(), endpoint_iterator, strand_.wrap([self, this, pSocket, res](const boost::system::error_code& err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator) {
 					handle_connect(err, res);
 				}));
 			}
@@ -293,7 +305,8 @@ namespace ara {
 
 				if (res->_is_https()) {
 					auto self = shared_from_this();
-					socket_.async_handshake(boost::asio::ssl::stream_base::client, strand_.wrap([self, this, res](const boost::system::error_code& err) {
+					auto pSocket = socket_ptr();
+					pSocket->async_handshake(boost::asio::ssl::stream_base::client, strand_.wrap([pSocket, self, this, res](const boost::system::error_code& err) {
 						handle_handshake(err, res);
 					}));
 				}
@@ -310,14 +323,16 @@ namespace ara {
 				last_server_ = res->_req()->get_server();
 
 				if (res->_is_https())
-					send_request_header(socket_, res);
+					send_request_header(*socket_ptr(), res);
 				else
-					send_request_header(socket_.next_layer(), res);
+					send_request_header(socket_ptr()->next_layer(), res);
 			}
 
 			template<class typeSocket>
 			void	send_request_header(typeSocket & s, client_respond_ptr res) {
 				std::string & str = res->_temp_data();
+				str.clear();
+
 				auto req = res->_req();
 				strext(str).printf("%v %v HTTP/%v\r\nHost: %v\r\n"
 									, (req->get_method().empty() ? std::string("GET") : req->get_method())
@@ -331,12 +346,13 @@ namespace ara {
 
 				if (req->is_body_chunk_mode())
 					str += "Transfer-Encoding: chunked\r\n";
-				else if (!req->get_body().empty())
+				else if (!req->get_body().empty() && h.find("Content-Length") == h.end())
 					strext(str).printf("Content-Length: %v\r\n", req->get_body().size());
 				str += "\r\n";
 
 				auto self = shared_from_this();
-				boost::asio::async_write(s, boost::asio::buffer(str), strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t) {
+				auto pSocket = socket_ptr();
+				boost::asio::async_write(s, boost::asio::buffer(str), strand_.wrap([&s, self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 					if (err)
 						on_net_fail(err, res, true);
 					else
@@ -348,9 +364,10 @@ namespace ara {
 			void	send_request_body(typeSocket & s, client_respond_ptr res) 	{
 				res->_temp_data().clear();	//clear the header cache data
 				auto self = shared_from_this();
+				auto pSocket = socket_ptr();
 
 				if (!res->_req()->get_body().empty()) {
-					boost::asio::async_write(s, boost::asio::buffer(res->_req()->get_body()), strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+					boost::asio::async_write(s, boost::asio::buffer(res->_req()->get_body()), strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
 							on_net_fail(err, res, true);
 						else
@@ -379,11 +396,14 @@ namespace ara {
 				char * pData = pBegin + nPrefixSize;
 
 				size_t res_size = res->_req()->get_body(pData, nCacheSize);
-				size_t prefix_size = ara::snprintf(pBegin, nPrefixSize, "%x\r\n", res_size);
+				size_t prefix_size = ara::snprintf(pBegin, nPrefixSize, "%X\r\n", res_size);
 				auto self = shared_from_this();
+				auto pSocket = socket_ptr();
 
 				if (res_size == 0) {
-					boost::asio::async_write(s, boost::asio::buffer(pBegin, prefix_size), strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+					pBegin[prefix_size++] = '\r';
+					pBegin[prefix_size++] = '\n';
+					boost::asio::async_write(s, boost::asio::buffer(pBegin, prefix_size), strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
 							on_net_fail(err, res, true);
 						else
@@ -397,7 +417,7 @@ namespace ara {
 						boost::asio::buffer(pBegin, prefix_size),
 						boost::asio::buffer(pData, res_size)
 					};
-					boost::asio::async_write(s, bufs, strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t) {
+					boost::asio::async_write(s, bufs, strand_.wrap([&s, self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
 							on_net_fail(err, res, true);
 						else
@@ -420,7 +440,9 @@ namespace ara {
 						to_read_status_line(res);
 					} else {
 						auto self = shared_from_this();
-						boost::asio::async_write(s, boost::asio::buffer(pBegin, res_size), strand_.wrap([&s, self, this, res](const boost::system::error_code& err, size_t n) {
+						auto pSocket = socket_ptr();
+
+						boost::asio::async_write(s, boost::asio::buffer(pBegin, res_size), strand_.wrap([&s, self, pSocket, this, res](const boost::system::error_code& err, size_t n) {
 							if (err)
 								on_net_fail(err, res, true);
 							else {
@@ -436,19 +458,22 @@ namespace ara {
 
 				// Read the response status line.
 				auto self = shared_from_this();
-				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+				auto pSocket = socket_ptr();
+				auto func = strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 					handle_read_status_line(err, res);
 				});
 				res->_temp_data().clear();	//clear cache data
 				if (res->_is_https())
-					boost::asio::async_read_until(socket_, res->_streambuf(), "\r\n", std::move(func));
+					boost::asio::async_read_until(*pSocket, res->_streambuf(), "\r\n", std::move(func));
 				else
-					boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\r\n", std::move(func));
+					boost::asio::async_read_until(pSocket->next_layer(), res->_streambuf(), "\r\n", std::move(func));
 			}
 
 			void handle_read_status_line(const boost::system::error_code& err, client_respond_ptr res) {
 				if (err)
 					return	on_net_fail(err, res, true);
+				else
+					reset_timeout();
 
 				// Check that response is OK.
 				std::string		http_version, status_msg;
@@ -468,13 +493,14 @@ namespace ara {
 
 				// Read the response headers, which are terminated by a blank line.
 				auto self = shared_from_this();
-				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+				auto pSocket = socket_ptr();
+				auto func = strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 					handle_read_headers(err, res);
 				});
 				if (res->_is_https())
-					boost::asio::async_read_until(socket_, res->_streambuf(), "\r\n\r\n", std::move(func));
+					boost::asio::async_read_until(*pSocket, res->_streambuf(), "\r\n\r\n", std::move(func));
 				else
-					boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\r\n\r\n", std::move(func));
+					boost::asio::async_read_until(pSocket->next_layer(), res->_streambuf(), "\r\n\r\n", std::move(func));
 			}
 
 			void handle_read_headers(const boost::system::error_code& err, client_respond_ptr res) {
@@ -570,8 +596,11 @@ namespace ara {
 						on_respond_finished( res );
 					return;
 				}
+				else
+					reset_timeout();
 
 				auto self = shared_from_this();
+				auto pSocket = socket_ptr();
 				size_t nRestSize = res->_get_body_size() - res->_recv_size();
 				size_t nCopy = std::min<size_t>(res->_streambuf().size(), nRestSize);
 				res->on_body(boost::asio::buffer_cast<const char *>(res->_streambuf().data()), nCopy, self);
@@ -580,17 +609,16 @@ namespace ara {
 				if (nRestSize == 0)
 					return on_respond_finished(res);
 				
-				reset_timeout();
-				auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+				auto func = strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 					handle_read_content(err, res);
 				});
 
 				if (nRestSize > options_.get_cache_size())
 					nRestSize = options_.get_cache_size();
 				if (res->_is_https())
-					boost::asio::async_read(socket_, res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
+					boost::asio::async_read(*pSocket, res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
 				else
-					boost::asio::async_read(socket_.next_layer(), res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
+					boost::asio::async_read(pSocket->next_layer(), res->_streambuf(), boost::asio::transfer_at_least(nRestSize), std::move(func));
 			}
 
 			void handle_read_chunk_size(client_respond_ptr res)	{
@@ -601,16 +629,17 @@ namespace ara {
 
 				if (p == ref_string::npos)	{
 					auto self = shared_from_this();
-					auto func = strand_.wrap([self, this, res](const boost::system::error_code& err, size_t) {
+					auto pSocket = socket_ptr();
+					auto func = strand_.wrap([self, pSocket, this, res](const boost::system::error_code& err, size_t) {
 						if (err)
 							return on_net_fail(err, res);
 						else
 							handle_read_chunk_size(res);
 					});
 					if (res->_is_https())
-						boost::asio::async_read_until(socket_, res->_streambuf(), "\n", std::move(func));
+						boost::asio::async_read_until(*pSocket, res->_streambuf(), "\n", std::move(func));
 					else
-						boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\n", std::move(func));
+						boost::asio::async_read_until(pSocket->next_layer(), res->_streambuf(), "\n", std::move(func));
 					return;
 				} else {
 					std::istream response_stream(&res->_streambuf());
@@ -640,16 +669,17 @@ namespace ara {
 				else
 				{
 					auto self = shared_from_this();
-					auto func = strand_.wrap([self, this, res, boLastPackage, nChunkSize](const boost::system::error_code& err, size_t) {
+					auto pSocket = socket_ptr();
+					auto func = strand_.wrap([self, pSocket, this, res, boLastPackage, nChunkSize](const boost::system::error_code& err, size_t) {
 						if (err)
 							on_net_fail(err, res);
 						else
 							handle_read_chunk_data(boLastPackage, nChunkSize, res);
 					});
 					if (res->_is_https())
-						boost::asio::async_read(socket_, res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
+						boost::asio::async_read(*pSocket, res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
 					else
-						boost::asio::async_read(socket_.next_layer(), res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
+						boost::asio::async_read(pSocket->next_layer(), res->_streambuf(), boost::asio::transfer_at_least(1), std::move(func));
 				}
 			}
 
@@ -667,23 +697,30 @@ namespace ara {
 						return handle_read_chunk_size(res);
 				} else 	{
 					auto self = shared_from_this();
-					auto func = strand_.wrap([self, this, res, boLastPackage](const boost::system::error_code & e, size_t nSize) {
+					auto pSocket = socket_ptr();
+					auto func = strand_.wrap([self, pSocket, this, res, boLastPackage](const boost::system::error_code & e, size_t nSize) {
 						if (e)
 							on_net_fail(e, res);
 						else
 							handle_read_chunk_data_end(boLastPackage, res);
 					});
 					if (res->_is_https())
-						boost::asio::async_read_until(socket_, res->_streambuf(), "\n", std::move(func));
+						boost::asio::async_read_until(*pSocket, res->_streambuf(), "\n", std::move(func));
 					else
-						boost::asio::async_read_until(socket_.next_layer(), res->_streambuf(), "\n", std::move(func));
+						boost::asio::async_read_until(pSocket->next_layer(), res->_streambuf(), "\n", std::move(func));
 				}
 			}
 
+			std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket_ptr() {
+				if (socket_ == nullptr)
+					socket_ = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(resolver_.get_io_context(), ssl_context_);
+				return socket_;
+			}
 
 			client_options					options_;
 			boost::asio::ip::tcp::resolver	resolver_;
-			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
+			std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket_;
+			boost::asio::ssl::context	&	ssl_context_;
 			boost::asio::deadline_timer		timer_;
 			boost::asio::io_context::strand	strand_;
 			bool							is_connect_ = false;

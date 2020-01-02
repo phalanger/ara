@@ -12,6 +12,7 @@
 #include "internal/string_traits.h"
 #include <map>
 #include <functional>
+#include <algorithm>
 
 namespace ara {
 

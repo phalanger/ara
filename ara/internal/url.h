@@ -101,7 +101,7 @@ namespace ara {
 				case '-':
 				case '.':
 				case '_':
-				case '~':
+				case '*':
 					out++ = in;
 					break;
 				default:

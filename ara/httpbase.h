@@ -179,10 +179,12 @@ namespace ara {
 					header_["Content-Type"] = "x-application/octet-stream";
 
 				body_callback_size_ = nSize;
-				auto slen = strext(header_["Content-Length"]);
-				slen.clear();
 				if (nSize != std::string::npos)
+				{
+					auto slen = strext(header_["Content-Length"]);
+					slen.clear();
 					slen.append_int(nSize);
+				}
 				body_func_ = std::move(func);
 			}
 
@@ -204,7 +206,7 @@ namespace ara {
 				if (header_.find("Content-Type") == header_.end())
 					header_["Content-Type"] = "x-application/octet-stream";
 
-				strext(header_["Content-Length"]).clear().append_int(strBody.size());
+				strext(header_["Content-Length"]).clear().append_int(body_.size());
 			}
 
 			bool					is_https_ = false;

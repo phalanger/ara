@@ -174,6 +174,11 @@ TEST_CASE("stringext", "[base]") {
 		std::stringstream s2;
 		ara::printf(s2, "%d - %d = %d", 3, 2, 1);
 		REQUIRE(s2.str() == "3 - 2 = 1");
+
+		std::wstring strRes;
+		wchar_t ch = L'\\';
+		ara::strext(strRes).printf(L"%%%02x", static_cast<unsigned>(ch));
+		REQUIRE(strRes == L"%5c");
 	}
 
 	SECTION("ara::snprintf") {

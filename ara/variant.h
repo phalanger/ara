@@ -217,6 +217,58 @@ namespace ara {
 			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 
+		inline bool  get(bool bo) const {
+			if (is_bool())
+				return b_;
+			return bo;
+		}
+		inline int  get(int n) const {
+			if (is_int() || is_int64())
+				return get_int();
+			return n;
+		}
+		inline int64_t  get(int64_t n) const {
+			if (is_int() || is_int64())
+				return get_int64();
+			return n;
+		}
+		inline double  get(double n) const {
+			if (is_double())
+				return f_.get();
+			return n;
+		}
+		inline ref_string get(const ref_string & n) const {
+			if (is_string())
+				return get_string();
+			return n;
+		}
+		inline std::string get(const std::string & n) const {
+			if (is_ref_string())
+				return ref_str_->str();
+			else if (is_std_string())
+				return *str_;
+			return n;
+		}
+
+		const var &	find_path(const std::string & strPath, char splitor = '/') const {
+			std::string::size_type b = 0;
+			std::string::size_type p = 0;
+			const var * pVar = this;
+			while ((p = strPath.find(splitor, b)) != std::string::npos) {
+				if (!pVar->is_dict())
+					return static_empty<var>::val;
+				auto item = pVar->dict_->find(strPath.substr(b, p - b));
+				if (item == pVar->dict_->end())
+					return static_empty<var>::val;
+				pVar = &item->second;
+				b = p + 1;
+			}
+			auto item = pVar->dict_->find(strPath.substr(b));
+			if (item == pVar->dict_->end())
+				return static_empty<var>::val;
+			return item->second;
+		}
+
 		template<typename T, typename Convertor = internal::default_variant_convert>
 		T	to() const {
 			switch (get_type()) {
@@ -441,7 +493,8 @@ namespace ara {
 				return defaultVal;
 			else if (it->second.is_ref_string())
 				throw std::invalid_argument("type is REF_STRING not STRING");
-			it->second.check_type(TYPE_STRING);
+			else if (!it->second.is_string())
+				return defaultVal;
 			return *(it->second.str_);
 		}
 		ref_string	get_path_imp(const key_string & key, const ref_string & defaultVal) const {
@@ -450,10 +503,11 @@ namespace ara {
 			auto it = dict_->find(key);
 			if (it == dict_->end())
 				return defaultVal;
-			else if (it->second.is_string())
+			else if (it->second.is_std_string())
 				return ref_string(*it->second.str_);
-			it->second.check_type(TYPE_STRING);
-			return *(it->second.ref_str_);
+			else if (it->second.is_ref_string())
+				return *(it->second.ref_str_);
+			return defaultVal;
 		}
 		const var &	get_path_imp(const key_string & key, const var & defaultVal) const {
 			if (!is_dict())

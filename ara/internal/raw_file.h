@@ -141,16 +141,16 @@ namespace ara {
 #endif
 			}
 
-			off_t		seek_imp(off_t n, std::ios::seekdir from) {
+			int64_t		seek_imp(int64_t n, std::ios::seekdir from) {
 				if (!is_opened_imp())
-					return off_t(-1);
+					return int64_t(-1);
 #if defined(ARA_WIN32_VER)
 				LARGE_INTEGER	off = {};
 				LARGE_INTEGER	NewFilePointer = {};
 				off.QuadPart = static_cast<LONGLONG>(n);
 				if (!::SetFilePointerEx(fd_, off, &NewFilePointer, from == std::ios::beg ? FILE_BEGIN : (from == std::ios::cur ? FILE_CURRENT : FILE_END)))
-					return off_t(-1);
-				return static_cast<off_t>(NewFilePointer.QuadPart);
+					return int64_t(-1);
+				return static_cast<int64_t>(NewFilePointer.QuadPart);
 #else
 				return ::lseek(fd_, n, from == std::ios::beg ? SEEK_SET : (from == std::ios::cur ? SEEK_CUR : SEEK_END));
 #endif
@@ -192,7 +192,7 @@ namespace ara {
 					return false;
 				return true;
 #else
-				return ::ftruncate(fd_, static_cast<off_t>(nNewSize)) == 0;
+				return ::ftruncate(fd_, static_cast<int64_t>(nNewSize)) == 0;
 #endif
 			}
 

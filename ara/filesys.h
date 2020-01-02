@@ -932,10 +932,10 @@ namespace ara {
 		inline bool	truncat(uint64_t n) {
 			return truncat_imp(n);
 		}
-		inline off_t	seek(off_t n, std::ios::seekdir from) {
+		inline int64_t	seek(int64_t n, std::ios::seekdir from) {
 			return seek_imp(n, from);
 		}
-		inline off_t	tell() {
+		inline int64_t	tell() {
 			return seek_imp(0, std::ios::cur);
 		}
 		inline bool	sync() {
@@ -950,7 +950,7 @@ namespace ara {
 			raw_file	f;
 			if (!f.open(strFileName).read_only().binary().done())
 				return false;
-			off_t s = f.seek(0, std::ios::end);
+			int64_t s = f.seek(0, std::ios::end);
 			size_t nOldSize = data.size();
 			data.resize(nOldSize + static_cast<size_t>(s));
 			f.seek(0, std::ios::beg);
