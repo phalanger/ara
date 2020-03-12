@@ -22,6 +22,7 @@
 
 #include <string>
 #include <type_traits>
+#include <cwctype>
 
 #include "utils.h"
 #include "ref_string.h"
@@ -113,18 +114,31 @@ namespace ara {
 			return *this;
 		}
 
+		static inline char ext_tolower(char c) { return std::tolower(c); }
+		static inline wchar_t ext_tolower(wchar_t c) { return std::towlower(c); }
+		static inline char16_t ext_tolower(char16_t c) { return std::towlower(c); }
+		template<typename ch>
+			static inline ch ext_tolower(ch c) { return  c < 0xffff ? std::tolower(c) : c; }
+
+		static inline char ext_toupper(char c) { return std::toupper(c); }
+		static inline wchar_t ext_toupper(wchar_t c) { return std::towupper(c); }
+		static inline char16_t ext_toupper(char16_t c) { return std::towupper(c); }
+		template<typename ch>
+			static inline ch ext_toupper(ch c) { return  c < 0xffff ? std::toupper(c) : c; }
+
 		string_ext &		to_lower(size_t off = 0, size_t len = typeStrTraits::npos) {
 			auto p = typeStrTraits::data_force_to_modify(str_) + off;
 			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
 			for (; p!= end; ++p)
-				*p = std::tolower(*p);
+				*p = ext_tolower(*p);
 			return *this;
 		}
+
 		string_ext &		to_upper(size_t off = 0, size_t len = typeStrTraits::npos) {
 			auto p = typeStrTraits::data_force_to_modify(str_) + off;
 			auto end = typeStrTraits::data(str_) + ((len == typeStrTraits::npos) ? typeStrTraits::size(str_) : std::min<size_t>(typeStrTraits::size(str_), off + len));
 			for (; p != end; ++p)
-				*p = std::toupper(*p);
+				*p = ext_toupper(*p);
 			return *this;
 		}
 
