@@ -173,9 +173,9 @@ namespace ara {
 
 			//! Compare
 			int compare(const date_time_imp & date) const {
-				if (time_ < date.time_)
+				if (static_cast<uint64_t>(time_) < static_cast<uint64_t>(date.time_))
 					return -1;
-				else if (time_ > date.time_)
+				else if (static_cast<uint64_t>(time_) > static_cast<uint64_t>(date.time_))
 					return 1;
 				return 0;
 			}
@@ -190,19 +190,19 @@ namespace ara {
 			}
 			//! Compare
 			bool operator<=(const date_time_imp& date) const {
-				return time_ <= date.time_;
+				return static_cast<uint64_t>(time_) <= static_cast<uint64_t>(date.time_);
 			}
 			//! Compare
 			bool operator>=(const date_time_imp& date) const {
-				return time_ >= date.time_;
+				return static_cast<uint64_t>(time_) >= static_cast<uint64_t>(date.time_);
 			}
 			//! Compare
 			bool operator< (const date_time_imp& date) const {
-				return time_ < date.time_;
+				return static_cast<uint64_t>(time_) < static_cast<uint64_t>(date.time_);
 			}
 			//! Compare
 			bool operator> (const date_time_imp& date) const {
-				return time_ > date.time_;
+				return static_cast<uint64_t>(time_) > static_cast<uint64_t>(date.time_);
 			}
 
 			// TDateTime math

@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ara_def.h"
 
 #include "internal/utf8_core.h"
+#include <stdexcept>
 
 namespace ara {
 	namespace utf8 {

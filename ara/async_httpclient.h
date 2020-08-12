@@ -167,8 +167,11 @@ namespace ara {
 
 				std::shared_ptr<async_client_control>	pControl = std::make_shared<async_client_control>(self);
 				retry_count_ = 1;
+				if (req->has_body_callback()) {
+					stop();
+					retry_count_ = 0;
+				}
 				_go(res);
-
 
 				return pControl;
 			}
@@ -232,7 +235,7 @@ namespace ara {
 			}
 
 			async_client(boost::asio::io_service & io, boost::asio::ssl::context & ssl_context)
-				: resolver_(io), ssl_context_(ssl_context), timer_(io), strand_(io) {
+				: io_(io), resolver_(io), ssl_context_(ssl_context), timer_(io), strand_(io) {
 			}
 		protected:
 			void close_all() {
@@ -399,7 +402,8 @@ namespace ara {
 				size_t prefix_size = ara::snprintf(pBegin, nPrefixSize, "%X\r\n", res_size);
 				auto self = shared_from_this();
 				auto pSocket = socket_ptr();
-
+				reset_timeout();
+				
 				if (res_size == 0) {
 					pBegin[prefix_size++] = '\r';
 					pBegin[prefix_size++] = '\n';
@@ -428,6 +432,7 @@ namespace ara {
 
 			template<class typeSocket>
 			void	send_request_body_callback(typeSocket & s, client_respond_ptr res) {
+				reset_timeout();
 				size_t nCacheSize = std::min<size_t>(options_.get_cache_size(), res->_get_body_size());
 				if (nCacheSize == 0) {
 					to_read_status_line(res);
@@ -713,10 +718,11 @@ namespace ara {
 
 			std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket_ptr() {
 				if (socket_ == nullptr)
-					socket_ = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(resolver_.get_io_context(), ssl_context_);
+					socket_ = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(io_, ssl_context_);
 				return socket_;
 			}
 
+			boost::asio::io_service &		io_;
 			client_options					options_;
 			boost::asio::ip::tcp::resolver	resolver_;
 			std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket_;
