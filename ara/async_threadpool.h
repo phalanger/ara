@@ -26,7 +26,9 @@ namespace ara {
 
 		async_thread_pool(const std::string & strName) : name_(strName) {}
 		~async_thread_pool() {
-			stop();
+			try {
+				stop();
+			} catch (...) {}
 		}
 
 		async_thread_pool &	init(size_t nThreadCount, size_t nStackSize = 1024 * 1024) {

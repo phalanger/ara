@@ -46,12 +46,14 @@
 	#include <windows.h>
 	#include <sys/types.h>
 	#include <sys/stat.h>
+	#include <sys/utime.h>
 #else//ARA_WIN32_VC_VER
 	#include <sys/types.h>
 	#include <sys/stat.h>
 	#include <dirent.h>
 	#include <unistd.h>
 	#include <fnmatch.h>
+	#include <utime.h>
 #endif//ARA_WIN32_VC_VER
 
 namespace ara {
@@ -267,6 +269,12 @@ namespace ara {
 			ull.LowPart = ft.dwLowDateTime;
 			ull.HighPart = ft.dwHighDateTime;
 			return ull.QuadPart / 10000000ULL - 11644473600ULL;
+		}
+		static void timet_to_filetime(time_t t, FILETIME& ft) {
+			ULARGE_INTEGER ull;
+			ull.QuadPart = (static_cast<ULONGLONG>(t) + 11644473600ULL) * 10000000ULL;
+			ft.dwLowDateTime = ull.LowPart;
+			ft.dwHighDateTime = ull.HighPart;
 		}
 
 		static	void stat_to_file_adv_attr(const struct __stat64 & buf, file_adv_attr & attr) {
@@ -588,6 +596,27 @@ namespace ara {
 			return true;
 #endif
 		}
+
+		static bool update_file_time(const std::string& strFile, const ara::date_time& tAccess, const ara::date_time& tModify)
+		{
+#ifdef ARA_WIN32_VER
+			struct __utimbuf64	buf = { tAccess.get(), tModify.get() };
+			return _utime64(strFile.c_str(), &buf) == 0;
+#else
+			struct utimbuf	buf = { tAccess.get(), tModify.get() };
+			return utime(strFile.c_str(), &buf) == 0;
+#endif
+		}
+		static bool update_file_time(std::wstring& strFile, const ara::date_time& tAccess, const ara::date_time& tModify)
+		{
+#ifdef ARA_WIN32_VER
+			struct __utimbuf64	buf = { tAccess.get(), tModify.get() };
+			return _wutime64(strFile.c_str(), &buf) == 0;
+#else
+			return update_file_time(strext(strFile).to<std::string>(), tAccess, tModify);
+#endif
+		}
+
 	};//file sys
 
 #if defined(ARA_WIN32_VER)

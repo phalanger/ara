@@ -164,4 +164,24 @@ TEST_CASE("filesys", "[base]") {
 
 		ara::file_sys::unlink(strFile);
 	}
+
+	SECTION("change_filetime") {
+
+		std::string strFile;
+		REQUIRE(ara::file_sys::get_temp_folder(strFile));
+		strFile += ara::file_sys::path_slash();
+		strFile += "text.txt";
+
+		ara::raw_file::save_data_to_file(strFile, "Hello");
+
+		ara::date_time t = ara::date_time::get_current();
+		t.step(-1, 0, 0);
+		bool boChangeTimeOK = ara::file_sys::update_file_time(strFile, t, t);
+		REQUIRE(boChangeTimeOK);
+
+		ara::file_adv_attr	attr;
+		REQUIRE(ara::file_sys::get_file_attr(strFile, attr) == true);
+		REQUIRE(attr.modify_time == t);
+		REQUIRE(attr.access_time == t);
+	}
 }

@@ -209,7 +209,7 @@ namespace ara {
 			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
-		inline const std::string &	get(const keyType & key, const ref_string & defaultVal) const {
+		inline ref_string 	get(const keyType & key, const ref_string & defaultVal) const {
 			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
@@ -263,6 +263,8 @@ namespace ara {
 				pVar = &item->second;
 				b = p + 1;
 			}
+			if (!pVar->is_dict())
+				return static_empty<var>::val;
 			auto item = pVar->dict_->find(strPath.substr(b));
 			if (item == pVar->dict_->end())
 				return static_empty<var>::val;
@@ -321,7 +323,8 @@ namespace ara {
 		}
 
 		const var &	operator[](size_t index) const {
-			check_type(TYPE_ARRAY);
+			if (get_type() != TYPE_ARRAY)
+				return static_empty<var>::val;
 			return (*array_)[index];
 		}
 		var &	operator[](size_t index) {
@@ -330,7 +333,8 @@ namespace ara {
 			return (*array_)[index];
 		}
 		const var &	operator[](const key_string & key) const {
-			check_type(TYPE_DICT);
+			if (get_type() != TYPE_DICT)
+				return static_empty<var>::val;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
 				return static_empty<var>::val;

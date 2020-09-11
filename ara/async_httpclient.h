@@ -88,7 +88,7 @@ namespace ara {
 				inline bool			_is_https() const {	return req_->is_https(); }
 				inline void			_set_redirect(size_t n) { redirect_count_ = n; }
 				inline bool			_should_redirect(int nCode, bool check_only) { 
-					if ((nCode / 100) != 3)
+					if ((nCode / 100) != 3 || _temp_data().empty())
 						return false;
 					else if (!_req()->get_method().empty() && _req()->get_method() != "GET")
 						return false;

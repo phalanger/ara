@@ -94,7 +94,8 @@ namespace ara {
 		class mission_imp : public std::enable_shared_from_this<mission_imp>
 		{
 		public:
-			mission_imp(boost::asio::io_service & io, funcCallback &&f, std::string && s) : io_(io), func_(std::move(f)), todo_(std::move(s)) {}
+			mission_imp(bool boTrace, boost::asio::io_service & io, funcCallback &&f, std::string && s) 
+				: trace_(boTrace), io_(io), func_(std::move(f)), todo_(std::move(s)) {}
 			void		setTimeout(const timer_val & tTimeout)
 			{
 				boost::system::error_code ec;
@@ -102,12 +103,21 @@ namespace ara {
 				timer_->expires_from_now(boost::posix_time::seconds(static_cast<long>(tTimeout.sec())) + boost::posix_time::microseconds(tTimeout.micro_sec()), ec);
 				std::shared_ptr<mission_imp> pSelf = this->shared_from_this();
 
+				if (trace_)
+					ara::glog(log::debug).printfln("mission (%v) begin wait p:%v", todo_, this);
+
 				timer_->async_wait([this, pSelf](boost::system::error_code const & ec) {
 					funcCallback func;
 					{
 						std::lock_guard<std::mutex>		_guard(lock_);
 						if (ec != boost::asio::error::operation_aborted && !has_val_)
+						{
 							func = std::move(func_);
+							func_ = nullptr;
+
+							if (trace_)
+								ara::glog(log::debug).printfln("mission (%v) timedout p:%v", todo_, this);
+						}
 					}
 					if (func)
 						func(boost::asio::error::timed_out, nullptr);
@@ -152,6 +162,7 @@ namespace ara {
 					func(boost::asio::error::interrupted, nullptr);
 			}
 
+			bool				trace_ = false;
 			boost::asio::io_service & io_;
 			funcCallback		func_;
 			std::string			todo_;
@@ -164,9 +175,9 @@ namespace ara {
 		{
 		public:
 			mission() {}
-			mission(boost::asio::io_service & io, const timer_val & tTimeout, funcCallback &&f, std::string && todo)
+			mission(bool boTrace, boost::asio::io_service & io, const timer_val & tTimeout, funcCallback &&f, std::string && todo)
 			{
-				std::shared_ptr<mission_imp>	p = std::make_shared<mission_imp>(io, std::move(f), std::move(todo));
+				std::shared_ptr<mission_imp>	p = std::make_shared<mission_imp>(boTrace, io, std::move(f), std::move(todo));
 				if (tTimeout != timer_val::max_time)
 					p->setTimeout(tTimeout);
 
@@ -209,7 +220,7 @@ namespace ara {
 					delete p2;
 				}
 			}
-			void	add_res(res_node * node, bool boFirst) {
+			void	add_res(const typeKey& k, res_node * node, bool boFirst) {
 				std::lock_guard<std::mutex>		_guard(lock_);
 
 				mission * cur = mission_root_.get_next();
@@ -225,17 +236,17 @@ namespace ara {
 						continue;
 
 					if (*trace_)
-						ara::glog(log::debug).printfln("add resource (%v) and dispatch now %v, p:%v", node, holder->todo_, temp);
+						ara::glog(log::debug).printfln("Key:%v add resource (%v) and dispatch now %v, p:%v", k, node, holder->todo_, temp);
 
-					holder->io_.post([ holder, pThis = this->shared_from_this(), node]() {
-						std::shared_ptr<async_respool_token>		pToken = std::make_shared<async_respool_token>( pThis, node);
+					std::shared_ptr<async_respool_token>		pToken = std::make_shared<async_respool_token>(k, this->shared_from_this(), node);
+					holder->io_.post([ holder, pToken]() {
 						holder->action(pToken);
 					});
 					return;
 				}
 
 				if (*trace_)
-					ara::glog(log::debug).printfln("add resource (%v)", node);
+					ara::glog(log::debug).printfln("Key:%v add resource (%v)", k, node);
 
 				if (boFirst)
 					node->append_after(res_root_);
@@ -252,14 +263,15 @@ namespace ara {
 		class async_respool_token : public internal::async_respool_token_base<typeRes>
 		{
 		public:
-			async_respool_token(res_node_list_ptr p, res_node * n) : parent_(p), node_(n) {}
+			async_respool_token(const typeKey& k, res_node_list_ptr p, res_node * n) : k_(k), parent_(p), node_(n) {}
 			virtual const typeRes	&	get() const override {
 				return node_->res_;
 			}
 			virtual ~async_respool_token() {
-				parent_->add_res(node_, true);
+				parent_->add_res(k_, node_, true);
 			}
 		protected:
+			typeKey				k_;
 			res_node_list_ptr	parent_;
 			res_node *			node_;
 		};
@@ -307,7 +319,7 @@ namespace ara {
 	typename async_resourcepool<typeKey, typeRes, typeKeyHash>::res_node_list_ptr	async_resourcepool<typeKey,typeRes,typeKeyHash>::findNodeList(const typeKey & k, bool boCreateWhileNoExist)
 	{
 		if (trace_)
-			ara::glog(log::debug).printfln("resource %v : ", k);
+			ara::glog(log::debug).printfln("Key:%v resource find node", k);
 
 		size_t nHash = hash_func_(k);
 		std::lock_guard<std::mutex>	_guard(glock_);
@@ -328,14 +340,14 @@ namespace ara {
 	void async_resourcepool<typeKey, typeRes, typeKeyHash>::add(const typeKey & k, const typeRes & res)
 	{
 		res_node_list_ptr	plist = findNodeList(k, true);
-		plist->add_res(new res_node(res), false);
+		plist->add_res(k, new res_node(res), false);
 	}
 
 	template<class typeKey, class typeRes, class typeKeyHash>
 	void async_resourcepool<typeKey, typeRes, typeKeyHash>::add(const typeKey & k, typeRes && res)
 	{
 		res_node_list_ptr	plist = findNodeList(k, true);
-		plist->add_res(new res_node(std::move(res)), false);
+		plist->add_res(k, new res_node(std::move(res)), false);
 	}
 
 	template<class typeKey, class typeRes, class typeKeyHash>
@@ -344,7 +356,7 @@ namespace ara {
 		res_node_list_ptr	plist = findNodeList(key, false);
 		if (plist == nullptr) {
 			if (trace_)
-				ara::glog(log::debug).printfln("resource not found, %v", strTodo);
+				ara::glog(log::debug).printfln("Key:%v resource not found: %v", key, strTodo);
 
 			func(boost::asio::error::invalid_argument, nullptr);
 			return;
@@ -355,18 +367,18 @@ namespace ara {
 			res_node * node = plist->res_root_.get_next();
 			node->unlink();
 			if (trace_)
-				ara::glog(log::debug).printfln("got resource right now:(%v) %v", node, strTodo);
+				ara::glog(log::debug).printfln("Key:%v got resource right now:(%v) %v", key, node, strTodo);
 
-			io.post([f = std::move(func), plist, node](){
-				std::shared_ptr<async_respool_token>		pToken = std::make_shared<async_respool_token>(plist, node);
+			std::shared_ptr<async_respool_token>		pToken = std::make_shared<async_respool_token>(key, plist, node);
+			io.post([f = std::move(func), pToken](){
 				f(boost::system::error_code(), pToken);
 			});
 			return;
 		}
 		else {
-			mission * m = new mission(io, tTimeout, std::move(func), std::move(strTodo));
+			mission * m = new mission(trace_, io, tTimeout, std::move(func), std::move(strTodo));
 			if (trace_)
-				ara::glog(log::debug).printfln("no resource, begin waitting : %v , p:%v", strTodo, m);
+				ara::glog(log::debug).printfln("Key:%v no resource, begin waitting : %v , p:%v", key, strTodo, m);
 			m->append_before(plist->mission_root_);
 		}
 	}
