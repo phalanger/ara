@@ -3,7 +3,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #define BOOST_FILESYSTEM_NO_LIB
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/async_httpclient.h"
 #include "ara/async_threadpool.h"
@@ -42,6 +42,6 @@ TEST_CASE("async http client", "[async]") {
 		num->wait(1);
 		pool.stop();
 
-		REQUIRE(strContent.find("NetEase Devilfish") != std::string::npos);
+		REQUIRE(strContent.find("www.163.com") != std::string::npos);
 	}
 }

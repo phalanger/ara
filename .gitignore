@@ -43,6 +43,7 @@ Debug
 /build/vc2017/benchmark
 /build/vc2017/x64
 /build/vc2017/Release
+/build/.cmake
 bin
 *.opensdf
 *.sdf

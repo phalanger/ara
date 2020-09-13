@@ -1,7 +1,9 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/stringext.h"
+
+#include <sstream>
 
 TEST_CASE("stringext", "[base]") {
 

@@ -37,6 +37,7 @@
 #include "ara_def.h"
 #include "stringext.h"
 #include "datetime.h"
+#include "stream.h"
 #include "internal/raw_file.h"
 
 #include <string>
@@ -1050,6 +1051,56 @@ namespace ara {
 			file_sys::remove_path(str);
 		}
 	};
+
+	namespace stream {
+		template <>
+        class stream_write_traist<raw_file>
+        {
+        public:
+            static int write(raw_file &s, const void *p, size_t n)
+            {
+                return static_cast<int>(s.write(p, n));
+            }
+            static void flush(raw_file &s)
+            {
+                s.sync();
+            }
+            static void prepare(raw_file &s, size_t n)
+            {
+            }
+        };
+
+        template <>
+        class stream_write_seekp_traist<raw_file> : public stream_write_traist<raw_file>
+        {
+        public:
+            static int64_t seekp(raw_file &s, int64_t offset, std::ios::seekdir nType)
+            {
+                return static_cast<int64_t>(s.seek(offset, nType));
+            }
+        };
+
+        template <>
+        class stream_read_traist<raw_file>
+        {
+        public:
+            static int read(raw_file &s, void *p, size_t n)
+            {
+                return static_cast<int>(s.read(p, n));
+            }
+        };
+
+        template <>
+        class stream_read_seekg_traist<raw_file> : public stream_read_traist<raw_file>
+        {
+        public:
+            static int64_t seekg(raw_file &s, int64_t offset, std::ios::seekdir nType)
+            {
+                return static_cast<int64_t>(s.seek(offset, nType));
+            }
+        };
+
+	}
 }
 
 #endif//ARA_FILESYS_H

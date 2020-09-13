@@ -1,5 +1,5 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 #include "ara/dlist.h"
 #include "ara/utils.h"
 

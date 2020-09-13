@@ -195,14 +195,14 @@ namespace ara {
 			}
 
 			template<class Pattern
-					, typename = std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
+					, typename = typename std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
 			async_server &	add(Pattern p, server_handler_ptr handler, size_t max_body_size = 1024 * 1024 * 4) {
 				list_dispatch_.push_back( std::make_shared<dispatch>(server_dispatch_pattern_builder<Pattern>::build(p), handler, max_body_size) );
 				return *this;
 			}
 
 			template<class Pattern
-					, typename = std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
+					, typename = typename std::enable_if<server_dispatch_pattern_builder<Pattern>::value>::type>
 			async_server &	add(Pattern p, std::function<void(request_ptr, respond_ptr)> && func, size_t max_body_size = 1024 * 1024 * 4
 				) {
 				list_dispatch_.push_back( std::make_shared<dispatch>(server_dispatch_pattern_builder<Pattern>::build(p)
@@ -693,7 +693,7 @@ namespace ara {
 					boost::asio::async_write(socket_, bufs, strand_.wrap(std::bind(&context_base::after_write_data, shared_from_this(), std::placeholders::_1)));
 				}
 
-				boost::asio::ip::tcp::socket::lowest_layer_type & socket()	{ return socket_.lowest_layer(); }
+				boost::asio::ip::tcp::socket::lowest_layer_type & socket() override	{ return socket_.lowest_layer(); }
 				boost::asio::ip::tcp::socket	socket_;
 			};
 			class ssl_context : public context_base {
@@ -701,7 +701,7 @@ namespace ara {
 				ssl_context(async_server_weak_ptr p, boost::asio::io_service & io, boost::asio::ssl::context & ssl_context) :
 					context_base(p, io), ssl_context_(ssl_context), socket_(io, ssl_context) {}
 
-				boost::asio::ip::tcp::socket::lowest_layer_type & socket()	{ return socket_.lowest_layer(); }
+				boost::asio::ip::tcp::socket::lowest_layer_type & socket() override	{ return socket_.lowest_layer(); }
 				virtual void	handshake() override {
 					socket_.async_handshake(boost::asio::ssl::stream_base::server, strand_.wrap([self = shared_from_this(), this](const boost::system::error_code& ec) {
 						if ( ec )
@@ -738,7 +738,8 @@ namespace ara {
 
 			class svr_base {
 			public:
-				svr_base(boost::asio::io_service & io, const std::string & ip, uint16_t port, size_t bl) : ip_(ip), port_(port), backlog_(bl),acceptor_(io) {}
+				svr_base(boost::asio::io_service & io, const std::string & ip, uint16_t port, size_t bl) 
+					: io_(io), ip_(ip), port_(port), backlog_(bl),acceptor_(io) {}
 				virtual ~svr_base() {}
 
 				void init() {
@@ -761,7 +762,7 @@ namespace ara {
 
 					acceptor_.listen(static_cast<int>(backlog_));
 
-					std::shared_ptr<context_base> pContext = make_context(parent, acceptor_.get_io_service());
+					std::shared_ptr<context_base> pContext = make_context(parent, io_);
 					acceptor_.async_accept(pContext->socket(), [pContext, this](boost::system::error_code ec) {
 						auto lock = pContext->svr_.lock();
 						if (lock == nullptr || ec)
@@ -781,6 +782,7 @@ namespace ara {
 					return std::make_shared<context>(p, io);
 				}
 
+				boost::asio::io_service & io_;
 				std::string		ip_;
 				uint16_t		port_;
 				size_t			backlog_;

@@ -3,7 +3,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #define BOOST_FILESYSTEM_NO_LIB
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/async_httpserver.h"
 #include "ara/async_httpclient.h"
@@ -73,7 +73,7 @@ TEST_CASE("async http server", "[async]") {
 
 		}
 		catch (std::exception & e) {
-			REQUIRE( e.what() == "" );
+			REQUIRE( std::string(e.what()).empty() == true );
 		}
 
 		num->wait(1);

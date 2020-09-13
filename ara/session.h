@@ -315,7 +315,7 @@ namespace ara {
 
 		time_t tNow = time(NULL);
 		controlData.set_expire_setting(nExpireSetting);
-		update_access_imp(controlData, hashNode, time(NULL));
+		update_access_imp(controlData, hashNode, tNow);
 	}
 
 	template<typename Key, typename Data, class typeKeyHash, class Pre, class LockType>

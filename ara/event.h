@@ -132,7 +132,6 @@ namespace ara {
 	template<class _Clock, class _Duration>
 	void	sleep_until(const std::chrono::time_point<_Clock, _Duration>& abstime) {
 		ara::event<int> ev(0);
-		auto now = std::chrono::system_clock::now();
 		ev.wait_until(1, abstime);
 	}
 }

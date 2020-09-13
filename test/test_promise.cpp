@@ -1,5 +1,5 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/promise.h"
 #include "ara/threadext.h"
@@ -145,7 +145,6 @@ TEST_CASE("promise", "[base]") {
 	SECTION("async_exec2") {
 
 		auto res = ara::async_exec([]() -> int {
-			int a = 10;
 			throw std::bad_exception();
 		});
 
