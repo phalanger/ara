@@ -1,6 +1,0 @@
-﻿  benchmark_printf.cpp
-  main.cpp
-  Generating code
-  All 4747 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  Finished generating code
-  benchmark.vcxproj -> G:\work\ara\build\vc2017\x64\Release\benchmark.exe
