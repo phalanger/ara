@@ -1,0 +1,8 @@
+﻿  benchmark_printf.cpp
+  Generating code
+  10 of 4930 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    4 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  benchmark.vcxproj -> G:\work\ara\build\vc2017\x64\Release\benchmark.exe
+  benchmark.vcxproj -> G:\work\ara\build\vc2017\x64\Release\benchmark.pdb (Full PDB)

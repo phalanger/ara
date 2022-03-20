@@ -69,7 +69,6 @@ namespace ara {
 #else
 			typedef		int			file_handle;
 #endif
-
 			void		close_imp() {
 				if (!is_opened_imp())
 					return;
@@ -129,7 +128,10 @@ namespace ara {
 
 				fd_ = _open_imp(strName, dwDesiredAccess, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes);
 				if (fd_ == INVALID_HANDLE_VALUE)
+				{
+					last_error = GetLastError();
 					return false;
+				}
 				if (nFlags & O_APPEND)
 					::SetFilePointerEx(fd_, LARGE_INTEGER{0}, 0, FILE_END);
 				return true;
@@ -137,7 +139,12 @@ namespace ara {
 				if (mod == -1)
 					mod = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 				fd_ = _open_imp(strName, nFlags, mod);
-				return fd_ >= 0;
+				if (fd_ < 0)
+				{
+					last_error = errno;
+					return false;
+				}
+				return true;
 #endif
 			}
 
@@ -219,7 +226,8 @@ namespace ara {
 
 		protected:
 #if defined(ARA_WIN32_VER)
-			HANDLE		fd_ = INVALID_HANDLE_VALUE;
+			HANDLE			fd_ = INVALID_HANDLE_VALUE;
+			unsigned long	last_error = 0;
 			static HANDLE		_open_imp(const std::string & strName, DWORD d1, DWORD d2, DWORD d3, DWORD d4) {
 				return ::CreateFileA(strName.c_str(), d1, d2, NULL, d3, d4, NULL);
 			}
@@ -228,6 +236,7 @@ namespace ara {
 		}
 #else
 			int			fd_ = -1;
+			int			last_error = 0;
 			static int		_open_imp(const std::string & strName, int a, int n) {
 				return ::open(strName.c_str(), a, n);
 			}

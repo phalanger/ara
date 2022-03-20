@@ -152,4 +152,25 @@ TEST_CASE("promise", "[base]") {
 		REQUIRE_THROWS_AS(res.get<0>(), std::bad_exception);
 	}
 
+	SECTION("async_exec_wait1") {
+
+		auto res = ara::async_exec([]() -> int {
+			ara::sleep(std::chrono::milliseconds(1000));
+			return 100;
+		});
+
+		res.wait();
+		REQUIRE(res.get() == 100);
+	}
+
+	SECTION("async_exec_wait2") {
+
+		auto res = ara::async_exec([]() -> int {
+			return 100;
+			});
+
+		ara::sleep(std::chrono::milliseconds(1000));
+		res.wait();
+		REQUIRE(res.get() == 100);
+	}
 }

@@ -82,11 +82,11 @@ namespace ara {
 			return key_string_base(string_traits<typeStr>::data(s), string_traits<typeStr>::size(s), false);
 		}
 
-		int	compare(const Ch * s, size_type nS2 = 0) const {
+		int	compare(const Ch * s, size_type nS2 = npos) const {
 			if (s == data())
 				return 0;
 			size_type nS1 = size();
-			nS2 = (nS2 == 0 ? chTraits::length(s) : nS2);
+			nS2 = (nS2 == npos ? chTraits::length(s) : nS2);
 			size_type nCmpSize = nS1 > nS2 ? nS2 : nS1;
 			int n = chTraits::compare(data(), s, nCmpSize);
 			if (n != 0)

@@ -108,6 +108,15 @@ namespace ara {
 			return true;
 		}
 
+		void for_each(std::function<bool(result_string&& res)>&& func) {
+			result_string res;
+			while (next(res)) {
+				if (!func(std::move(res)))
+					break;
+				res.clear();
+			}
+		}
+
 		iterator	begin() {
 			return iterator(*this);
 		}

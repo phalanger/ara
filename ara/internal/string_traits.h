@@ -9,11 +9,15 @@ namespace ara {
 
 	template<typename Ch>
 	inline bool isspace(Ch ch) {
-#ifdef ARA_WIN32_VER
-		return (ch >= 0 && ch <= 128) && std::isspace(ch);
-#else
-		return std::isspace(ch);
-#endif
+		return (ch >= 0 && ch < 128) && std::isspace(ch);
+	}
+	template<typename Ch>
+	inline Ch toupper(Ch ch) {
+		return (ch >= 0 && ch < 128) ? std::toupper(ch) : ch;
+	}
+	template<typename Ch>
+	inline Ch tolower(Ch ch) {
+		return (ch >= 0 && ch < 128) ? std::tolower(ch) : ch;
 	}
 
 	template<class Ch, int base>

@@ -121,9 +121,6 @@ namespace ara {
 			const std::thread::id	&	get_id() const {
 				return id_;
 			}
-			static thread_state & get_root() {
-				return thread_state_lock<std::mutex, thread_state>::root_;
-			}
 			static void	dump_all(std::ostream & out) {
 				std::lock_guard<LockType>        _guard(lock_parent::g_lock);
 				auto p = root_.get_next();
@@ -144,7 +141,18 @@ namespace ara {
 					p = p->get_next();
 				}
 			}
+			static void append_after_root(internal::thread_state& node) {
+				std::lock_guard<LockType>        _guard(lock_parent::g_lock);
+				node.append_after(get_root());
+			}
+			static void init() {
+				std::lock_guard<LockType>        _guard(lock_parent::g_lock);
+				get_root().as_root();
+			}
 		protected:
+			static thread_state& get_root() {
+				return thread_state_lock<std::mutex, thread_state>::root_;
+			}
 			thread_call	*	ptr_callstack_ = nullptr;
 			std::thread::id	id_;
 		private:

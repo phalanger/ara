@@ -1,0 +1,19 @@
+﻿  main.cpp
+  test_datetime.cpp
+  test_dlist.cpp
+  test_filesys.cpp
+  test_fixedstring.cpp
+  test_flags.cpp
+  test_keystring.cpp
+  test_log.cpp
+  test_stringex.cpp
+  test_threadext.cpp
+  test_utf8.cpp
+  test_utils.cpp
+  test_json.cpp
+  test_variant.cpp
+  Generating code
+  All 9274 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  test.vcxproj -> G:\work\ara\build\vc2017\Release\test.exe
+  test.vcxproj -> G:\work\ara\build\vc2017\Release\test.pdb (Full PDB)

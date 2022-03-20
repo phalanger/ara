@@ -3,6 +3,7 @@
 #define ARA_ASYNC_RESPOOL_H
 
 #include "async_queue.h"
+#include "threadext.h"
 
 #if 0
 	using ara::async_resourcepool<std::string>		arespool;
@@ -72,6 +73,7 @@ namespace ara {
 		}
 		void	set_hash_size(size_t n);
 
+		void	clear();
 	protected:
 		async_resourcepool();
 		class res_node;
@@ -132,6 +134,7 @@ namespace ara {
 				out << strPrefix << "[" << todo_ << "]" << strExpire << std::endl;
 			}
 			void	action(async_res_token token) {
+				BEGIN_CALL(todo_);
 				funcCallback func;
 				{
 					std::lock_guard<std::mutex>		_guard(lock_);
@@ -253,6 +256,19 @@ namespace ara {
 				else
 					node->append_before(res_root_);
 			}
+			void clear() {
+				std::lock_guard<std::mutex>		_guard(lock_);
+				mission* cur = mission_root_.get_next();
+				while (cur != &mission_root_)
+				{
+					mission* temp = cur;
+					cur = cur->get_next();
+
+					temp->unlink();
+					std::unique_ptr<mission> _guard2(temp);
+					temp->holder_.reset();
+				}
+			}
 
 			bool	*		trace_ = nullptr;
 			res_node		res_root_;
@@ -351,6 +367,18 @@ namespace ara {
 	}
 
 	template<class typeKey, class typeRes, class typeKeyHash>
+	void async_resourcepool<typeKey, typeRes, typeKeyHash>::clear()
+	{
+		std::lock_guard<std::mutex>	_guard(glock_);
+		for (type_map & mapData : pool_) {
+			for (auto& it : mapData) {
+				res_node_list_ptr& root = it.second;
+				root->clear();
+			}
+		}
+	}
+
+	template<class typeKey, class typeRes, class typeKeyHash>
 	void async_resourcepool<typeKey, typeRes, typeKeyHash>::apply(boost::asio::io_service & io, const typeKey & key, const timer_val & tTimeout, funcCallback && func, std::string && strTodo)
 	{
 		res_node_list_ptr	plist = findNodeList(key, false);
@@ -370,7 +398,8 @@ namespace ara {
 				ara::glog(log::debug).printfln("Key:%v got resource right now:(%v) %v", key, node, strTodo);
 
 			std::shared_ptr<async_respool_token>		pToken = std::make_shared<async_respool_token>(key, plist, node);
-			io.post([f = std::move(func), pToken](){
+			io.post([f = std::move(func), pToken, strTodo = std::move(strTodo)](){
+				BEGIN_CALL(strTodo);
 				f(boost::system::error_code(), pToken);
 			});
 			return;

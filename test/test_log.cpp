@@ -41,6 +41,7 @@ TEST_CASE("log", "[base]") {
 		REQUIRE(strLog.find("8765") != std::string::npos);
 		REQUIRE(strLog.find("App.log") != std::string::npos);
 
+		root.set_level(ara::log::info);
 		pos = strLog.size();
 		LOG_DEBUG("App2.log").printfln("%u", 8745);
 		strLog = s.str();

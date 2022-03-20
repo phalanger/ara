@@ -201,4 +201,12 @@ TEST_CASE("test variant", "[base]") {
 		REQUIRE(a["key2"].is_bool());
 		REQUIRE_FALSE(a["key2"].get_bool());
 	}
+
+	{
+		ara::var a = ara::var("key1", 100)("key2", 200);
+		std::string strKey;
+		auto res = a.get(strKey.c_str(), ara::static_empty<std::string>::val);
+
+		REQUIRE(res == "");
+	}
 }

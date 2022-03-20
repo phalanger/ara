@@ -49,7 +49,7 @@ namespace ara {
 			return false;
 		}
 
-		void	start() {
+		void	start(bool boDetach = false) {
 			if (workder_)
 				return;
 
@@ -87,6 +87,8 @@ namespace ara {
 					if (do_log_)
 						LOG_INFO(THREAD_LOGGER).printfln("Pool[%v] ID:%d Index:%d work end", name_, boost::this_thread::get_id(), i);
 				}));
+				if (boDetach)
+					task->detach();
 				threads_.add_thread(task.get());
 				task.release();
 			}

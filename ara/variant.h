@@ -296,7 +296,8 @@ namespace ara {
 		}
 		template<typename T, typename keyType, typename Convertor = internal::default_variant_convert>
 		T	find_and_convert_to(const keyType & key, const T & nDefault) const {
-			check_type(TYPE_DICT);
+			if (get_type() != TYPE_DICT)
+				return nDefault;
 			auto it = get_dict().find(key);
 			if (it == get_dict().end())
 				return  nDefault;
@@ -323,7 +324,7 @@ namespace ara {
 		}
 
 		const var &	operator[](size_t index) const {
-			if (get_type() != TYPE_ARRAY)
+			if (get_type() != TYPE_ARRAY || index >= array_->size())
 				return static_empty<var>::val;
 			return (*array_)[index];
 		}
@@ -485,7 +486,7 @@ namespace ara {
 			if ( !is_dict() )
 				return defaultVal;
 			auto it = dict_->find(key);
-			if (it == dict_->end())
+			if (it == dict_->end() || it->second.is_null())
 				return defaultVal;
 			return it->second.get_imp(ara::type_id<T>());
 		}

@@ -281,6 +281,9 @@ namespace ara {
 						return d->handler_;
 					}
 				}
+				if (!default_dispatch_)
+					return nullptr;
+
 				nMaxSize = default_dispatch_->max_body_size_;
 				return default_dispatch_->handler_;
 			}

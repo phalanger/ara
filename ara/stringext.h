@@ -115,16 +115,12 @@ namespace ara {
 		}
 
 		static inline char ext_tolower(char c) { return std::tolower(c); }
-		static inline wchar_t ext_tolower(wchar_t c) { return std::towlower(c); }
-		static inline char16_t ext_tolower(char16_t c) { return std::towlower(c); }
 		template<typename ch>
-			static inline ch ext_tolower(ch c) { return  c < 0xffff ? std::tolower(c) : c; }
+			static inline ch ext_tolower(ch c) { return ara::tolower(c); }
 
 		static inline char ext_toupper(char c) { return std::toupper(c); }
-		static inline wchar_t ext_toupper(wchar_t c) { return std::towupper(c); }
-		static inline char16_t ext_toupper(char16_t c) { return std::towupper(c); }
 		template<typename ch>
-			static inline ch ext_toupper(ch c) { return  c < 0xffff ? std::toupper(c) : c; }
+			static inline ch ext_toupper(ch c) { return ara::toupper(c); }
 
 		string_ext &		to_lower(size_t off = 0, size_t len = typeStrTraits::npos) {
 			auto p = typeStrTraits::data_force_to_modify(str_) + off;
@@ -285,7 +281,7 @@ namespace ara {
 		template<class T>
 		inline T to(typename std::enable_if<is_string<T>::value>::type * p = 0) const {
 			T		res;
-			string_ext<T>(res).append(str_);
+			internal::string_convert::append(res, str_);
 			return res;
 		}
 		template<class T>
@@ -362,13 +358,22 @@ namespace ara {
 		return n;
 	}
 
+	template<typename...TypeList >
+	inline std::string	printf_str(const char * s, TypeList&&... t2) {
+		return str_printf<std::string>(s, std::forward<TypeList>(t2)...);
+	}
+	template<typename...TypeList >
+	inline std::wstring	printf_wstr(const wchar_t* s, TypeList&&... t2) {
+		return str_printf<std::wstring>(s, std::forward<TypeList>(t2)...);
+	}
+
 	template<class typeStr = std::string>
-	class nocase_string_compare : public std::binary_function<typeStr, typeStr, bool>
+	class nocase_string_compare
 	{
 	public:
-		struct nocase_compare : public std::binary_function<int, int, bool> {
+		struct nocase_compare {
 			bool operator() (const unsigned char& c1, const unsigned char& c2) const	{
-				return std::tolower(c1) < std::tolower(c2);
+				return ara::tolower(c1) < ara::tolower(c2);
 			}
 		};
 
@@ -384,8 +389,8 @@ namespace ara {
 			auto last2 = s2.end();
 
 			for (; (first1 != last1) && (first2 != last2); ++first1, (void) ++first2) {
-				auto c1 = std::tolower(*first1);
-				auto c2 = std::tolower(*first2);
+				auto c1 = ara::tolower(*first1);
+				auto c2 = ara::tolower(*first2);
 				if (c1 < c2) return -1;
 				else if (c2 < c1) return 1;
 			}
@@ -397,6 +402,73 @@ namespace ara {
 					return 0;
 			}
 			return 1;
+		}
+	};
+
+	template<typename CharType>
+	struct cistring_char_traits : public std::char_traits<CharType>
+	{
+		typedef std::char_traits<CharType>	typeParent;
+
+		typedef CharType				char_type;
+		typedef CharType				int_type;
+		typedef typename typeParent::pos_type	pos_type;
+		typedef typename typeParent::off_type	off_type;
+		typedef typename typeParent::state_type	state_type;
+
+		//! Equal
+		static inline bool eq(CharType c1, CharType c2) {
+			return ara::toupper(c1) == ara::toupper(c2);
+		};
+		//! Not Equal
+		static inline bool ne(CharType c1, CharType c2) {
+			return ara::toupper(c1) != ara::toupper(c2);
+		};
+		//! Less
+		static inline bool lt(CharType c1, CharType c2) {
+			return ara::toupper(c1) < ara::toupper(c2);
+		};
+		//! Compare
+		static int compare(const CharType* str1, const CharType* str2, size_t n) {
+			while (n != 0 && ara::toupper(*str1) == ara::toupper(*str2++)) {
+				if (*str1 == CharType())
+					break;
+				++str1;
+				n--;
+			}
+			return n == 0 ? 0 : (ara::toupper(*str1) - ara::toupper(*(--str2)));
+		};
+		static int compare(const CharType* str1, size_t n1, const CharType* str2, size_t n2) {
+			const CharType* str1End = str1 + n1;
+			const CharType* str2End = str2 + n2;
+			CharType ch1 = 0, ch2 = 0;
+			for (; str1 != str1End && str2 != str2End; ++str1, ++str2) {
+				if ((ch1 = ara::toupper(*str1)) != (ch2 = ara::toupper(*str2)))
+					break;
+			}
+			if (str1 == str1End && str2 == str2End)
+				return 0;
+			else if (str1 == str1End)
+				return -1;
+			else if (str2 == str2End)
+				return 1;
+			else if (ch1 < ch2)
+				return -1;
+			else if (ch1 > ch2)
+				return 1;
+			return 0;
+		};
+
+		//!find
+		static const CharType * find(const CharType * _First, size_t _Count, const CharType & _Ch) noexcept /* strengthened */ {
+			// look for _Ch in [_First, _First + _Count)
+			CharType t = ara::toupper(_Ch);
+			for (; 0 < _Count; --_Count, ++_First) {
+				if (ara::toupper(*_First) == t) {
+					return _First;
+				}
+			}
+			return nullptr;
 		}
 	};
 }

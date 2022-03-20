@@ -256,4 +256,16 @@ TEST_CASE("stringext", "[base]") {
 		str2 = ara::ref_string(str1);
 		REQUIRE_FALSE(ara::strext(str2).check_postfix(".eml"));
 	}
+
+	SECTION("nocasestring") {
+
+		std::wstring str1 = L"aBcDefghijk";
+		std::wstring str2 = L"bCDe";
+
+		typedef ara::ref_string_base<wchar_t, ara::cistring_char_traits<wchar_t> >		nocase_ref_wstring;
+		nocase_ref_wstring	strLower(str1);
+
+		nocase_ref_wstring::size_type p = strLower.find(nocase_ref_wstring(str2));
+		REQUIRE(p == 1);
+	}
 }
