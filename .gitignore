@@ -43,6 +43,11 @@ Debug
 /build/vc2017/benchmark
 /build/vc2017/x64
 /build/vc2017/Release
+/build/vc2019/ara/*
+/build/vc2019/test
+/build/vc2019/benchmark
+/build/vc2019/x64
+/build/vc2019/Release
 /build/.cmake
 bin
 *.opensdf
