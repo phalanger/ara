@@ -1,12 +1,10 @@
-sudo: required
 dist: precise
 language: cpp
 
 matrix:
   include:
-
     # 1/ Linux Clang Builds
-   - os: linux
+    - os: linux
       addons:
         apt:
           sources:
@@ -17,7 +15,7 @@ matrix:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
     # 2/ Linux GCC Builds
-  - os: linux
+    - os: linux
       addons:
         apt:
           sources:
@@ -50,4 +48,3 @@ before_script:
 script:
   - make -j 2
   - ctest -V -j 2
-
