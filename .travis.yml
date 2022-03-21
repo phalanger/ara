@@ -6,111 +6,43 @@ matrix:
   include:
 
     # 1/ Linux Clang Builds
-    - os: linux
-      compiler: clang
-      addons: &clang38
+   - os: linux
+      addons:
         apt:
-          sources: ['llvm-toolchain-precise-3.8', 'ubuntu-toolchain-r-test']
-          packages: ['clang-3.8']
-      env: COMPILER='ccache clang++-3.8' BUILD_TYPE='Release'
-
-    - os: linux
-      compiler: clang
-      addons: *clang38
-      env: COMPILER='ccache clang++-3.8' BUILD_TYPE='Debug'
-
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
     # 2/ Linux GCC Builds
-    - os: linux
-      compiler: gcc
-      addons: &gcc48
+  - os: linux
+      addons:
         apt:
-         sources: ['ubuntu-toolchain-r-test']
-         packages: ['g++-4.8']
-      env: COMPILER='ccache g++-4.8' BUILD_TYPE='Release'
-
-    - os: linux
-      compiler: gcc
-      addons: *gcc48
-      env: COMPILER='ccache g++-4.8' BUILD_TYPE='Debug'
-
-
-    - os: linux
-      compiler: gcc
-      addons: &gcc49
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-4.9']
-      env: COMPILER='ccache g++-4.9' BUILD_TYPE='Release'
-
-    - os: linux
-      compiler: gcc
-      addons: *gcc49
-      env: COMPILER='ccache g++-4.9' BUILD_TYPE='Debug'
-
-
-    - os: linux
-      compiler: gcc
-      addons: &gcc5
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-5']
-      env: COMPILER='ccache g++-5' BUILD_TYPE='Release'
-
-    - os: linux
-      compiler: gcc
-      addons: *gcc5
-      env: COMPILER='ccache g++-5' BUILD_TYPE='Debug'
-
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
     # 3/ OSX Clang Builds
     - os: osx
-      osx_image: xcode8
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Debug'
-
-    - os: osx
-      osx_image: xcode8
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Release'
-
-    - os: osx
-      osx_image: xcode9
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Debug'
-
-    - os: osx
-      osx_image: xcode9
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Release'
-
-    - os: osx
-      osx_image: xcode9.1
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Debug'
-
-    - os: osx
-      osx_image: xcode9.1
-      compiler: clang
-      env: COMPILER='clang++' BUILD_TYPE='Release'
-
-install:
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="http://www.cmake.org/files/v3.3/cmake-3.3.2-Linux-x86_64.tar.gz"
-      mkdir cmake && travis_retry wget --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
-      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-    elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      which cmake || brew install cmake 
-      brew upgrade openssl
-      export LDFLAGS="-L/usr/local/opt/openssl/lib ${LDFLAGS}"
-      export CPPFLAGS="-I/usr/local/opt/openssl/include ${CPPFLAGS}"
-    fi
+      osx_image: xcode13.2.1
+      
+before_install:
+    - eval "${MATRIX_EVAL}"
+    
+addons:
+  apt:
+    packages:
+      - cmake
+      - libboost-dev
+      - libboost-test-dev
+      - lcov    
 
 before_script:
-  - export CXX=${COMPILER}
   - cd ${TRAVIS_BUILD_DIR}
   - cmake -H. -Bbin -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
   - cd bin
