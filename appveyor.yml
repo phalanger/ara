@@ -1,24 +1,19 @@
-version: 0.0.1.{build}
-
-configuration:
-- Debug
-- Release
+version: 1.0.{build}
+image: Visual Studio 2022
 
 environment:
   matrix:
-  - VS_VERSION: 14
-    VS_PLATFORM: win32
-  - VS_VERSION: 14
-    VS_PLATFORM: x64
-
-before_build:
-- git submodule update --init --recursive
-- cmake -H. -Bbin/VS -G "Visual Studio %VS_VERSION%" -DCMAKE_GENERATOR_PLATFORM=%VS_PLATFORM% -DBUILD_SHARED_LIBS=true -Wno-dev
-
-build:
-  project: bin\VS\ara.sln
-  parallel: true
-  verbosity: minimal
-
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    GENERATOR: Visual Studio 17 2022
+    CONFIG: Release
+    ARCH_ARG: -A x64
+    
+build_script:
+- cmd: >-
+    cmake -G "%GENERATOR%" -H. -B_builds -DENABLE_TESTING=1
+    cmake --build _builds --config "%CONFIG%"
+    
 test_script:
-- cd bin\VS && if %CONFIGURATION%==Debug (ctest --verbose -E perftest --build-config %CONFIGURATION%) else (ctest --verbose --build-config %CONFIGURATION%)
+- cmd: >-
+    cd _builds
+    ctest -VV -C "%CONFIG%"

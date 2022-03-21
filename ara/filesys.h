@@ -42,6 +42,8 @@
 
 #include <string>
 #include <vector>
+#include <list>
+#include <memory>
 
 #if defined(ARA_WIN32_VER)
 	#include <windows.h>
@@ -292,7 +294,8 @@ namespace ara {
 			attr.nlink = buf.st_nlink;
 			attr.blocks = 0;
 			attr.blocksize = 0;
-			attr.flags = buf.st_mode;
+			if (buf.st_mode & S_IFDIR)
+				attr.flags |= file_attr::IS_DIR;
 		}
 
 		static bool		get_file_attr(const std::string & sFile, file_adv_attr & attr) {
@@ -447,7 +450,7 @@ namespace ara {
 
 			std::wstring	parent, subpath;
 			split_path(s, parent, subpath);
-			if (!path_exist(parent) && !create_path(parent, mod))
+			if (!parent.empty() && !path_exist(parent) && !create_path(parent, mod))
 				return false;
 
 			return ::CreateDirectoryW(s.c_str(), NULL) == TRUE;
@@ -464,6 +467,7 @@ namespace ara {
 			bool needPrefix = false;
 #ifdef ARA_WIN32_VER
 			bool withDriver = false;
+			bool withNetPrefix = false;
 #endif
 
 			if (!string_traits<typeStr>::empty(path)) {
@@ -472,6 +476,10 @@ namespace ara {
 #ifdef ARA_WIN32_VER
 				else if (string_traits<typeStr>::size(path) > 1 && *(string_traits<typeStr>::data(path) + 1) == ':')
 					withDriver = true;
+				else if (string_traits<typeStr>::size(path) > 2 
+					&& *(string_traits<typeStr>::data(path)) == '\\'
+					&& *(string_traits<typeStr>::data(path) + 1) == '\\')
+					withNetPrefix = true;
 #endif
 			}
 
@@ -503,6 +511,10 @@ namespace ara {
 			}
 			if (is_path(path))
 				string_traits<typeStr>::append(res, ch);
+#ifdef ARA_WIN32_VER
+			if (withNetPrefix)
+				res = typeStr(2, '\\') + res;
+#endif
 			return res;
 		}
 
@@ -935,6 +947,11 @@ namespace ara {
 			internal::raw_file_imp::close_imp();
 		}
 
+		inline int get_last_error()
+		{
+			return static_cast<int>(last_error);
+		}
+
 		inline internal::open_flag<std::string>		open(const std::string & strName) {
 			return internal::open_flag<std::string>(*this, strName);
 		}
@@ -959,7 +976,7 @@ namespace ara {
 		inline int		write(const std::string & str) {
 			return write_imp(str.data(), str.size());
 		}
-		inline bool	truncat(uint64_t n) {
+		inline bool	truncate(uint64_t n) {
 			return truncat_imp(n);
 		}
 		inline int64_t	seek(int64_t n, std::ios::seekdir from) {
@@ -986,7 +1003,7 @@ namespace ara {
 			f.seek(0, std::ios::beg);
 			char * p = const_cast<char *>(data.data() + nOldSize);
 			while (s > 0) {
-				int n = f.read(p, s);
+				int n = f.read(p, static_cast<size_t>(s));
 				if (n <= 0)
 					break;
 				p += n;
@@ -1050,6 +1067,71 @@ namespace ara {
 			}
 			file_sys::remove_path(str);
 		}
+	};
+
+	class copy_dir_recursive
+	{
+	public:
+		copy_dir_recursive(size_t nCacheSize = 4 * 1024 * 1024) : cache_size_(nCacheSize)  {
+			buf_.reset(new char[cache_size_]);
+		}
+
+		void	copy(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			_copy(strFromPath, strToPath);
+		}
+		bool	copy_file(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			ara::raw_file	fSrc, fTar;
+			if (!fSrc.open(strFromPath).read_only().binary().done())
+				return false;
+			std::wstring strTemp = strToPath + L".tmp";
+			if (!fTar.open(strTemp).write_only().create().binary().truncat().done())
+				return false;
+			bool boOK = false;
+			for (;;)
+			{
+				int n = fSrc.read(buf_.get(), cache_size_);
+				if (n == 0) {
+					boOK = true;
+					break;
+				}
+				else if (n < 0)
+					break;
+				if (fTar.write(buf_.get(), static_cast<size_t>(n)) != n)
+					break;
+			}
+
+			if (boOK)
+				file_sys::rename(strTemp, strToPath);
+			else
+				file_sys::unlink(strTemp);
+
+			return boOK;
+		}
+		const std::list<std::wstring>& get_fail_list() const { return fail_list_; }
+	protected:
+		void	_copy(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			if (!ara::file_sys::create_path(strToPath))
+				return;
+			ara::scan_wdir	scan(strFromPath);
+			auto it = scan.begin();
+			auto itend = scan.end();
+			for (; it != itend; ++it) {
+				std::wstring s = *it;
+				if (s.empty() || s[0] == L'.')
+					continue;
+				else if (it.get_attr().is_dir())
+					_copy(file_sys::join_to_path(strFromPath, s), file_sys::join_to_path(strToPath, s));
+				else if (!copy_file(file_sys::join_to_file(strFromPath, s), file_sys::join_to_file(strToPath, s)))
+					fail_list_.push_back(file_sys::join_to_file(strFromPath, s));
+			}
+		}
+
+		std::list<std::wstring>		fail_list_;
+		const size_t	cache_size_ = 4 * 1024 * 1024;
+		std::unique_ptr<char[]>		buf_;
 	};
 
 	namespace stream {
