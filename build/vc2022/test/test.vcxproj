@@ -98,23 +98,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(BOOST_INCLUDE_PATH)$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_LIB_PATH);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;g:\work\Libary\zlib\;g:\work\Libary\boost_1_72_0\;d:\OpenSSL-Win64\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>d:\OpenSSL-Win64\lib\VC\static\;g:\work\Libary\boost_1_72_0\stage\lib\;g:\work\Libary\zlib\build64\Debug;D:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(BOOST_INCLUDE_PATH);$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_LIB_PATH);D:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>D:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(BOOST_INCLUDE_PATH)$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_LIB_PATH);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;g:\work\Libary\zlib\;g:\work\Libary\boost_1_72_0\;d:\OpenSSL-Win64\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>d:\OpenSSL-Win64\lib\VC\static\;g:\work\Libary\boost_1_72_0\stage\lib\;g:\work\Libary\zlib\build64\Release\;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rd\rapidjson\include\;..\..\..\;$(BOOST_INCLUDE_PATH);$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_LIB_PATH);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
