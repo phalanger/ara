@@ -12,7 +12,7 @@ matrix:
           packages:
             - clang-7.0
       env:
-        - MATRIX_EVAL="CC=clang-7.0 && CXX=clang++-7.0"
+        - MATRIX_EVAL="CC=clang && CXX=clang++"
 
     # 2/ Linux GCC Builds
     - os: linux
