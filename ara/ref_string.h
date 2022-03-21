@@ -12,6 +12,7 @@
 #include "internal/string_traits.h"
 #include <map>
 #include <functional>
+#include <algorithm>
 
 namespace ara {
 
@@ -28,20 +29,43 @@ namespace ara {
 		typedef const Ch *		iterator;
 		typedef chTraits		traits_type;
 
-		ref_string_base(void) : ptr_data_(&g_nCh), ptr_end_(&g_nCh) {}
-		ref_string_base(const Ch * p, size_t nSize) : ptr_data_(p), ptr_end_(p + nSize) {}
-		ref_string_base(const Ch * p, const Ch * pEnd) : ptr_data_(p), ptr_end_(pEnd) {}
-		ref_string_base(const ref_string_base & s) : ptr_data_(s.ptr_data_), ptr_end_(s.ptr_end_) {}
-		ref_string_base(const Ch * p) : ptr_data_(p), ptr_end_(p) {
+		inline ref_string_base(void) : ptr_data_(&g_nCh), ptr_end_(&g_nCh) {}
+		inline ref_string_base(const Ch * p, size_t nSize) : ptr_data_(p), ptr_end_(p + nSize) {}
+		inline ref_string_base(const Ch * p, const Ch * pEnd) : ptr_data_(p), ptr_end_(pEnd) {}
+		inline ref_string_base(const ref_string_base & s) : ptr_data_(s.ptr_data_), ptr_end_(s.ptr_end_) {}
+		inline ref_string_base(const Ch * p) : ptr_data_(p), ptr_end_(p) {
 			ptr_end_ += chTraits::length(p);
 		}
 		template<typename typeStr>
-		explicit ref_string_base(const typeStr & s) :
+		inline explicit ref_string_base(const typeStr & s) :
 			ptr_data_(string_traits<typeStr>::data(s)), ptr_end_(ptr_data_ + string_traits<typeStr>::size(s)) {}
 
 		template<typename typeStr>
-		ref_string_base(const typeStr & s, size_t off, size_t nCount) :
+		inline ref_string_base(const typeStr & s, size_t off, size_t nCount = static_cast<size_t>(-1)) :
 			ptr_data_(string_traits<typeStr>::data(s) + off), ptr_end_(ptr_data_ + std::min<size_t>(nCount, string_traits<typeStr>::size(s) - off)) {}
+
+		int	compare(size_type pos1, size_type count1, const value_type * s2, size_type count2) const {
+
+			size_t nMaxSize = size();
+			if (pos1 > nMaxSize)
+				pos1 = nMaxSize;
+			if (count1 == npos || pos1 + count1 >= nMaxSize)
+				count1 = nMaxSize - pos1;
+			if (count2 == static_cast<size_t>(-1))
+				count2 = chTraits::length(s2);
+
+			size_t nS1 = count1;
+			size_t nS2 = count2;
+			size_t nCmpSize = nS1 > nS2 ? nS2 : nS1;
+			int n = chTraits::compare(ptr_data_ + pos1, s2, nCmpSize);
+			if (n != 0)
+				return n;
+			if (nS1 > nS2)
+				return 1;
+			else if (nS1 < nS2)
+				return -1;
+			return 0;
+		}
 
 		int	compare(const ref_string_base & s) const {
 			size_t nS1 = size();
@@ -57,26 +81,26 @@ namespace ara {
 			return 0;
 		}
 
-		bool operator==(const ref_string_base & s) const {
+		inline bool operator==(const ref_string_base & s) const {
 			return compare(s) == 0;
 		}
-		bool operator!=(const ref_string_base & s) const {
+		inline bool operator!=(const ref_string_base & s) const {
 			return compare(s) != 0;
 		}
-		bool operator<(const ref_string_base & s) const {
+		inline bool operator<(const ref_string_base & s) const {
 			return compare(s) < 0;
 		}
-		bool operator>(const ref_string_base & s) const {
+		inline bool operator>(const ref_string_base & s) const {
 			return compare(s) > 0;
 		}
-		bool operator<=(const ref_string_base & s) const {
+		inline bool operator<=(const ref_string_base & s) const {
 			return compare(s) <= 0;
 		}
-		bool operator>=(const ref_string_base & s) const {
+		inline bool operator>=(const ref_string_base & s) const {
 			return compare(s) >= 0;
 		}
 
-		const ref_string_base & operator=(const ref_string_base & s) {
+		inline const ref_string_base & operator=(const ref_string_base & s) {
 			if (this != &s) {
 				ptr_data_ = s.ptr_data_;
 				ptr_end_ = s.ptr_end_;
@@ -84,38 +108,38 @@ namespace ara {
 			return *this;
 		}
 
-		const ref_string_base & assign(const ref_string_base & s) {
+		inline const ref_string_base & assign(const ref_string_base & s) {
 			return *this = s;
 		}
 
-		const ref_string_base & assign(const Ch * pBegin, const Ch * pEnd) {
+		inline const ref_string_base & assign(const Ch * pBegin, const Ch * pEnd) {
 			ptr_data_ = pBegin;
 			ptr_end_ = pEnd;
 			return *this;
 		}
 
-		size_t		size(void) const {
+		inline size_t		size(void) const {
 			return ptr_end_ - ptr_data_;
 		}
-		size_t		length(void) const {
+		inline size_t		length(void) const {
 			return ptr_end_ - ptr_data_;
 		}
-		bool		empty(void) const {
+		inline bool		empty(void) const {
 			return ptr_data_ == ptr_end_;
 		}
-		const Ch *	data(void) const {
+		inline const Ch *	data(void) const {
 			return ptr_data_;
 		}
-		Ch			operator[](size_t nIndex) const {
+		inline Ch			operator[](size_t nIndex) const {
 			return ptr_data_[nIndex];
 		}
-		Ch			at(size_t nIndex) const {
+		inline Ch			at(size_t nIndex) const {
 			return ptr_data_[nIndex];
 		}
-		const_iterator	begin(void) const {
+		inline const_iterator	begin(void) const {
 			return ptr_data_;
 		}
-		const_iterator	end(void) const {
+		inline const_iterator	end(void) const {
 			return ptr_end_;
 		}
 
@@ -166,7 +190,7 @@ namespace ara {
 			return ref_string_base(ptr_data_ + nBegin, ptr_data_ + nEnd);
 		}
 
-		size_t		find(Ch ch, size_t nOff = 0) const {
+		inline size_t		find(Ch ch, size_t nOff = 0) const {
 			size_t nMySize = size();
 			if (nOff == npos || nOff > nMySize)
 				return npos;
@@ -191,7 +215,7 @@ namespace ara {
 			}
 			return (npos);	// no match
 		}
-		size_t		find(const ref_string_base & s, size_t nOff = 0) const {
+		inline size_t		find(const ref_string_base & s, size_t nOff = 0) const {
 			return find(s.data(), nOff, s.size());
 		}
 
@@ -224,7 +248,7 @@ namespace ara {
 
 			return (npos);	// no match
 		}
-		size_t		rfind(const ref_string_base & s, size_t nOff = npos) const {
+		inline size_t		rfind(const ref_string_base & s, size_t nOff = npos) const {
 			return rfind(s.data(), nOff, s.size());
 		}
 
@@ -237,7 +261,7 @@ namespace ara {
 					return p - ptr_data_;
 			return npos;
 		}
-		size_t		find_first_of(const ref_string_base & s, size_t nOff = 0) const {
+		inline size_t		find_first_of(const ref_string_base & s, size_t nOff = 0) const {
 			return find_first_of(s.data(), nOff, s.size());
 		}
 
@@ -250,7 +274,7 @@ namespace ara {
 					return p - ptr_data_;
 			return npos;
 		}
-		size_t		find_first_not_of(const ref_string_base & s, size_t nOff = 0) const {
+		inline size_t		find_first_not_of(const ref_string_base & s, size_t nOff = 0) const {
 			return find_first_not_of(s.data(), nOff, s.size());
 		}
 
@@ -264,7 +288,7 @@ namespace ara {
 					return p - ptr_data_;
 			return npos;
 		}
-		size_t		find_last_of(const ref_string_base & s, size_t nOff = npos) const {
+		inline size_t		find_last_of(const ref_string_base & s, size_t nOff = npos) const {
 			return find_last_of(s.data(), nOff, s.size());
 		}
 
@@ -278,24 +302,24 @@ namespace ara {
 					return p - ptr_data_;
 			return npos;
 		}
-		size_t		find_last_not_of(const ref_string_base & s, size_t nOff = npos) const {
+		inline size_t		find_last_not_of(const ref_string_base & s, size_t nOff = npos) const {
 			return find_last_not_of(s.data(), nOff, s.size());
 		}
 
-		std::basic_string<value_type> str() const {
+		inline std::basic_string<value_type> str() const {
 			return std::basic_string<value_type>(data(), size());
 		}
 		template<typename typeString>
-		typeString  as() const {
+		inline typeString  as() const {
 			return typeString(data(), size());
 		}
 
-		void	swap(const ref_string_base & s) {
+		inline void	swap(const ref_string_base & s) {
 			std::swap(ptr_data_, s.ptr_data_);
 			std::swap(ptr_end_, s.ptr_end_);
 		}
 
-		void	clear(void) {
+		inline void	clear(void) {
 			ptr_data_ = ptr_end_ = &g_nCh;
 		}
 
@@ -321,6 +345,20 @@ namespace ara {
 		for (; it != itEnd; ++it)
 			o << (Ch)(*it);
 		return o;
+	}
+
+	template<typename Ch, typename chTraits, typename chTraits2>
+	std::basic_string<Ch, chTraits> operator+(const std::basic_string<Ch, chTraits> & s, const ref_string_base<Ch, chTraits2> & s2)
+	{
+		std::basic_string<Ch, chTraits>  s3 = s;
+		s3.append(s2.data(), s2.size());
+		return s3;
+	}
+
+	template<typename Ch, typename chTraits, typename chTraits2>
+	std::basic_string<Ch, chTraits> & operator+=(std::basic_string<Ch, chTraits> & s, const ref_string_base<Ch, chTraits2> & s2)
+	{
+		return s.append(s2.data(), s2.size());
 	}
 
 	typedef ref_string_base<char, std::char_traits<char> >			ref_string;

@@ -26,6 +26,8 @@ namespace ara {
 			bool	done();
 
 			open_flag &	mod(int nMod) { mod_ = nMod; return *this; }
+			open_flag &	flags(int flag) { flags_ |= flag; return *this; }
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -67,7 +69,6 @@ namespace ara {
 #else
 			typedef		int			file_handle;
 #endif
-
 			void		close_imp() {
 				if (!is_opened_imp())
 					return;
@@ -127,7 +128,10 @@ namespace ara {
 
 				fd_ = _open_imp(strName, dwDesiredAccess, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes);
 				if (fd_ == INVALID_HANDLE_VALUE)
+				{
+					last_error = GetLastError();
 					return false;
+				}
 				if (nFlags & O_APPEND)
 					::SetFilePointerEx(fd_, LARGE_INTEGER{0}, 0, FILE_END);
 				return true;
@@ -135,20 +139,25 @@ namespace ara {
 				if (mod == -1)
 					mod = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 				fd_ = _open_imp(strName, nFlags, mod);
-				return fd_ >= 0;
+				if (fd_ < 0)
+				{
+					last_error = errno;
+					return false;
+				}
+				return true;
 #endif
 			}
 
-			off_t		seek_imp(off_t n, std::ios::seek_dir from) {
+			int64_t		seek_imp(int64_t n, std::ios::seekdir from) {
 				if (!is_opened_imp())
-					return off_t(-1);
+					return int64_t(-1);
 #if defined(ARA_WIN32_VER)
 				LARGE_INTEGER	off = {};
 				LARGE_INTEGER	NewFilePointer = {};
 				off.QuadPart = static_cast<LONGLONG>(n);
 				if (!::SetFilePointerEx(fd_, off, &NewFilePointer, from == std::ios::beg ? FILE_BEGIN : (from == std::ios::cur ? FILE_CURRENT : FILE_END)))
-					return off_t(-1);
-				return static_cast<off_t>(NewFilePointer.QuadPart);
+					return int64_t(-1);
+				return static_cast<int64_t>(NewFilePointer.QuadPart);
 #else
 				return ::lseek(fd_, n, from == std::ios::beg ? SEEK_SET : (from == std::ios::cur ? SEEK_CUR : SEEK_END));
 #endif
@@ -186,15 +195,39 @@ namespace ara {
 				off.QuadPart = static_cast<decltype(off.QuadPart)>(nNewSize);
 				if (!::SetFilePointerEx(fd_, off, 0, FILE_BEGIN))
 					return false;
+				else if (!::SetEndOfFile(fd_))
+					return false;
 				return true;
 #else
-				return ::ftruncate(fd_, static_cast<off_t>(nNewSize)) == 0;
+				return ::ftruncate(fd_, static_cast<int64_t>(nNewSize)) == 0;
+#endif
+			}
+
+			bool		sync_imp() {
+				if (!is_opened_imp())
+					return false;
+#if defined(ARA_WIN32_VER)
+				return ::FlushFileBuffers(fd_) == TRUE;
+#else
+				return ::fsync(fd_) == 0;
+#endif
+			}
+			bool		data_sync_imp() {
+				if (!is_opened_imp())
+					return false;
+#if defined(ARA_WIN32_VER)
+				return ::FlushFileBuffers(fd_) == TRUE;
+#elif defined(ARA_LINUX_VER)
+				return ::fdatasync(fd_) == 0;
+#else
+				return ::fsync(fd_) == 0;
 #endif
 			}
 
 		protected:
 #if defined(ARA_WIN32_VER)
-			HANDLE		fd_ = INVALID_HANDLE_VALUE;
+			HANDLE			fd_ = INVALID_HANDLE_VALUE;
+			unsigned long	last_error = 0;
 			static HANDLE		_open_imp(const std::string & strName, DWORD d1, DWORD d2, DWORD d3, DWORD d4) {
 				return ::CreateFileA(strName.c_str(), d1, d2, NULL, d3, d4, NULL);
 			}
@@ -203,6 +236,7 @@ namespace ara {
 		}
 #else
 			int			fd_ = -1;
+			int			last_error = 0;
 			static int		_open_imp(const std::string & strName, int a, int n) {
 				return ::open(strName.c_str(), a, n);
 			}

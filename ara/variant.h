@@ -168,12 +168,12 @@ namespace ara {
 
 		bool	get_bool() const { check_type(TYPE_BOOL); return b_; }
 		bool &	get_bool_modify() { check_type(TYPE_BOOL); return b_; }
-		int		get_int() const { check_type(TYPE_INT); return i_; }
+		int		get_int() const { if (get_type() == TYPE_INT64) return static_cast<int>(i64_.get());  check_type(TYPE_INT); return i_; }
 		int	&	get_int_modify() { check_type(TYPE_INT); return i_; }
-		int64_t		get_int64() const { check_type(TYPE_INT64); return i64_.get(); }
+		int64_t		get_int64() const { if (get_type() == TYPE_INT) return i_; check_type(TYPE_INT64); return i64_.get(); }
 		int64_t	&	get_int64_modify() { check_type(TYPE_INT64); return i64_.get(); }
-		double_t		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
-		double_t	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
+		double		get_double() const { check_type(TYPE_DOUBLE); return f_.get(); }
+		double	&	get_double_modify() { check_type(TYPE_DOUBLE); return f_.get(); }
 		ref_string	get_string() const {
 			check_type(TYPE_STRING);
 			if (type_ & TYPE_CONST)
@@ -209,12 +209,66 @@ namespace ara {
 			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
-		inline const std::string &	get(const keyType & key, const ref_string & defaultVal) const {
+		inline ref_string 	get(const keyType & key, const ref_string & defaultVal) const {
 			return get_path_imp(key_string::ref(key), defaultVal);
 		}
 		template<typename keyType>
 		inline const var &	get(const keyType & key, const var & defaultVal) const {
 			return get_path_imp(key_string::ref(key), defaultVal);
+		}
+
+		inline bool  get(bool bo) const {
+			if (is_bool())
+				return b_;
+			return bo;
+		}
+		inline int  get(int n) const {
+			if (is_int() || is_int64())
+				return get_int();
+			return n;
+		}
+		inline int64_t  get(int64_t n) const {
+			if (is_int() || is_int64())
+				return get_int64();
+			return n;
+		}
+		inline double  get(double n) const {
+			if (is_double())
+				return f_.get();
+			return n;
+		}
+		inline ref_string get(const ref_string & n) const {
+			if (is_string())
+				return get_string();
+			return n;
+		}
+		inline std::string get(const std::string & n) const {
+			if (is_ref_string())
+				return ref_str_->str();
+			else if (is_std_string())
+				return *str_;
+			return n;
+		}
+
+		const var &	find_path(const std::string & strPath, char splitor = '/') const {
+			std::string::size_type b = 0;
+			std::string::size_type p = 0;
+			const var * pVar = this;
+			while ((p = strPath.find(splitor, b)) != std::string::npos) {
+				if (!pVar->is_dict())
+					return static_empty<var>::val;
+				auto item = pVar->dict_->find(strPath.substr(b, p - b));
+				if (item == pVar->dict_->end())
+					return static_empty<var>::val;
+				pVar = &item->second;
+				b = p + 1;
+			}
+			if (!pVar->is_dict())
+				return static_empty<var>::val;
+			auto item = pVar->dict_->find(strPath.substr(b));
+			if (item == pVar->dict_->end())
+				return static_empty<var>::val;
+			return item->second;
 		}
 
 		template<typename T, typename Convertor = internal::default_variant_convert>
@@ -240,6 +294,16 @@ namespace ara {
 			}
 			return T();
 		}
+		template<typename T, typename keyType, typename Convertor = internal::default_variant_convert>
+		T	find_and_convert_to(const keyType & key, const T & nDefault) const {
+			if (get_type() != TYPE_DICT)
+				return nDefault;
+			auto it = get_dict().find(key);
+			if (it == get_dict().end())
+				return  nDefault;
+			else
+				return it->second.template to<T>();
+		}
 
 		var_dict	&	to_dict() { 
 			if (get_type() != TYPE_DICT)
@@ -260,7 +324,8 @@ namespace ara {
 		}
 
 		const var &	operator[](size_t index) const {
-			check_type(TYPE_ARRAY);
+			if (get_type() != TYPE_ARRAY || index >= array_->size())
+				return static_empty<var>::val;
 			return (*array_)[index];
 		}
 		var &	operator[](size_t index) {
@@ -269,7 +334,8 @@ namespace ara {
 			return (*array_)[index];
 		}
 		const var &	operator[](const key_string & key) const {
-			check_type(TYPE_ARRAY);
+			if (get_type() != TYPE_DICT)
+				return static_empty<var>::val;
 			auto it = dict_->find(key);
 			if (it == dict_->end())
 				return static_empty<var>::val;
@@ -289,7 +355,13 @@ namespace ara {
 		}
 		template<typename T>
 		var & operator=(T && v) {
-			var tmp( std::move(v) );
+			var tmp( std::forward<T>(v) );
+			swap(tmp);
+			return *this;
+		}
+
+		var & operator=(const var & v) {
+			var tmp(v);
 			swap(tmp);
 			return *this;
 		}
@@ -414,7 +486,7 @@ namespace ara {
 			if ( !is_dict() )
 				return defaultVal;
 			auto it = dict_->find(key);
-			if (it == dict_->end())
+			if (it == dict_->end() || it->second.is_null())
 				return defaultVal;
 			return it->second.get_imp(ara::type_id<T>());
 		}
@@ -426,7 +498,8 @@ namespace ara {
 				return defaultVal;
 			else if (it->second.is_ref_string())
 				throw std::invalid_argument("type is REF_STRING not STRING");
-			it->second.check_type(TYPE_STRING);
+			else if (!it->second.is_string())
+				return defaultVal;
 			return *(it->second.str_);
 		}
 		ref_string	get_path_imp(const key_string & key, const ref_string & defaultVal) const {
@@ -435,10 +508,11 @@ namespace ara {
 			auto it = dict_->find(key);
 			if (it == dict_->end())
 				return defaultVal;
-			else if (it->second.is_string())
+			else if (it->second.is_std_string())
 				return ref_string(*it->second.str_);
-			it->second.check_type(TYPE_STRING);
-			return *(it->second.ref_str_);
+			else if (it->second.is_ref_string())
+				return *(it->second.ref_str_);
+			return defaultVal;
 		}
 		const var &	get_path_imp(const key_string & key, const var & defaultVal) const {
 			if (!is_dict())

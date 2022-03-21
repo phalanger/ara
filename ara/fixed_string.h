@@ -460,6 +460,14 @@ namespace ara {
 				append(n - size(), ch);
 		}
 
+		const Ch *	c_str() {
+			if (ptr_data_end_ == ptr_buf_end_)
+				*(ptr_data_end_ - 1) = Ch();
+			else
+				*(ptr_data_end_) = Ch();
+			return ptr_data_;
+		}
+
 		static size_type	npos;
 	private:
 		Ch *		ptr_data_;

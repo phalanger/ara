@@ -33,6 +33,9 @@ namespace ara {
 		static inline const value_type * data(const base_type & s) {
 			return s.data();
 		}
+		static inline value_type * data_force_to_modify(const base_type & s) {
+			return const_cast<value_type *>(s.data());
+		}
 		static inline size_type size(const base_type & s) {
 			return s.size();
 		}
@@ -50,6 +53,10 @@ namespace ara {
 		}
 		static inline size_type capacity(base_type & s) {
 			return s.capacity();
+		}
+
+		static inline int compare(const base_type & s, size_type pos1, size_type count1, const value_type * s2, size_type count2) {
+			return s.compare(pos1, count1, s2, count2);
 		}
 
 		static inline size_type	find(const base_type & s, value_type ch, size_type off) {

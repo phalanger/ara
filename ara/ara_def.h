@@ -9,7 +9,13 @@
 	#endif
 
 	#ifdef _MSC_VER
-		#if (_MSC_VER >= 1910)
+		#if (_MSC_VER >= 1930)
+			#define ARA_WIN32_VS2022_VER
+			#define ARA_WIN32_MSVC143_VER
+		#elif (_MSC_VER >= 1920)
+			#define ARA_WIN32_VS2019_VER
+			#define ARA_WIN32_MSVC142_VER
+		#elif (_MSC_VER >= 1910)
 			#define ARA_WIN32_VS2017_VER
 			#define ARA_WIN32_MSVC141_VER
 		#elif (_MSC_VER >= 1900)
@@ -97,10 +103,15 @@
 
 #if defined(__GNUC__)
 	#define ARA_FUNC_NAME		__PRETTY_FUNCTION__
+	#define ARA_FILE_NAME		(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #elif defined(ARA_WIN32_VC_VER)
 	#define ARA_FUNC_NAME		__FUNCTION__
+	#define ARA_FILE_NAME		(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #else
 	#define ARA_FUNC_NAME		__func__
+	#define ARA_FILE_NAME		(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
+
+#define ARA_UNUSED(x)  (void)x
 
 #endif // ARA_DEF_H

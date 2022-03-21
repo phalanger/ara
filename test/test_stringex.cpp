@@ -1,7 +1,9 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/stringext.h"
+
+#include <sstream>
 
 TEST_CASE("stringext", "[base]") {
 
@@ -49,6 +51,18 @@ TEST_CASE("stringext", "[base]") {
 		REQUIRE(re1 == "hello world");
 	}
 
+	SECTION("remove_chars") {
+
+		const std::string str1 = "\rhello world\n\t ";
+
+		std::string re1 = str1;
+		ara::strext(re1).remove_all_chars_inplace(" \t\r\n");
+		REQUIRE(re1 == "helloworld");
+
+		re1 = ara::strext(str1).remove_all_chars(" \t\r\n");
+		REQUIRE(re1 == "helloworld");
+	}
+
 	SECTION("to int") {
 		const std::string str1 = "";
 		REQUIRE(ara::strext(str1).to_int<int>() == int(0));
@@ -70,6 +84,17 @@ TEST_CASE("stringext", "[base]") {
 
 		int n4 = ara::strext(ara::ref_string("112345")).to<int>();
 		REQUIRE(n4 == int(112345));
+	}
+
+	SECTION("find int") {
+		const std::string str1 = " wer\r\n123fqw";
+		REQUIRE(ara::strext(str1).find_int<int>() == int(123));
+		int a = ara::strext(str1).find_int<int, 16>();
+		REQUIRE(a == int(0x0e));
+		a = ara::strext(str1).find_int<int, 16>(3);
+		REQUIRE(a == int(0x123f));
+		a = ara::strext(str1).find_int<int, 8>(3);
+		REQUIRE(a == int(0123));
 	}
 
 	SECTION("from int") {
@@ -151,6 +176,11 @@ TEST_CASE("stringext", "[base]") {
 		std::stringstream s2;
 		ara::printf(s2, "%d - %d = %d", 3, 2, 1);
 		REQUIRE(s2.str() == "3 - 2 = 1");
+
+		std::wstring strRes;
+		wchar_t ch = L'\\';
+		ara::strext(strRes).printf(L"%%%02x", static_cast<unsigned>(ch));
+		REQUIRE(strRes == L"%5c");
 	}
 
 	SECTION("ara::snprintf") {
@@ -182,5 +212,60 @@ TEST_CASE("stringext", "[base]") {
 		std::map<std::string, int, ara::nocase_string_compare<std::string>>	mapData;
 		mapData["AA"] = 1;
 		REQUIRE(mapData["aa"] == 1);
+
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello", "heLLO") == 0);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello1", "heLLO") == 1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hello", "heLLO1") == -1);
+
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hella", "heLLO") == -1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hellp", "heLLO") == 1);
+		REQUIRE(ara::nocase_string_compare<std::string>::compare("Hella", "heLLP") == -1);
+	}
+
+	SECTION("check_prefix") {
+
+		std::string str1 = "hello.eml";
+		REQUIRE(ara::strext(str1).check_prefix("hel"));
+		REQUIRE_FALSE(ara::strext(str1).check_prefix("he1"));
+		str1 = "he";
+		REQUIRE_FALSE(ara::strext(str1).check_prefix("hel"));
+
+		str1 = "hello.eml";
+		ara::ref_string str2(str1);
+		REQUIRE(ara::strext(str2).check_prefix("hel"));
+		REQUIRE_FALSE(ara::strext(str2).check_prefix("he1"));
+		str1 = "he";
+		str2 = ara::ref_string(str1);
+		REQUIRE_FALSE(ara::strext(str2).check_prefix("hel"));
+
+	}
+
+	SECTION("check_postfix") {
+
+		std::string str1 = "hello.eml";
+		REQUIRE(ara::strext(str1).check_postfix(".eml"));
+		REQUIRE_FALSE(ara::strext(str1).check_postfix(".em1"));
+		str1 = "eml";
+		REQUIRE_FALSE(ara::strext(str1).check_postfix(".eml"));
+
+		str1 = "hello.eml";
+		ara::ref_string str2(str1);
+		REQUIRE(ara::strext(str2).check_postfix(".eml"));
+		REQUIRE_FALSE(ara::strext(str2).check_postfix(".em1"));
+		str1 = "eml";
+		str2 = ara::ref_string(str1);
+		REQUIRE_FALSE(ara::strext(str2).check_postfix(".eml"));
+	}
+
+	SECTION("nocasestring") {
+
+		std::wstring str1 = L"aBcDefghijk";
+		std::wstring str2 = L"bCDe";
+
+		typedef ara::ref_string_base<wchar_t, ara::cistring_char_traits<wchar_t> >		nocase_ref_wstring;
+		nocase_ref_wstring	strLower(str1);
+
+		nocase_ref_wstring::size_type p = strLower.find(nocase_ref_wstring(str2));
+		REQUIRE(p == 1);
 	}
 }

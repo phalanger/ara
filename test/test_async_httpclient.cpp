@@ -3,18 +3,13 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #define BOOST_FILESYSTEM_NO_LIB
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/async_httpclient.h"
 #include "ara/async_threadpool.h"
 #include "ara/event.h"
 #include "ara/log.h"
 #include "test_async_helper.h"
-
-#ifdef ARA_WIN32_VC_VER
-	FILE _iob[] = { *stdin, *stdout, *stderr };
-	extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
-#endif
 
 TEST_CASE("async http client", "[async]") {
 	SECTION("base") {
@@ -31,12 +26,12 @@ TEST_CASE("async http client", "[async]") {
 
 		auto num = std::make_shared<ara::event<int>>(0);
 
-		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::sslv23_client);
+		boost::asio::ssl::context	ssl_context(boost::asio::ssl::context::tlsv11_client);
 		auto client = ara::http::async_client::make(io, ssl_context);
 
 		std::string strContent;
 
-		auto c = client->request(ara::http::request::make("https://163.com"),
+		auto c = client->request(ara::http::request::make("https://163.com/"),
 			ara::http::respond::make_simple([num, &strContent](int nCode, const std::string & strMsg, ara::http::header && h, std::string && strBody) {
 			if (nCode > 0)
 				strContent = std::move(strBody);
@@ -47,6 +42,6 @@ TEST_CASE("async http client", "[async]") {
 		num->wait(1);
 		pool.stop();
 
-		REQUIRE(strContent.find("NetEase Devilfish") != std::string::npos);
+		REQUIRE(strContent.find("www.163.com") != std::string::npos);
 	}
 }

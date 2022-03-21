@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ara_def.h"
 
 #include "internal/utf8_core.h"
+#include <stdexcept>
 
 namespace ara {
 	namespace utf8 {
@@ -120,7 +121,8 @@ namespace ara {
 						}
 						break;
 					}
-					++it;
+					if (it != end)
+						++it;
 					return cp;
 				}
 				template <typename octet_iterator>

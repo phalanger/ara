@@ -3,6 +3,7 @@
 #define ARA_ASYNC_QUEUE_H
 
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "ara_def.h"
 #include "dlist.h"
@@ -142,7 +143,7 @@ namespace ara {
 				std::string strExpire;
 				if (timer_) {
 					strExpire = " Expires at:";
-					strExpire += date_time(timer_->expires_at()).format();
+					strExpire += to_iso_string(timer_->expires_at());
 				}
 				out << strPrefix << "[" << todo_ << "]" << strExpire << std::endl;
 			}

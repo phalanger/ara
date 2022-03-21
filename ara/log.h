@@ -109,8 +109,39 @@ namespace ara {
 			logger_mgr::get().get_root()->set_appender(std::make_shared<ara::log::appender_stdstream>(out));
 		}
 	}
+
+	class thread_logger
+	{
+	public:
+		thread_logger(const char * name) {
+			auto & context = thread_context::get()._get_log_context();
+			current_logger_ = context.get_current_logger();
+			context.set_current_logger(&glog::get_logger_by_name(name));
+		}
+		thread_logger(const char * name, const char * name2) {
+			auto & context = thread_context::get()._get_log_context();
+			current_logger_ = context.get_current_logger();
+			std::string strName;
+			if (name == nullptr)
+				strName = current_logger_->get_name();
+			else
+				strName = name;
+			strName += '.';
+			strName += name2;
+
+			context.set_current_logger(&glog::get_logger_by_name(strName.c_str()));
+		}
+
+		~thread_logger() {
+			auto & context = thread_context::get()._get_log_context();
+			context.set_current_logger(current_logger_);
+		}
+	protected:
+		log::logger *	current_logger_ = nullptr;
+	};
 }
 
+#define THREAD_LOGGER			nullptr
 #define	LOG_DEBUG(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::debug))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::debug)
 #define	LOG_INFO(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::info))		ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::info)
 #define	LOG_NOTICE(...)		if (!ara::glog::get_logger_by_name( __VA_ARGS__ ).can_display(ara::log::notice))	ara::glog::dummy(); else ara::glog( __VA_ARGS__ )(ara::log::notice)

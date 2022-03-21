@@ -58,6 +58,7 @@ namespace ara {
 			typedef typename strType::size_type		size_type;
 			typedef std::basic_streambuf<char_type, traits_type>	streambuf_parent;
 			typedef std::basic_ostream<char_type, traits_type>		ostream_parent;
+			typedef std::basic_string<char_type, traits_type>		stdtring_type;
 			typedef string_traits<strType>			string_traits_type;
 
 			string_stream(strType & buf) : streambuf_parent(), ostream_parent((streambuf_parent*)this), buf_(buf) {
@@ -99,9 +100,21 @@ namespace ara {
 
 		template<class T, class Enable = void>
 		struct format_appender {
-			typedef typename T::char_type	char_type;
+			typedef typename T::char_type			char_type;
+			typedef std::basic_string<char_type>	stdtring_type;
 
 			format_appender(T & stream) : stream_(stream) {}
+
+			inline void append(const stdtring_type & s) {
+				stream_ << s;
+			}
+
+			template<class ChType, class ChTraits>
+			inline void append(const std::basic_string<ChType,ChTraits> & s) {
+				std::basic_string<char_type>	str;
+				string_convert::append(str, s.data(), s.size());
+				stream_ << str;
+			}
 
 			template<class T2>
 			inline void	append(const T2 & t) {
@@ -109,16 +122,20 @@ namespace ara {
 			}
 
 			inline void	append(const char * ch) {
-				append_str(ch, std::char_traits<char>::length(ch));
+				if (ch)
+					append_str(ch, std::char_traits<char>::length(ch));
 			}
 			inline void	append(const wchar_t * ch) {
-				append_str(ch, std::char_traits<wchar_t>::length(ch));
+				if (ch)
+					append_str(ch, std::char_traits<wchar_t>::length(ch));
 			}
 			inline void	append(const char16_t * ch) {
-				append_str(ch, std::char_traits<char16_t>::length(ch));
+				if (ch)
+					append_str(ch, std::char_traits<char16_t>::length(ch));
 			}
 			inline void	append(const char32_t * ch) {
-				append_str(ch, std::char_traits<char32_t>::length(ch));
+				if (ch)
+					append_str(ch, std::char_traits<char32_t>::length(ch));
 			}
 
 			inline void	append_ch(char ch) {
@@ -147,7 +164,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T2>(t);
+				append(t);
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -182,7 +199,7 @@ namespace ara {
 					nWidth = static_cast<int>(stream_.width(nWidth));
 				chFill = stream_.fill(chFill);
 
-				stream_ << static_cast<T2>(t);
+				append( t );
 
 				stream_.flags(nFlags);
 				if (nWidth != -1)
@@ -203,7 +220,7 @@ namespace ara {
 				else if (base == 16) {
 					stream_.setf(static_cast<std::ios::fmtflags>(format::BASE16), std::ios::basefield);
 				}
-				stream_ << static_cast<T2>(t);
+				stream_ << t;
 				stream_.flags(nFlags);
 			}
 
@@ -261,11 +278,22 @@ namespace ara {
 
 			typedef string_traits<T>					typeStrTraits;
 			typedef typename typeStrTraits::value_type	typeCh;
+			typedef std::basic_string<typeCh>			stdtring_type;
 			typedef string_stream<T>    typeStream;
 
 			inline void	append_ch(char ch) {
 				str_ += static_cast<typeCh>(ch);
 			}
+
+			inline void append(const stdtring_type & s) {
+				str_ += s;
+			}
+
+			template<class ChType, class ChTraits>
+			inline void append(const std::basic_string<ChType,ChTraits> & s) {
+				string_convert::append(str_, s.data(), s.size());
+			}
+
 
 			template<class T2>
 			inline void	append(const T2 & t) {
@@ -352,14 +380,8 @@ namespace ara {
 				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				typeStream	out(str_);
-
-				out.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
-
-				if (nWidth != -1)
-					out.width(nWidth);
-				out.fill(chFill);
-
-				out << t;
+				format_appender<typeStream>		stream_temp(out);
+				stream_temp.append(t, nWidth, chFill, nAdjust);
 			}
 
 			template<class T2>
@@ -370,27 +392,8 @@ namespace ara {
 				, format::ADJUSTFIELD_FLAG nAdjust = format::ADJUST_RIGHT) {
 
 				typeStream	out(str_);
-
-				out.setf(static_cast<std::ios::fmtflags>(nBase), std::ios::basefield);
-				if (bShowPos == format::SHOW_POS)
-					out.setf(std::ios::showpos);
-				else
-					out.unsetf(std::ios::showpos);
-				if (bUpcase == format::CHAR_UPCASE)
-					out.setf(std::ios::uppercase);
-				else
-					out.unsetf(std::ios::uppercase);
-				if (bShowBase == format::SHOW_BASE)
-					out.setf(std::ios::showbase);
-				else
-					out.unsetf(std::ios::showbase);
-				out.setf(static_cast<std::ios::fmtflags>(nAdjust), std::ios::adjustfield);
-
-				if (nWidth != -1)
-					out.width(nWidth);
-				out.fill(chFill);
-
-				out << static_cast<T2>(t);
+				format_appender<typeStream>		stream_temp(out);
+				stream_temp.append(t, nBase, nWidth, chFill, bUpcase, bShowPos, bShowBase, nAdjust);
 			}
 
 			template<typename typeDouble>
@@ -487,9 +490,9 @@ namespace ara {
 			size_t i = 1;	//fmt[0] is %
 			char_type	ch = fmt[i];
 			switch (ch) {
-			case 'v': case 'u': case 's': case 'f':
+			case 'v': case 's': case 'f':
 				++i;	out_.append(t1);	break;
-			case 'd':
+			case 'd': case 'u':
 				++i;	out_.template append_int<T1, 10, false>(t1);	break;
 			case 'x':
 				++i;	out_.template append_int<T1, 16, false>(t1);	break;
@@ -564,7 +567,7 @@ namespace ara {
 			if (fmt < pEnd)
 			{
 				const char_type ch = *fmt;
-				if (ch && !std::isspace(ch))
+				if (ch && !ara::isspace(ch))
 					++fmt;
 
 				if (ch == 'f') {
@@ -629,7 +632,7 @@ namespace ara {
 			if (fmt < pEnd)
 			{
 				const char_type ch = *fmt;
-				if (ch && !std::isspace(ch))
+				if (ch && !ara::isspace(ch))
 					++fmt;
 				out_.append(t1, nWidth, chFill, nAdjust);
 			}
@@ -640,6 +643,13 @@ namespace ara {
 			size_t i = append_prefix(fmt, nSize);
 			if (i + 1 >= nSize)
 				return nSize;
+			else if (fmt[i + 1] == '%')
+			{
+				out_.append_ch('%');
+				if (i + 2 >= nSize)
+					return nSize;
+				return printf_imp(fmt + i + 2, nSize - i - 2, std::forward<T1>(t1), std::forward<TypeList>(t2)...);
+			}
 			i += append_fmt_val(fmt + i, nSize - i, t1);
 			if (i >= nSize)
 				return nSize;

@@ -12,7 +12,7 @@ namespace ara {
 		class appender_rollingfile : public appender
 		{
 		public:
-			appender_rollingfile(const std::string & file
+			appender_rollingfile(const std::wstring & file
 				, const timer_val & rolltime = 1_day
 				, size_t	max_file_size = 0
 				, size_t	keep_file_count = 0
@@ -43,7 +43,7 @@ namespace ara {
 
 			virtual std::string	dump_setting() const {
 				return str_printf<std::string>("rollingfile_appender(n:%v t:%v, s:%v, c:%v)"
-					, file_name_
+					, strext(file_name_).to<std::string>()
 					, roll_time_
 					, max_file_size_
 					, keep_file_count_
@@ -69,41 +69,43 @@ namespace ara {
 				}
 				next_roll_time_.step(0, 0, 0, 0, 0, static_cast<int>(roll_time_.sec()));
 
-				std::string strFileName = file_name_;
+				std::wstring strFileName = file_name_;
 
 				if (roll_time_ >= 1_day) {
 
-					strFileName += now.format(".%Y-%m-%d");
+					strext(strFileName) += now.format(".%Y-%m-%d");
 
 					if (strFileName == current_filename_) //that means size too large
-						strFileName += now.format(".%H%M%S");
+						strext(strFileName) += now.format(".%H%M%S");
 					else
 						current_filename_ = strFileName;
 				}
 				else
-					strFileName += now.format(".%Y-%m-%d.%H%M%S");
+					strext(strFileName) += now.format(".%Y-%m-%d.%H%M%S");
 
 				rf_.open(strFileName).create().write_only().append().done();
 				current_size_ = 0;
 
 
 #ifndef ARA_WIN32_VER
+				std::string file = strext(file_name_).to<std::string>();
 				struct stat statbuf;
 				memset(&statbuf, 0, sizeof(statbuf));
-				if (::lstat(file_name_.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
+				if (::lstat(file.c_str(), &statbuf) != 0 || (statbuf.st_mode & S_IFLNK) != 0)
 				{
-					::unlink(file_name_.c_str());
-					(void)::symlink(strFileName.c_str(), file_name_.c_str());
+					::unlink(file.c_str());
+					int r = ::symlink( strext(strFileName).to<std::string>().c_str(), file.c_str());
+					ARA_UNUSED(r);
 				}
 #endif
 			}
 			void		check_history() {
 				if (keep_file_count_ == 0)
 					return;
-				std::string sPath, sFile;
+				std::wstring sPath, sFile;
 				file_sys::split_path(file_name_, sPath, sFile);
-				std::vector<std::string>		vectPathName;
-				for (auto it : scan_dir(sPath)) {
+				std::vector<std::wstring>		vectPathName;
+				for (auto it : scan_wdir(sPath)) {
 					if (it.find(sFile) == 0)
 						vectPathName.push_back(it);
 				}
@@ -117,13 +119,13 @@ namespace ara {
 			}
 
 			std::mutex		lock_;
-			std::string		file_name_;
+			std::wstring	file_name_;
 			date_time		next_roll_time_;
 			timer_val		roll_time_;
 			size_t			max_file_size_ = 0;
 			size_t			keep_file_count_ = 0;
 			size_t			current_size_ = 0;
-			std::string		current_filename_;
+			std::wstring	current_filename_;
 			ara::raw_file	rf_;
 		};
 	}

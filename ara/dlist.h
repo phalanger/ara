@@ -26,7 +26,7 @@ namespace ara {
 	class dlist
 	{
 	public:
-		dlist() {}
+		dlist() noexcept {}
 		~dlist() {
 			unlink();
 		}

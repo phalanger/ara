@@ -101,7 +101,7 @@ namespace ara {
 				case '-':
 				case '.':
 				case '_':
-				case '~':
+				case '*':
 					out++ = in;
 					break;
 				default:
@@ -113,7 +113,7 @@ namespace ara {
 			}
 
 			template <typename CharT>
-			CharT letter_to_hex(CharT in) {
+			CharT letter_to_hex(CharT in, bool & boValid) {
 				switch (in) {
 				case '0':
 				case '1':
@@ -125,6 +125,7 @@ namespace ara {
 				case '7':
 				case '8':
 				case '9':
+					boValid = true;
 					return in - '0';
 				case 'a':
 				case 'b':
@@ -132,6 +133,7 @@ namespace ara {
 				case 'd':
 				case 'e':
 				case 'f':
+					boValid = true;
 					return in + 10 - 'a';
 				case 'A':
 				case 'B':
@@ -139,8 +141,10 @@ namespace ara {
 				case 'D':
 				case 'E':
 				case 'F':
+					boValid = true;
 					return in + 10 - 'A';
 				}
+				boValid = false;
 				return CharT();
 			}
 
@@ -156,7 +160,7 @@ namespace ara {
 			}
 
 			template<class typeString>
-			inline typeString encoded(const typeString &input) {
+			inline typeString encode(const typeString &input) {
 				typeString encoded;
 				encode(input.begin(), input.end(), std::back_inserter(encoded));
 				return encoded;
@@ -167,14 +171,24 @@ namespace ara {
 
 				InputIterator it = in_begin;
 				OutputIterator out = out_begin;
+				bool boValid = false;
 				while (it != in_end) {
 					if (*it == '%') {
-						++it;
-						auto v0 = ara::internal::url::letter_to_hex(*it);
-						++it;
-						auto v1 = ara::internal::url::letter_to_hex(*it);
-						++it;
-						*out++ = 0x10 * v0 + v1;
+						if (++it == in_end)
+							break;
+						auto v0 = ara::internal::url::letter_to_hex(*it, boValid);
+						if (!boValid) {
+							*out++ = '%';
+							continue;
+						}
+						if (++it == in_end)
+							break;
+						auto v1 = ara::internal::url::letter_to_hex(*it, boValid);
+						if (boValid) {
+							++it;
+							*out++ = 0x10 * v0 + v1;
+						} else
+							*out++ = v0;
 					}
 					else if (*it == '+') {
 						*out++ = ' ';
@@ -196,9 +210,9 @@ namespace ara {
 
 			template<class typeString>
 			void split_url(const typeString & strURL, typeString & strSchema, typeString & strHost, typeString & strPath) {
-				typename typeString::size_type p = strURL.find("://");
+				typename typeString::size_type p = strURL.find(ara::strext(std::string("://")).to<typeString>());
 				if (p == typeString::npos) {
-					strext(strSchema).clear().append("http");
+					strext(strSchema).clear().append(ara::strext(std::string("http")).to<typeString>());
 					p = 0;
 				}
 				else {
@@ -208,7 +222,7 @@ namespace ara {
 
 				typename typeString::size_type p2 = strURL.find('/', p);
 				if (p2 == typeString::npos) {
-					strext(strPath).clear().append( "/" );
+					strext(strPath).clear().append('/');
 					strHost = strURL.substr(p);
 					return;
 				}

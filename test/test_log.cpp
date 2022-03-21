@@ -1,5 +1,5 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 
 #include "ara/log.h"
 
@@ -41,6 +41,7 @@ TEST_CASE("log", "[base]") {
 		REQUIRE(strLog.find("8765") != std::string::npos);
 		REQUIRE(strLog.find("App.log") != std::string::npos);
 
+		root.set_level(ara::log::info);
 		pos = strLog.size();
 		LOG_DEBUG("App2.log").printfln("%u", 8745);
 		strLog = s.str();
@@ -55,9 +56,9 @@ TEST_CASE("log", "[base]") {
 
 TEST_CASE("log to file", "[base]") {
 
-	std::string strFile;
+	std::wstring strFile;
 	REQUIRE(ara::file_sys::get_temp_folder(strFile));
-	strFile = ara::file_sys::join_to_file(strFile, std::string("a.log"));
+	strFile = ara::file_sys::join_to_file(strFile, "a.log");
 
 	SECTION("rolling file") {
 
@@ -66,17 +67,17 @@ TEST_CASE("log to file", "[base]") {
 
 		LOG_INFO().printfln("Hello %d", 124);
 
-		std::string strFileWithDate = strFile + ara::date_time::get_current().format(".%Y-%m-%d");
+		std::wstring strFileWithDate = strFile + ara::strext(ara::date_time::get_current().format(".%Y-%m-%d")).to<std::wstring>();
 #ifndef ARA_WIN32_VER
 		REQUIRE(ara::file_sys::path_exist(strFile));
 #endif
 		REQUIRE(ara::file_sys::path_exist(strFileWithDate));
 	}
 
-	std::string sPath, sFile;
+	std::wstring sPath, sFile;
 	ara::file_sys::split_path(strFile, sPath, sFile);
-	std::vector<std::string>		vectPathName;
-	for (auto it : ara::scan_dir(sPath)) {
+	std::vector<std::wstring>		vectPathName;
+	for (auto it : ara::scan_wdir(sPath)) {
 		if (it.find(sFile) == 0)
 			vectPathName.push_back(it);
 	}

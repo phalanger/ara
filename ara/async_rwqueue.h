@@ -130,7 +130,9 @@ namespace ara {
 				std::string strExpire;
 				if (timer_) {
 					strExpire = " Expires at:";
-					strExpire += date_time(timer_->expires_at()).format();
+					std::stringstream	debug;
+					debug << timer_->expires_at() << std::flush;
+					strExpire += debug.str();
 				}
 				out << strPrefix << "[" << todo_ << "]" << strExpire << std::endl;
 			}

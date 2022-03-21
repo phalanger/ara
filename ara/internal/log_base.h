@@ -37,7 +37,7 @@ namespace ara {
 		class log_context
 		{
 		public:
-			log_context() {}
+			log_context() noexcept {}
 			~log_context() {
 				release_cache();
 			}

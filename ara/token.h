@@ -7,6 +7,19 @@
 
 #include <iterator>
 
+#if 0
+
+	std::string				src("Hello,world;hi,;wel;");
+	ara::token_string		token(src, ";,");
+	ara::token_string::result_string	res;
+	size_t i = 0;
+	while (token.next(res)) {
+		REQUIRE(res == spec[i++]);
+	}
+	REQUIRE(spec[i] == nullptr);
+
+#endif
+
 namespace ara {
 
 	namespace internal {
@@ -95,6 +108,15 @@ namespace ara {
 			return true;
 		}
 
+		void for_each(std::function<bool(result_string&& res)>&& func) {
+			result_string res;
+			while (next(res)) {
+				if (!func(std::move(res)))
+					break;
+				res.clear();
+			}
+		}
+
 		iterator	begin() {
 			return iterator(*this);
 		}
@@ -109,6 +131,8 @@ namespace ara {
 	};
 
 	typedef token_base<std::string>		token_string;
+	typedef token_base<std::wstring>	token_wstring;
+	typedef token_base<ref_string>		token_ref_string;
 }
 
 

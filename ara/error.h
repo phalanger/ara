@@ -7,7 +7,7 @@
 #ifndef ARA_ERROR_H_201608
 #define ARA_ERROR_H_201608
 
-#include "ara_def.h"
+#include "ara/stringext.h"
 
 #include <string>
 
@@ -44,7 +44,7 @@ namespace ara {
 			std::string message(messageBuffer, size);
 			::LocalFree(messageBuffer);
 
-			return message;	
+			return ara::strext(message).trim(" \t\r\n");
 #else
 			return strerror(nCode);
 //#ifndef _POSIX_C_SOURCE

@@ -37,20 +37,26 @@
 #include "ara_def.h"
 #include "stringext.h"
 #include "datetime.h"
+#include "stream.h"
 #include "internal/raw_file.h"
 
 #include <string>
+#include <vector>
+#include <list>
+#include <memory>
 
 #if defined(ARA_WIN32_VER)
 	#include <windows.h>
 	#include <sys/types.h>
 	#include <sys/stat.h>
+	#include <sys/utime.h>
 #else//ARA_WIN32_VC_VER
 	#include <sys/types.h>
 	#include <sys/stat.h>
 	#include <dirent.h>
 	#include <unistd.h>
 	#include <fnmatch.h>
+	#include <utime.h>
 #endif//ARA_WIN32_VC_VER
 
 namespace ara {
@@ -145,35 +151,64 @@ namespace ara {
 			string_traits<typeStr>::append(res, 1, detect_path_slash(sPath));
 			return res;
 		}
-
+		
 		template<class typeStr>
-		static	typeStr		join_to_path(const typeStr & sPath, const typeStr & sSub) {
+		static	typeStr		to_file(const typeStr & sPath) {
+
+			size_t nSize = string_traits<typeStr>::size(sPath);
+			if (nSize == 0)
+				return	sPath;
+
+			int ch = static_cast<int>(*(string_traits<typeStr>::data(sPath) + nSize - 1));
+			if (!isPathSlashChar(ch))
+				return sPath;
+
+			return string_traits<typeStr>::substr(sPath, 0, nSize - 1);
+		}
+		
+		template<class typeStr, class typeStr2>
+		static	typeStr		join_to_path(const typeStr & sPath, const typeStr2 & sSub) {
 			return to_path(join_to_file(sPath, sSub));
 		}
-		template<typename typeStrResult, typename ...typeStr>
-		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&... sPath) {
+		template<typename typeStrResult, typename typeStr2, typename ...typeStr>
+		static	typeStrResult		join_to_path(const typeStrResult & sSub, const typeStr2 & sSub2, typeStr&&... sPath) {
 			return join_to_path(join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
-
 		template<class typeStr>
-		static	typeStr		join_to_file(const typeStr & sPath, const typeStr & sSub) {
+		static	typeStr		join_to_path(const typeStr & sPath, const char * p) {
+			return join_to_path(sPath, std::string(p));
+		}
+		template<class typeStr>
+		static	typeStr		join_to_path(const typeStr & sPath, const wchar_t * p) {
+			return join_to_path(sPath, std::wstring(p));
+		}
 
-			auto nSize = string_traits<typeStr>::size(sSub);
+		template<class typeStr, class typeStr2>
+		static	typeStr		join_to_file(const typeStr & sPath, const typeStr2 & sSub) {
+
+			auto nSize = string_traits<typeStr2>::size(sSub);
 			if (nSize == 0)
 				return	sPath;
 			typename string_traits<typeStr>::size_type off = 0;
-			auto p = string_traits<typeStr>::data(sSub);
+			auto p = string_traits<typeStr2>::data(sSub);
 			for (; off < nSize; ++off, ++p)
 				if (!isPathSlashChar(*p))
 					break;
 
 			typeStr res = to_path(sPath);
-			for (; off < nSize; ++off, ++p)
-				string_traits<typeStr>::append(res, *p);
+			strext(res) += sSub.substr(off);
 			return  res;
 		}
-		template<typename typeStrResult, class...typeStr>
-		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStrResult & sSub2, typeStr&&...sPath) {
+		template<class typeStr>
+		static	typeStr		join_to_file(const typeStr & sPath, const char * p) {
+			return join_to_file(sPath, std::string(p));
+		}
+		template<class typeStr>
+		static	typeStr		join_to_file(const typeStr & sPath, const wchar_t * p) {
+			return join_to_file(sPath, std::wstring(p));
+		}
+		template<typename typeStrResult, typename typeStr2, class...typeStr>
+		static	typeStrResult		join_to_file(const typeStrResult & sSub, const typeStr2 & sSub2, typeStr&&...sPath) {
 			return join_to_file( join_to_path(sSub, sSub2), std::forward<typeStr>(sPath)...);
 		}
 
@@ -238,6 +273,12 @@ namespace ara {
 			ull.HighPart = ft.dwHighDateTime;
 			return ull.QuadPart / 10000000ULL - 11644473600ULL;
 		}
+		static void timet_to_filetime(time_t t, FILETIME& ft) {
+			ULARGE_INTEGER ull;
+			ull.QuadPart = (static_cast<ULONGLONG>(t) + 11644473600ULL) * 10000000ULL;
+			ft.dwLowDateTime = ull.LowPart;
+			ft.dwHighDateTime = ull.HighPart;
+		}
 
 		static	void stat_to_file_adv_attr(const struct __stat64 & buf, file_adv_attr & attr) {
 			attr.create_time = static_cast<time_t>(buf.st_ctime);
@@ -253,7 +294,8 @@ namespace ara {
 			attr.nlink = buf.st_nlink;
 			attr.blocks = 0;
 			attr.blocksize = 0;
-			attr.flags = buf.st_mode;
+			if (buf.st_mode & S_IFDIR)
+				attr.flags |= file_attr::IS_DIR;
 		}
 
 		static bool		get_file_attr(const std::string & sFile, file_adv_attr & attr) {
@@ -381,19 +423,74 @@ namespace ara {
 			return path_splitor<typeStr>(std::forward<typeStr>(s));
 		}
 
+		static bool	create_path(const std::string & s, int mod = 0755) {
+			std::string realPath = to_file(s);
+			if ( realPath.empty() )
+				return false;
+			else if ( path_exist(realPath) )
+				return true;
+
+			std::string	parent, subpath;
+			split_path(realPath, parent, subpath);
+			if (!path_exist(parent) && !create_path(parent, mod))
+				return false;
+
+#ifdef ARA_WIN32_VER
+			return ::CreateDirectoryA(realPath.c_str(), NULL) == TRUE;
+#else
+			return ::mkdir(realPath.c_str(), mod) == 0;
+#endif
+		}
+
+		static bool	create_path(const std::wstring & s, int mod = 0755) {
+
+#ifdef ARA_WIN32_VER
+			if ( path_exist(s) )
+				return true;
+
+			std::wstring	parent, subpath;
+			split_path(s, parent, subpath);
+			if (!parent.empty() && !path_exist(parent) && !create_path(parent, mod))
+				return false;
+
+			return ::CreateDirectoryW(s.c_str(), NULL) == TRUE;
+#else
+			return create_path( strext(s).to<std::string>(), mod);
+#endif
+		}
+
+
 		template<class typeStr>
-		static typeStr		fix_path(const typeStr & path) {
+		static typeStr		fix_path(const typeStr & path, char chSplitor = 0) {
 			std::vector<typeStr>	vecItems;
 			typeStr		res;
 			bool needPrefix = false;
+#ifdef ARA_WIN32_VER
+			bool withDriver = false;
+			bool withNetPrefix = false;
+#endif
 
-			if (!string_traits<typeStr>::empty(path) && *string_traits<typeStr>::data(path) == '/')
-				needPrefix = true;
+			if (!string_traits<typeStr>::empty(path)) {
+				if(*string_traits<typeStr>::data(path) == '/')
+					needPrefix = true;
+#ifdef ARA_WIN32_VER
+				else if (string_traits<typeStr>::size(path) > 1 && *(string_traits<typeStr>::data(path) + 1) == ':')
+					withDriver = true;
+				else if (string_traits<typeStr>::size(path) > 2 
+					&& *(string_traits<typeStr>::data(path)) == '\\'
+					&& *(string_traits<typeStr>::data(path) + 1) == '\\')
+					withNetPrefix = true;
+#endif
+			}
 
 			for (auto it : split_path(path)) {
 				if (is_parent_path(it)) {
-					if (!vecItems.empty())
+					if (!vecItems.empty()) {
+#ifdef ARA_WIN32_VER
+						if (!withDriver || vecItems.size() > 1)
+#endif
 						vecItems.pop_back();
+					}
 					if (vecItems.empty())
 						needPrefix = true;
 				}
@@ -402,20 +499,22 @@ namespace ara {
 				else
 					vecItems.push_back(it);
 			}
-			char ch = detect_path_slash(path);
-			if (needPrefix)
-				string_traits<typeStr>::append(res, ch);
+			char ch = (chSplitor == 0) ? detect_path_slash(path) : chSplitor;
 			for (auto & it2 : vecItems) {
 				if (!string_traits<typeStr>::empty(res)) {
-					if (needPrefix)
-						needPrefix = false;
-					else
-						string_traits<typeStr>::append(res, ch);
+					string_traits<typeStr>::append(res, ch);
+				} else if (needPrefix) {
+					needPrefix = false;
+					string_traits<typeStr>::append(res, ch);
 				}
 				string_traits<typeStr>::append(res, it2);
 			}
 			if (is_path(path))
 				string_traits<typeStr>::append(res, ch);
+#ifdef ARA_WIN32_VER
+			if (withNetPrefix)
+				res = typeStr(2, '\\') + res;
+#endif
 			return res;
 		}
 
@@ -434,11 +533,41 @@ namespace ara {
 #endif
 		}
 
+		static bool	rename(const std::string & strSrc, const std::string & strTar) {
+#ifdef ARA_WIN32_VER
+			return ::MoveFileA(strSrc.c_str(), strTar.c_str()) == TRUE;
+#else
+			return ::rename(strSrc.c_str(), strTar.c_str()) == 0;
+#endif
+		}
+		static bool	rename(const std::wstring & strSrc, const std::wstring & strTar) {
+#ifdef ARA_WIN32_VER
+			return ::MoveFileW(strSrc.c_str(), strTar.c_str()) == TRUE;
+#else
+			return ::rename(strext(strSrc).to<std::string>().c_str(), strext(strTar).to<std::string>().c_str()) == 0;
+#endif
+		}
+
+		static bool	remove_path(const std::string & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::RemoveDirectoryA(strFile.c_str()) == TRUE;
+#else
+			return ::rmdir(strFile.c_str()) == 0;
+#endif
+		}
+		static bool	remove_path(const std::wstring & strFile) {
+#ifdef ARA_WIN32_VER
+			return ::RemoveDirectoryW(strFile.c_str()) == TRUE;
+#else
+			return ::rmdir(strext(strFile).to<std::string>().c_str()) == 0;
+#endif
+		}
+
 		static bool path_exist(const std::string & strFile) {
 #ifdef ARA_WIN32_VER
 			return (::GetFileAttributesA(strFile.c_str()) != INVALID_FILE_ATTRIBUTES);
 #else
-			return (access(strFile.c_str(), F_OK) == 0);
+			return (access(to_file(strFile).c_str(), F_OK) == 0);
 #endif
 		}
 		static bool path_exist(const std::wstring & strFile) {
@@ -480,19 +609,40 @@ namespace ara {
 			return true;
 #endif
 		}
+
+		static bool update_file_time(const std::string& strFile, const ara::date_time& tAccess, const ara::date_time& tModify)
+		{
+#ifdef ARA_WIN32_VER
+			struct __utimbuf64	buf = { tAccess.get(), tModify.get() };
+			return _utime64(strFile.c_str(), &buf) == 0;
+#else
+			struct utimbuf	buf = { tAccess.get(), tModify.get() };
+			return utime(strFile.c_str(), &buf) == 0;
+#endif
+		}
+		static bool update_file_time(std::wstring& strFile, const ara::date_time& tAccess, const ara::date_time& tModify)
+		{
+#ifdef ARA_WIN32_VER
+			struct __utimbuf64	buf = { tAccess.get(), tModify.get() };
+			return _wutime64(strFile.c_str(), &buf) == 0;
+#else
+			return update_file_time(strext(strFile).to<std::string>(), tAccess, tModify);
+#endif
+		}
+
 	};//file sys
 
 #if defined(ARA_WIN32_VER)
 	class dir_iterator
 	{
 	public:
-		dir_iterator() {}
+		dir_iterator() noexcept : FindFileDataA_() {}
 		dir_iterator(const std::string & strPath, const std::string & strFilter = "") {
 			std::string str = file_sys::join_to_file(strPath, strFilter.empty() ? std::string("*.*") : strFilter);
 			hFind_ = ::FindFirstFileA(str.c_str(), &FindFileDataA_);
 		}
 
-		dir_iterator(dir_iterator && r) {
+		dir_iterator(dir_iterator && r) noexcept {
 			hFind_ = r.hFind_;
 			r.hFind_ = INVALID_HANDLE_VALUE;
 			memcpy(&FindFileDataA_, &FindFileDataA_, sizeof(FindFileDataA_));
@@ -561,6 +711,84 @@ namespace ara {
 		HANDLE hFind_ = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAA FindFileDataA_;
 	};
+	class wdir_iterator
+	{
+	public:
+		wdir_iterator() noexcept : FindFileDataW_() {}
+		wdir_iterator(const std::wstring & strPath, const std::wstring & strFilter = L"") {
+			std::wstring str = file_sys::join_to_file(strPath, strFilter.empty() ? std::wstring(L"*.*") : strFilter);
+			hFind_ = ::FindFirstFileW(str.c_str(), &FindFileDataW_);
+		}
+
+		wdir_iterator(wdir_iterator && r) noexcept {
+			hFind_ = r.hFind_;
+			r.hFind_ = INVALID_HANDLE_VALUE;
+			memcpy(&FindFileDataW_, &FindFileDataW_, sizeof(FindFileDataW_));
+		}
+
+		~wdir_iterator() {
+			if (hFind_ != INVALID_HANDLE_VALUE) {
+				::FindClose(hFind_);
+				hFind_ = INVALID_HANDLE_VALUE;
+			}
+		}
+
+		bool operator==(const wdir_iterator &) const {
+			return hFind_ == INVALID_HANDLE_VALUE;
+		}
+		bool operator!=(const wdir_iterator &) const {
+			return hFind_ != INVALID_HANDLE_VALUE;
+		}
+
+		std::wstring operator*() const {
+			return FindFileDataW_.cFileName;
+		}
+
+		file_attr get_attr() const {
+			file_attr attr;
+			get_attr(attr);
+			return attr;
+		}
+
+		wdir_iterator & operator++() {
+			if (hFind_ != INVALID_HANDLE_VALUE) {
+				if (!::FindNextFileW(hFind_, &FindFileDataW_)) {
+					::FindClose(hFind_);
+					hFind_ = INVALID_HANDLE_VALUE;
+				}
+			}
+			return *this;
+		}
+	protected:
+		void get_attr(file_attr & attr) const {
+			attr.access_time = file_sys::filetime_to_timet(FindFileDataW_.ftLastAccessTime);
+			attr.create_time = file_sys::filetime_to_timet(FindFileDataW_.ftCreationTime);
+			attr.modify_time = file_sys::filetime_to_timet(FindFileDataW_.ftLastWriteTime);
+
+			ULARGE_INTEGER ull;
+			ull.LowPart = FindFileDataW_.nFileSizeLow;
+			ull.HighPart = FindFileDataW_.nFileSizeHigh;
+			attr.size = static_cast<uint64_t>(ull.QuadPart);
+
+			DWORD n = FindFileDataW_.dwFileAttributes;
+			if (n & FILE_ATTRIBUTE_COMPRESSED)
+				attr.flags |= file_attr::IS_COMPRESS;
+			if (n & FILE_ATTRIBUTE_DIRECTORY)
+				attr.flags |= file_attr::IS_DIR;
+			if (n & FILE_ATTRIBUTE_ENCRYPTED)
+				attr.flags |= file_attr::IS_ENC;
+			if (n & FILE_ATTRIBUTE_HIDDEN)
+				attr.flags |= file_attr::IS_HIDDEN;
+			if (n & FILE_ATTRIBUTE_READONLY)
+				attr.flags |= file_attr::IS_READONLY;
+			if (n & FILE_ATTRIBUTE_SYSTEM)
+				attr.flags |= file_attr::IS_SYS;
+		}
+		wdir_iterator(const wdir_iterator &) = delete;
+
+		HANDLE hFind_ = INVALID_HANDLE_VALUE;
+		WIN32_FIND_DATAW FindFileDataW_;
+	};
 #else// !ARA_WIN32_VC_VER && !ARA_WIN32_MINGW_VER
 	class dir_iterator
 	{
@@ -626,12 +854,26 @@ namespace ara {
 			return false;
 		}
 		bool	fetch() {
+#ifdef ARA_LINUX_VER
+			struct dirent * dp = ::readdir(dir_);
+			if (dp == nullptr) {
+				::closedir(dir_);
+				dir_ = nullptr;
+				return false;
+			}
+			else
+			{
+				memcpy(entry_, dp, sizeof(struct dirent));
+				strcpy(entry_->d_name, dp->d_name);
+			}
+#else
 			struct dirent * dp;
 			if (::readdir_r(dir_, entry_, &dp) != 0 || dp == nullptr) {
 				::closedir(dir_);
 				dir_ = nullptr;
 				return false;
 			}
+#endif
 			return true;
 		}
 		dir_iterator(const dir_iterator &) = delete;
@@ -640,6 +882,19 @@ namespace ara {
 		struct dirent *		entry_ = nullptr;
 		std::string			parent_;
 		std::string			filter_;
+	};
+	class wdir_iterator : public dir_iterator
+	{
+	public:
+		wdir_iterator() {}
+		wdir_iterator(const std::wstring & strPath, const std::wstring & strFilter = L"") :
+			dir_iterator( strext(strPath).to<std::string>(), strext(strFilter).to<std::string>()) {}
+
+		wdir_iterator(wdir_iterator && r) : dir_iterator(std::move(r)) {}
+
+		std::wstring operator*() const {
+			return strext(std::string(entry_->d_name)).to<std::wstring>();
+		}
 	};
 #endif//ARA_WIN32_VC_VER
 
@@ -657,6 +912,20 @@ namespace ara {
 		std::string path_;
 		std::string filter_;
 	};
+	class scan_wdir {
+	public:
+		scan_wdir(const std::wstring & strPath, const std::wstring & strFilter = L"") : path_(strPath), filter_(strFilter) {}
+
+		wdir_iterator	begin() const {
+			return wdir_iterator(path_, filter_);
+		}
+		wdir_iterator	end() const {
+			return wdir_iterator();
+		}
+	protected:
+		std::wstring path_;
+		std::wstring filter_;
+	};
 
 	class raw_file;
 
@@ -669,42 +938,251 @@ namespace ara {
 			return fd_;
 		}
 
-		raw_file() {}
+		raw_file() noexcept {}
 		~raw_file() {
 			internal::raw_file_imp::close_imp();
 		}
 
-		internal::open_flag<std::string>		open(const std::string & strName) {
+		void	close() {
+			internal::raw_file_imp::close_imp();
+		}
+
+		inline int get_last_error()
+		{
+			return static_cast<int>(last_error);
+		}
+
+		inline internal::open_flag<std::string>		open(const std::string & strName) {
 			return internal::open_flag<std::string>(*this, strName);
 		}
-		internal::open_flag<std::wstring>		open(const std::wstring & strName) {
+		inline internal::open_flag<std::wstring>		open(const std::wstring & strName) {
 			return internal::open_flag<std::wstring>(*this, strName);
 		}
-		bool	open(const std::string & strName, int nFlags, int mod = -1) {
+		inline bool	open(const std::string & strName, int nFlags, int mod = -1) {
 			return open_imp(strName, nFlags, mod);
 		}
-		bool	open(const std::wstring & strName, int nFlags, int mod = -1) {
+		inline bool	open(const std::wstring & strName, int nFlags, int mod = -1) {
 			return open_imp(strName, nFlags, mod);
 		}
-		bool	is_opened() const {
+		inline bool	is_opened() const {
 			return is_opened_imp();
 		}
-		int		read(void * buf, size_t n) {
+		inline int		read(void * buf, size_t n) {
 			return read_imp(buf, n);
 		}
-		int		write(const void * buf, size_t n) {
+		inline int		write(const void * buf, size_t n) {
 			return write_imp(buf, n);
 		}
-		bool	truncat(uint64_t n) {
+		inline int		write(const std::string & str) {
+			return write_imp(str.data(), str.size());
+		}
+		inline bool	truncate(uint64_t n) {
 			return truncat_imp(n);
 		}
-		off_t	seek(off_t n, std::ios::seek_dir from) {
+		inline int64_t	seek(int64_t n, std::ios::seekdir from) {
 			return seek_imp(n, from);
 		}
-		off_t	tell() {
+		inline int64_t	tell() {
 			return seek_imp(0, std::ios::cur);
 		}
+		inline bool	sync() {
+			return sync_imp();
+		}
+		inline bool	data_sync() {
+			return data_sync_imp();
+		}
+
+		template<class typeFileNameString>
+		static bool		load_data_from_file(const typeFileNameString & strFileName, std::string & data) {
+			raw_file	f;
+			if (!f.open(strFileName).read_only().binary().done())
+				return false;
+			int64_t s = f.seek(0, std::ios::end);
+			size_t nOldSize = data.size();
+			data.resize(nOldSize + static_cast<size_t>(s));
+			f.seek(0, std::ios::beg);
+			char * p = const_cast<char *>(data.data() + nOldSize);
+			while (s > 0) {
+				int n = f.read(p, static_cast<size_t>(s));
+				if (n <= 0)
+					break;
+				p += n;
+				s -= n;
+			}
+			if (s)
+				data.resize( static_cast<size_t>(data.size() - s) );
+			return true;
+		}
+		template<class typeFileNameString>
+		static bool		save_data_to_file(const typeFileNameString & strFileName, const std::string & data) {
+			return save_data_to_file(strFileName, data.data(), data.size());
+		}
+		template<class typeFileNameString>
+		static bool		save_data_to_file(const typeFileNameString & strFileName, const void * pData, size_t s) {
+			raw_file	f;
+			if (!f.open(strFileName).write_only().create().truncat().binary().done())
+				return false;
+			const char * p = static_cast<const char *>(pData);
+			while (s > 0) {
+				int n = f.write(p, s);
+				if (n <= 0)
+					return false;
+				p += n;
+				s -= n;
+			}
+			return true;
+		}
 	};
+
+	class remove_dir_recursive
+	{
+	public:
+		static void	del(const std::string & str) {
+			scan_dir	s(str);
+			auto it = s.begin();
+			auto itend = s.end();
+			for (; it != itend; ++it) {
+				std::string s = *it;
+				if (s == "." || s == "..")
+					continue;
+				else if (it.get_attr().is_dir())
+					remove_dir_recursive::del(file_sys::join_to_path(str, s));
+				else
+					file_sys::unlink( file_sys::join_to_file(str, s) );
+			}
+			file_sys::remove_path(str);
+		}
+		static void del(const std::wstring & str) {
+			scan_wdir	s(str);
+			auto it = s.begin();
+			auto itend = s.end();
+			for (; it != itend; ++it) {
+				std::wstring s = *it;
+				if (s == L"." || s == L"..")
+					continue;
+				else if (it.get_attr().is_dir())
+					remove_dir_recursive::del(file_sys::join_to_path(str, s));
+				else
+					file_sys::unlink( file_sys::join_to_file(str, s) );
+			}
+			file_sys::remove_path(str);
+		}
+	};
+
+	class copy_dir_recursive
+	{
+	public:
+		copy_dir_recursive(size_t nCacheSize = 4 * 1024 * 1024) : cache_size_(nCacheSize)  {
+			buf_.reset(new char[cache_size_]);
+		}
+
+		void	copy(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			_copy(strFromPath, strToPath);
+		}
+		bool	copy_file(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			ara::raw_file	fSrc, fTar;
+			if (!fSrc.open(strFromPath).read_only().binary().done())
+				return false;
+			std::wstring strTemp = strToPath + L".tmp";
+			if (!fTar.open(strTemp).write_only().create().binary().truncat().done())
+				return false;
+			bool boOK = false;
+			for (;;)
+			{
+				int n = fSrc.read(buf_.get(), cache_size_);
+				if (n == 0) {
+					boOK = true;
+					break;
+				}
+				else if (n < 0)
+					break;
+				if (fTar.write(buf_.get(), static_cast<size_t>(n)) != n)
+					break;
+			}
+
+			if (boOK)
+				file_sys::rename(strTemp, strToPath);
+			else
+				file_sys::unlink(strTemp);
+
+			return boOK;
+		}
+		const std::list<std::wstring>& get_fail_list() const { return fail_list_; }
+	protected:
+		void	_copy(const std::wstring& strFromPath, const std::wstring& strToPath)
+		{
+			if (!ara::file_sys::create_path(strToPath))
+				return;
+			ara::scan_wdir	scan(strFromPath);
+			auto it = scan.begin();
+			auto itend = scan.end();
+			for (; it != itend; ++it) {
+				std::wstring s = *it;
+				if (s.empty() || s[0] == L'.')
+					continue;
+				else if (it.get_attr().is_dir())
+					_copy(file_sys::join_to_path(strFromPath, s), file_sys::join_to_path(strToPath, s));
+				else if (!copy_file(file_sys::join_to_file(strFromPath, s), file_sys::join_to_file(strToPath, s)))
+					fail_list_.push_back(file_sys::join_to_file(strFromPath, s));
+			}
+		}
+
+		std::list<std::wstring>		fail_list_;
+		const size_t	cache_size_ = 4 * 1024 * 1024;
+		std::unique_ptr<char[]>		buf_;
+	};
+
+	namespace stream {
+		template <>
+        class stream_write_traist<raw_file>
+        {
+        public:
+            static int write(raw_file &s, const void *p, size_t n)
+            {
+                return static_cast<int>(s.write(p, n));
+            }
+            static void flush(raw_file &s)
+            {
+                s.sync();
+            }
+            static void prepare(raw_file &s, size_t n)
+            {
+            }
+        };
+
+        template <>
+        class stream_write_seekp_traist<raw_file> : public stream_write_traist<raw_file>
+        {
+        public:
+            static int64_t seekp(raw_file &s, int64_t offset, std::ios::seekdir nType)
+            {
+                return static_cast<int64_t>(s.seek(offset, nType));
+            }
+        };
+
+        template <>
+        class stream_read_traist<raw_file>
+        {
+        public:
+            static int read(raw_file &s, void *p, size_t n)
+            {
+                return static_cast<int>(s.read(p, n));
+            }
+        };
+
+        template <>
+        class stream_read_seekg_traist<raw_file> : public stream_read_traist<raw_file>
+        {
+        public:
+            static int64_t seekg(raw_file &s, int64_t offset, std::ios::seekdir nType)
+            {
+                return static_cast<int64_t>(s.seek(offset, nType));
+            }
+        };
+
+	}
 }
 
 #endif//ARA_FILESYS_H

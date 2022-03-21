@@ -58,7 +58,8 @@ namespace ara {
 		class tls_holder {
 		public:
 			static void at_main_exit() {
-				delete get();
+				//delete get();
+				destroy();
 			}
 
 			static void		make_key() {
@@ -149,7 +150,7 @@ namespace ara {
 		class thread_local_storage
 		{
 		public:
-			thread_local_storage() {}
+			thread_local_storage() noexcept {}
 			thread_local_storage(const thread_local_storage &) = delete;
 			thread_local_storage(thread_local_storage &&) = delete;
 

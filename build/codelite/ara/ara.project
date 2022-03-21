@@ -118,6 +118,9 @@
       <File Name="../../../ara/internal/utf8_core.h"/>
       <File Name="../../../ara/internal/log_appender_rollingfile.h"/>
       <File Name="../../../ara/internal/raw_file.h"/>
+      <File Name="../../../ara/internal/async_httpsvr_pattern.h"/>
+      <File Name="../../../ara/internal/url.h"/>
+      <File Name="../../../ara/internal/variant_convert.h"/>
     </VirtualDirectory>
     <File Name="../../../ara/threadext.h"/>
     <File Name="../../../ara/flags.h"/>
@@ -129,6 +132,15 @@
     <File Name="../../../ara/event.h"/>
     <File Name="../../../ara/fixed_string.h"/>
     <File Name="../../../ara/key_string.h"/>
+    <File Name="../../../ara/async_httpclient.h"/>
+    <File Name="../../../ara/async_httpserver.h"/>
+    <File Name="../../../ara/async_rwqueue.h"/>
+    <File Name="../../../ara/async_session.h"/>
+    <File Name="../../../ara/async_threadpool.h"/>
+    <File Name="../../../ara/httpbase.h"/>
+    <File Name="../../../ara/session.h"/>
+    <File Name="../../../ara/token.h"/>
+    <File Name="../../../ara/variant.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>

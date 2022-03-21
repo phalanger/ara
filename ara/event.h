@@ -129,6 +129,11 @@ namespace ara {
 		auto now = std::chrono::system_clock::now();
 		ev.wait_until(1, now + v);
 	}
+	template<class _Clock, class _Duration>
+	void	sleep_until(const std::chrono::time_point<_Clock, _Duration>& abstime) {
+		ara::event<int> ev(0);
+		ev.wait_until(1, abstime);
+	}
 }
 
 #endif//ARA_EVENT_H

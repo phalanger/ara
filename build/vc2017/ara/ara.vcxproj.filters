@@ -10,6 +10,9 @@
     <Filter Include="source">
       <UniqueIdentifier>{ec1fb9d0-7c69-4a4a-a111-b31a24cfa665}</UniqueIdentifier>
     </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{58bb0318-3163-436a-8b40-2bde2f39b2b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\ara\utf8.h">
@@ -147,5 +150,35 @@
     <ClInclude Include="..\..\..\ara\httpbase.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ara\async_httpserver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ara\internal\async_httpsvr_pattern.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\docs\datetime.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\dlist.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\event.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\install_linux.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\install_win.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\timer_val.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="..\..\..\README.md" />
+    <None Include="..\..\..\docs\filesys.md">
+      <Filter>docs</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -111,6 +111,7 @@ namespace ara {
 		//////////////////////////////////////////////////////
 
 		typedef std::function<void(std::exception_ptr ptr)>		typeFuncExceptionCallback;
+		typedef std::function<void()>							typeFuncCancelCallback;
 
 		template<class... _Types>
 		class result_holder {
@@ -314,7 +315,19 @@ namespace ara {
 				return should_stop_;
 			}
 			inline void	cancel() {
+				std::unique_lock<std::mutex>		_guard(lock_);
+				if (func_cancel_) {
+					func_cancel_();
+					func_cancel_ = nullptr;
+				}
 				should_stop_ = true;
+			}
+			void	set_cancel(typeFuncCancelCallback&& func) {
+				std::unique_lock<std::mutex>		_guard(lock_);
+				if (should_stop_)
+					func();
+				else
+					func_cancel_ = std::move(func);
 			}
 
 			std::unique_ptr<func_holder_base>	func_ptr_;
@@ -322,6 +335,7 @@ namespace ara {
 			std::mutex			lock_;
 			std::condition_variable	cond_;
 			typeFuncExceptionCallback	func_exp_;
+			typeFuncCancelCallback		func_cancel_;
 			typeResult			result_;
 			bool				result_ok_ = false;
 			bool				should_stop_ = false;
@@ -526,6 +540,10 @@ namespace ara {
 
 		inline void cancel() const {
 			res_holder_ptr_->cancel();
+		}
+
+		void set_cancel_callback(internal::typeFuncCancelCallback && func) {
+			res_holder_ptr_->set_cancel(std::move(func));
 		}
 
 		template<typename linkType>

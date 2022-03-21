@@ -1,14 +1,18 @@
 # timer_val
 
-Header file:
+## [Header file](../ara/datetime.h)
 
 ~~~C++
 #include "ara/datetime.h"
 ~~~
 
+## Descriptions
+
 Usually C/C++ handle the timedout setting by **struct timeval**. The structure is used to specify a time interval. But **struct timeval** just store seconds and microseconds. Sometimes we need handle **nanoseconds**.
 
 **ara::timer_val** is a simple class to maintain the **seconds** and **nanoseconds** data.
+
+## Example
 
 ~~~C++
 ara::timer_val t1 = ara::timer_val::current_time();
@@ -28,3 +32,10 @@ ara::timer_val t1( std::chrono::system_clock::now() );
 auto t2 = t1.to_time_point<std::chrono::system_clock>();
 ~~~
 
+## See also
+
+* test and exsample :
+  * [test/test_datetime.cpp](../test/test_datetime.cpp)
+* other classes used it:
+  * [ara/async_queue.h](../ara/async_queue.h)
+  * [ara/async_rwqueue.h](../ara/async_rwqueue.h)

@@ -56,6 +56,7 @@
 #include <functional>
 #include <list>
 #include <thread>
+#include <sstream>
 
 namespace ara {
 
@@ -78,8 +79,8 @@ namespace ara {
 			return *internal::tls_holder<thread_context>::get();
 		}
 
-		thread_context() {
-			thread_state_.append_after(internal::thread_state::get_root());
+		thread_context() noexcept {
+			internal::thread_state::append_after_root(thread_state_);
 		}
 		thread_context(const thread_context &) = delete;
 		thread_context(thread_context &&) = delete;
@@ -113,6 +114,14 @@ namespace ara {
 			internal::tls_holder<thread_context>::destroy();
 		}
 
+		static void		dump_callstack(std::ostream& out) {
+			get()._get_thread_state().dump_callstack(out);
+		}
+		static std::string dump_callstack_string() {
+			std::stringstream s; 
+			dump_callstack(s);
+			return s.str();
+		}
 		static void		dump_all_thread_state(std::ostream & out) {
 			internal::thread_state::dump_all(out);
 		}
@@ -139,7 +148,7 @@ namespace ara {
 		}
 
 		static void	_global_init() {
-			internal::thread_state::get_root().as_root();
+			internal::thread_state::init();
 		}
 
 		inline log::log_context	 & _get_log_context() {
@@ -262,7 +271,10 @@ namespace ara {
 		auto func = std::bind<void>(std::forward<_Callable>(f), std::forward<_Args>(args)...);
 		std::thread res([func = std::move(func)](){
 			defer		_au([]() {thread_context::destroy_context(); });
-			func();
+			try {
+				func();
+			}
+			catch (...) {}
 		});
 		return res;
 	}
@@ -291,7 +303,7 @@ namespace ara {
 		, typename RetType = typename function_traits<FunCall>::result_type
 		, typename = typename std::enable_if<!std::is_base_of<internal::async_result_base, RetType>::value>::type
 	>
-		async_result<RetType>	async_exec(FunCall && func) {
+	async_result<RetType>	async_exec(FunCall && func) {
 		async_result<RetType> res;
 		std::thread  t([res, func = std::move(func)](){
 			defer		_au([]() {thread_context::destroy_context(); });
@@ -305,10 +317,9 @@ namespace ara {
 		t.detach();
 		return res;
 	}
-
 }
 
-#define BEGIN_CALL_AUTOINFO		ara::call_begin		ARA_TMP_VAR(_call)( ara::str_printf<std::string>("%v@%v#%v", ARA_FUNC_NAME, __FILE__, __LINE__) )
+#define BEGIN_CALL_AUTOINFO		ara::call_begin		ARA_TMP_VAR(_call)( ara::str_printf<std::string>("%v@%v#%v", ARA_FUNC_NAME, ARA_FILE_NAME, __LINE__) )
 #define BEGIN_CALL(...)			ara::call_begin		ARA_TMP_VAR(_call)( __VA_ARGS__ )
 
 #endif//ARA_THREADEXT_H

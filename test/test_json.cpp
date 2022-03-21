@@ -1,5 +1,5 @@
 
-#include "3rd/Catch/single_include/catch.hpp"
+#include "3rd/Catch2/catch.hpp"
 #include "ara/json.h"
 
 TEST_CASE("json", "[base]") {
@@ -105,5 +105,26 @@ TEST_CASE("json", "[base]") {
 		std::wstring s3 = ara::json::pretty_save<std::wstring>(v);
 		std::wstring s3_pretty = L"{\n    \"a\": 100,\n    \"b\": \"hello world\"\n}";
 		REQUIRE(s3 == s3_pretty);
+	}
+
+	SECTION("overflow") {
+		{
+			std::string str1 = "2147483648";
+			ara::var v = ara::json::parse_ref(std::move(str1));
+
+			int64_t n = v.get_int64();
+			if (n < 0)
+				n += 0x100000000;
+			REQUIRE(n == 0x80000000);
+		}
+		{
+			std::string str1 = "2147483649";
+			ara::var v = ara::json::parse_ref(std::move(str1));
+
+			int64_t n = v.get_int64();
+			if (n < 0)
+				n += 0x100000000;
+			REQUIRE(n == 0x80000001);
+		}
 	}
 }

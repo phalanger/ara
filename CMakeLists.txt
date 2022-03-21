@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.15)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
@@ -15,7 +15,10 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.2)
         message(FATAL_ERROR "Clang version must be at least 3.2!")
     endif()
-    set(CMAKE_CXX_FLAGS "-std=c++11 -O2 ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -Wno-dangling-else ${CMAKE_CXX_FLAGS}")
+    list(APPEND CMAKE_INCLUDE_PATH "~/Work/libs")
+    list(APPEND CMAKE_LIBRARY_PATH "~/Work/libs")
+    set(OPENSSL_ROOT_DIR "~/Work/libs/openssl-1.1.1g")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     # require at least VS2015
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.0)
@@ -77,7 +80,7 @@ INCLUDE(FindBoost)
 set(Boost_USE_STATIC_LIBS        ON) # only find static libs
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
-find_package(Boost COMPONENTS date_time thread system)
+find_package(Boost 1.77.0 COMPONENTS date_time thread system)
 if(Boost_FOUND)
 	# Find openssl
 	find_package(OpenSSL)
